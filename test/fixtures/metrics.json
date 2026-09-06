@@ -1,0 +1,63 @@
+{
+  "counters": {
+    "prompt_tokens_total": 42781,
+    "prefill_tokens_total": 848,
+    "prefix_cache_tokens_total": 41933,
+    "generation_tokens_total": 26,
+    "requests_success_total": 1,
+    "requests_cancelled_total": 0,
+    "prefix_cache_queries_total": 1,
+    "prefix_cache_hits_total": 1
+  },
+  "gauges": {
+    "requests_running": 0,
+    "requests_waiting": 0,
+    "gpu_utilization_pct": 0,
+    "memory_mb": 39439,
+    "generation_tokens_live": 26,
+    "prefill_tokens_live": 0,
+    "requests_prefilling": 0,
+    "mlx_active_bytes": 40846363996,
+    "mlx_cache_bytes": 78704656,
+    "ane_int8_bytes": 0,
+    "ane_layers": 0
+  },
+  "histograms": {
+    "time_to_first_token_seconds": {
+      "count": 1,
+      "sum": 11.258592084,
+      "bounds": [0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+      "bucket_counts": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    },
+    "e2e_request_latency_seconds": {
+      "count": 1,
+      "sum": 12.464859042,
+      "bounds": [0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+      "bucket_counts": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    },
+    "prefill_time_seconds": {
+      "count": 1,
+      "sum": 11.258411167,
+      "bounds": [0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+      "bucket_counts": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    },
+    "decode_time_seconds": {
+      "count": 1,
+      "sum": 1.206266958,
+      "bounds": [0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+      "bucket_counts": [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
+    },
+    "prompt_tokens": {
+      "count": 1,
+      "sum": 42781,
+      "bounds": [32, 128, 256, 512, 1024, 2048, 4096, 8192],
+      "bucket_counts": [0, 0, 0, 0, 0, 0, 0, 0, 1]
+    },
+    "output_tokens": {
+      "count": 1,
+      "sum": 26,
+      "bounds": [32, 128, 256, 512, 1024, 2048, 4096, 8192],
+      "bucket_counts": [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    }
+  }
+}
