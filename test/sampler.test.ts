@@ -7,6 +7,7 @@ import type {
   ModelInfo,
 } from "../src/engine/types.ts";
 import { History } from "../src/history.ts";
+import type { HostProbes } from "../src/host/types.ts";
 import { Sampler } from "../src/sampler.ts";
 import { handle, isRange, snapshot } from "../src/web.ts";
 import metricsFixture from "./fixtures/metrics.json";
@@ -48,6 +49,9 @@ class FakeEngine implements Engine {
   }
   logFile() {
     return null;
+  }
+  processNames() {
+    return ["fake-engine"];
   }
 }
 
@@ -248,5 +252,102 @@ describe("web", () => {
     expect(isRange("7d")).toBe(true);
     expect(isRange("2d")).toBe(false);
     expect(isRange(null)).toBe(false);
+  });
+});
+
+describe("Sampler host probes", () => {
+  function fakeProbes(
+    pids: Map<number, string>,
+  ): HostProbes & { scans: number } {
+    return {
+      scans: 0,
+      hostMemory: () => ({
+        total: 1000,
+        free: 100,
+        active: 400,
+        inactive: 200,
+        wired: 300,
+        speculative: 0,
+        compressed: 50,
+      }),
+      processMemory: (pid) =>
+        pids.has(pid) ? { footprint: pid * 10, rss: pid * 9 } : null,
+      findPid(names) {
+        this.scans++;
+        for (const [pid, name] of pids) if (names.includes(name)) return pid;
+        return null;
+      },
+      pidMatches: (pid, names) => names.includes(pids.get(pid) ?? ""),
+    };
+  }
+
+  test("remote engine: host memory only, no pid, engine's own footprint", async () => {
+    const engine = new FakeEngine([idle]);
+    const history = new History(":memory:");
+    const probes = fakeProbes(new Map([[42, "fake-engine"]]));
+    const s = new Sampler(engine, history, {
+      now: clock().now,
+      probes,
+      local: false,
+    });
+    const a = (await s.tick())!;
+    expect(a.mem.hostFree).toBe(100);
+    expect(a.mem.hostCompressed).toBe(50);
+    expect(a.enginePid).toBeNull();
+    expect(a.mem.procFootprint).toBe(39439 * 1024 * 1024);
+    expect(a.mem.procRss).toBe(0);
+    expect(probes.scans).toBe(0);
+    history.close();
+  });
+
+  test("local engine: pid found, rusage footprint, rescan on exit", async () => {
+    const engine = new FakeEngine([idle, idle, idle, idle, idle, idle, idle]);
+    const history = new History(":memory:");
+    const pids = new Map([[42, "fake-engine"]]);
+    const probes = fakeProbes(pids);
+    const lines: string[] = [];
+    const c = clock();
+    const s = new Sampler(engine, history, {
+      now: c.now,
+      probes,
+      local: true,
+      log: (l) => lines.push(l),
+    });
+    const a = (await s.tick())!;
+    expect(a.enginePid).toBe(42);
+    expect(a.mem.procFootprint).toBe(420);
+    expect(a.mem.procRss).toBe(378);
+    expect(probes.scans).toBe(1);
+    expect(lines).toEqual(["engine pid none -> 42"]);
+    // the engine process restarts: old pid gone
+    pids.clear();
+    c.advance(1000);
+    const b = (await s.tick())!;
+    expect(b.enginePid).toBeNull();
+    expect(b.mem.procFootprint).toBe(39439 * 1024 * 1024);
+    // new pid appears; found on the next scan interval
+    pids.set(77, "fake-engine");
+    c.advance(1000);
+    const d = (await s.tick())!;
+    expect(d.enginePid).toBe(77);
+    expect(d.mem.procFootprint).toBe(770);
+    expect(lines.at(-1)).toBe("engine pid none -> 77");
+    history.close();
+  });
+
+  test("engine down still carries host memory and disk", async () => {
+    const engine = new FakeEngine(["down"]);
+    const history = new History(":memory:");
+    const s = new Sampler(engine, history, {
+      now: clock().now,
+      probes: fakeProbes(new Map()),
+      local: true,
+    });
+    await s.settle();
+    const a = (await s.tick())!;
+    expect(a.engineUp).toBe(false);
+    expect(a.mem.hostTotal).toBe(1000);
+    expect(a.disk).toEqual([]);
+    history.close();
   });
 });

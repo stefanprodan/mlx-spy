@@ -42,6 +42,13 @@ export type Series = {
   hotCacheEst: number[];
   mlxActive: number[];
   mlxPool: number[];
+  hostTotal: number[];
+  hostFree: number[];
+  hostInactive: number[];
+  hostWired: number[];
+  hostCompressed: number[];
+  procRss: number[];
+  diskBytes: number[];
 };
 
 // What the sampler needs back after a restart to keep the epoch honest:
@@ -77,16 +84,50 @@ export class History {
       weights INTEGER NOT NULL,
       hot_cache_est INTEGER NOT NULL,
       mlx_active INTEGER NOT NULL,
-      mlx_pool INTEGER NOT NULL
+      mlx_pool INTEGER NOT NULL,
+      host_total INTEGER NOT NULL DEFAULT 0,
+      host_free INTEGER NOT NULL DEFAULT 0,
+      host_inactive INTEGER NOT NULL DEFAULT 0,
+      host_wired INTEGER NOT NULL DEFAULT 0,
+      host_compressed INTEGER NOT NULL DEFAULT 0,
+      proc_rss INTEGER NOT NULL DEFAULT 0,
+      disk_bytes INTEGER NOT NULL DEFAULT 0
     )`);
+    this.migrate();
     this.db.run(
       "CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
     );
     this.insert = this.db.prepare(`INSERT OR REPLACE INTO samples VALUES (
       $t, $engineUp, $epoch, $decodeTps, $prefillTps, $requestsRunning,
       $requestsWaiting, $cacheHitPct, $cacheTokenPct, $gpuPct, $procFootprint,
-      $weights, $hotCacheEst, $mlxActive, $mlxPool)`);
+      $weights, $hotCacheEst, $mlxActive, $mlxPool, $hostTotal, $hostFree,
+      $hostInactive, $hostWired, $hostCompressed, $procRss, $diskBytes)`);
     this.prune = this.db.prepare("DELETE FROM samples WHERE t < $before");
+  }
+
+  // Columns added after the first release get appended to an existing file;
+  // CREATE TABLE IF NOT EXISTS leaves an old schema alone.
+  private migrate() {
+    const have = new Set(
+      (
+        this.db.query("PRAGMA table_info(samples)").all() as { name: string }[]
+      ).map((c) => c.name),
+    );
+    for (const col of [
+      "host_total",
+      "host_free",
+      "host_inactive",
+      "host_wired",
+      "host_compressed",
+      "proc_rss",
+      "disk_bytes",
+    ]) {
+      if (!have.has(col)) {
+        this.db.run(
+          `ALTER TABLE samples ADD COLUMN ${col} INTEGER NOT NULL DEFAULT 0`,
+        );
+      }
+    }
   }
 
   push(s: Sample) {
@@ -108,6 +149,13 @@ export class History {
       hotCacheEst: s.mem.hotCacheEst,
       mlxActive: s.mem.mlxActive,
       mlxPool: s.mem.mlxPool,
+      hostTotal: s.mem.hostTotal,
+      hostFree: s.mem.hostFree,
+      hostInactive: s.mem.hostInactive,
+      hostWired: s.mem.hostWired,
+      hostCompressed: s.mem.hostCompressed,
+      procRss: s.mem.procRss,
+      diskBytes: s.disk.reduce((n, d) => n + d.bytes, 0),
     });
     // once a minute is plenty; the delete is a range scan on the primary key
     if (s.t - this.lastPruneAt >= 60_000) {
@@ -153,7 +201,11 @@ export class History {
           avg(cache_hit_pct) AS cacheHitPct, avg(cache_token_pct) AS cacheTokenPct,
           avg(gpu_pct) AS gpuPct, avg(proc_footprint) AS procFootprint,
           avg(weights) AS weights, avg(hot_cache_est) AS hotCacheEst,
-          avg(mlx_active) AS mlxActive, avg(mlx_pool) AS mlxPool
+          avg(mlx_active) AS mlxActive, avg(mlx_pool) AS mlxPool,
+          avg(host_total) AS hostTotal, avg(host_free) AS hostFree,
+          avg(host_inactive) AS hostInactive, avg(host_wired) AS hostWired,
+          avg(host_compressed) AS hostCompressed, avg(proc_rss) AS procRss,
+          avg(disk_bytes) AS diskBytes
         FROM samples WHERE t >= $since AND t <= $now
         GROUP BY 1 ORDER BY 1`,
       )
@@ -174,6 +226,13 @@ export class History {
       hotCacheEst: [],
       mlxActive: [],
       mlxPool: [],
+      hostTotal: [],
+      hostFree: [],
+      hostInactive: [],
+      hostWired: [],
+      hostCompressed: [],
+      procRss: [],
+      diskBytes: [],
     };
     for (const r of rows) {
       out.t.push(r.t);
@@ -191,6 +250,13 @@ export class History {
       out.hotCacheEst.push(Math.round(r.hotCacheEst));
       out.mlxActive.push(Math.round(r.mlxActive));
       out.mlxPool.push(Math.round(r.mlxPool));
+      out.hostTotal.push(Math.round(r.hostTotal));
+      out.hostFree.push(Math.round(r.hostFree));
+      out.hostInactive.push(Math.round(r.hostInactive));
+      out.hostWired.push(Math.round(r.hostWired));
+      out.hostCompressed.push(Math.round(r.hostCompressed));
+      out.procRss.push(Math.round(r.procRss));
+      out.diskBytes.push(Math.round(r.diskBytes));
     }
     return out;
   }

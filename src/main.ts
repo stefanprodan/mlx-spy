@@ -17,6 +17,8 @@ import { dirname, join } from "node:path";
 import pkg from "../package.json";
 import { MlxServe } from "./engine/mlxserve.ts";
 import { History } from "./history.ts";
+import { createHostProbes } from "./host/index.ts";
+import { isLocalUrl } from "./host/local.ts";
 import { takeSample } from "./sample.ts";
 import { Sampler } from "./sampler.ts";
 import { DEFAULT_PORT, serve, tailscaleAddress } from "./web.ts";
@@ -111,9 +113,11 @@ try {
 }
 
 const engine = new MlxServe(engineUrl);
+const probes = await createHostProbes();
+const local = isLocalUrl(engineUrl);
 
 if (once) {
-  const sample = await takeSample(engine, ONCE_WINDOW_MS);
+  const sample = await takeSample(engine, ONCE_WINDOW_MS, probes);
   console.log(JSON.stringify(sample, null, 2));
   process.exit(sample.engineUp ? 0 : 2);
 }
@@ -132,14 +136,14 @@ const log = (line: string) =>
 
 if (dbPath !== ":memory:") mkdirSync(dirname(dbPath), { recursive: true });
 const history = new History(dbPath, retentionDays);
-const sampler = new Sampler(engine, history, { log });
+const sampler = new Sampler(engine, history, { log, probes, local });
 const server = serve(
   { engine, sampler, history, version: VERSION },
   { hostname, port },
 );
 sampler.start();
 log(
-  `mlx-spy ${VERSION} on http://${server.hostname}:${server.port}, engine ${engineUrl}, history ${dbPath}`,
+  `mlx-spy ${VERSION} on http://${server.hostname}:${server.port}, engine ${engineUrl} (${local ? "local" : "remote"}), history ${dbPath}`,
 );
 
 const shutdown = () => {

@@ -15,13 +15,21 @@ function sample(t: number, over: Partial<Sample> = {}): Sample {
     cacheHitPct: null,
     cacheTokenPct: null,
     gpuPct: 50,
+    enginePid: null,
     mem: {
+      hostTotal: 96_000,
+      hostFree: 20_000,
+      hostInactive: 10_000,
+      hostWired: 5_000,
+      hostCompressed: 0,
       procFootprint: 1000,
+      procRss: 900,
       weights: 800,
       hotCacheEst: 100,
       mlxActive: 900,
       mlxPool: 10,
     },
+    disk: [{ path: "/x/fp", bytes: 300, modelId: null }],
     models: [],
     ...over,
   };
@@ -52,6 +60,8 @@ describe("History", () => {
     expect(s.decodeTps[0]).toBe(99);
     expect(s.cacheHitPct[0]).toBeNull();
     expect(s.weights[0]).toBe(800);
+    expect(s.hostFree[0]).toBe(20_000);
+    expect(s.diskBytes[0]).toBe(300);
     h.close();
   });
 
@@ -135,5 +145,36 @@ describe("History", () => {
     expect(s.engineUp).toEqual([0]);
     expect(s.decodeTps).toEqual([null]);
     h.close();
+  });
+});
+
+describe("History migration", () => {
+  test("adds the host columns to a pre-existing samples table", () => {
+    const { Database } = require("bun:sqlite");
+    const path = `${require("node:os").tmpdir()}/mlx-spy-migrate-${process.pid}.sqlite`;
+    const old = new Database(path, { create: true });
+    old.run(`CREATE TABLE samples (
+      t INTEGER PRIMARY KEY, engine_up INTEGER NOT NULL, epoch INTEGER NOT NULL,
+      decode_tps REAL, prefill_tps REAL, requests_running INTEGER NOT NULL,
+      requests_waiting INTEGER NOT NULL, cache_hit_pct REAL, cache_token_pct REAL,
+      gpu_pct REAL NOT NULL, proc_footprint INTEGER NOT NULL, weights INTEGER NOT NULL,
+      hot_cache_est INTEGER NOT NULL, mlx_active INTEGER NOT NULL, mlx_pool INTEGER NOT NULL)`);
+    old.run(
+      "INSERT INTO samples VALUES (1000, 1, 0, 1, 2, 0, 0, NULL, NULL, 0, 5, 4, 1, 5, 0)",
+    );
+    old.close();
+    try {
+      const h = new History(path);
+      const s = h.series("1h", 1000);
+      expect(s.t).toEqual([1000]);
+      expect(s.hostFree).toEqual([0]);
+      h.push(sample(2000));
+      expect(h.series("1h", 2000).diskBytes).toEqual([0, 300]);
+      h.close();
+    } finally {
+      require("node:fs").rmSync(path, { force: true });
+      require("node:fs").rmSync(`${path}-wal`, { force: true });
+      require("node:fs").rmSync(`${path}-shm`, { force: true });
+    }
   });
 });

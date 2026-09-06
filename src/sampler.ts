@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // The 1 Hz loop. Each tick reads the engine's metrics, compares them with the
-// previous reading (rates, epoch), refreshes the model list every few ticks,
-// and hands the Sample to the history and to listeners. tick() is public and
-// the clock injectable so tests drive it without timers or a network.
+// previous reading (rates, epoch), probes host memory and the engine process,
+// refreshes the model list every few ticks and the disk tier every 30, and
+// hands the Sample to the history and to listeners. tick() is public and the
+// clock injectable so tests drive it without timers or a network.
 
 import type { Engine, ModelInfo } from "./engine/types.ts";
 import type { History } from "./history.ts";
+import { cacheDirSizes } from "./host/disk.ts";
+import { NULL_PROBES } from "./host/index.ts";
+import type { DiskDir, HostProbes, HostSnapshot } from "./host/types.ts";
 import {
   buildSample,
   computeRates,
@@ -21,10 +25,19 @@ export const TICK_MS = 1000;
 // The model list changes only on load/unload/eviction; 5 s is quick enough
 // for the table and keeps the per-tick work to one request.
 const MODELS_EVERY_TICKS = 5;
+// A pid scan walks the whole process table; only when the pid is unknown,
+// and not on every tick when the engine is simply not running.
+const PID_EVERY_TICKS = 5;
+// The tier changes by hundreds of MB per request; a stat walk of a 50 GB
+// tier is cheap but not free, and the number is for a tile, not a graph.
+const DISK_EVERY_TICKS = 30;
 
 export type SamplerOptions = {
   now?: () => number;
   log?: (line: string) => void;
+  probes?: HostProbes;
+  // engine runs on this host: probe its pid and size its cache dirs
+  local?: boolean;
 };
 
 export class Sampler {
@@ -32,11 +45,18 @@ export class Sampler {
   private epoch: number;
   private models: ModelInfo[] = [];
   private ticksSinceModels = MODELS_EVERY_TICKS; // fetch on the first tick
+  private pid: number | null = null;
+  private ticksSincePid = PID_EVERY_TICKS;
+  private disk: DiskDir[] = [];
+  private ticksSinceDisk = DISK_EVERY_TICKS;
+  private diskScan: Promise<void> | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
   private inFlight = false;
   private readonly listeners = new Set<(s: Sample) => void>();
   private readonly now: () => number;
   private readonly log: (line: string) => void;
+  private readonly probes: HostProbes;
+  private readonly local: boolean;
 
   constructor(
     private readonly engine: Engine,
@@ -45,6 +65,8 @@ export class Sampler {
   ) {
     this.now = opts.now ?? Date.now;
     this.log = opts.log ?? (() => {});
+    this.probes = opts.probes ?? NULL_PROBES;
+    this.local = opts.local ?? false;
     // Carry the epoch and the last counters across our own restarts, so the
     // first reading after a restart still detects an engine restart that
     // happened while we were down.
@@ -92,6 +114,10 @@ export class Sampler {
     return this.models;
   }
 
+  currentDisk(): DiskDir[] {
+    return this.disk;
+  }
+
   start() {
     if (this.timer) return;
     void this.tick();
@@ -103,6 +129,54 @@ export class Sampler {
     this.timer = null;
   }
 
+  // Host side of a tick. The pid is validated by name each scan interval so
+  // a restarted engine (new pid) is picked up and a recycled pid is not
+  // trusted. The disk walk is async and its result lands on a later tick.
+  private probeHost(): HostSnapshot {
+    if (this.local) {
+      if (++this.ticksSincePid >= PID_EVERY_TICKS) {
+        this.ticksSincePid = 0;
+        const names = this.engine.processNames();
+        if (this.pid === null || !this.probes.pidMatches(this.pid, names)) {
+          const found = this.probes.findPid(names);
+          if (found !== this.pid) {
+            this.log(`engine pid ${this.pid ?? "none"} -> ${found ?? "none"}`);
+          }
+          this.pid = found;
+        }
+      }
+      if (++this.ticksSinceDisk >= DISK_EVERY_TICKS && !this.diskScan) {
+        this.ticksSinceDisk = 0;
+        this.diskScan = cacheDirSizes(this.engine.cacheDirs())
+          .then((d) => {
+            this.disk = d;
+          })
+          .catch(() => {})
+          .finally(() => {
+            this.diskScan = null;
+          });
+      }
+    }
+    let proc = this.pid === null ? null : this.probes.processMemory(this.pid);
+    if (this.pid !== null && proc === null) {
+      // the process is gone; rescan on the next interval
+      this.pid = null;
+      this.ticksSincePid = PID_EVERY_TICKS;
+      proc = null;
+    }
+    return {
+      mem: this.probes.hostMemory(),
+      pid: this.pid,
+      proc,
+      disk: this.disk,
+    };
+  }
+
+  // Waits for an in-flight disk walk; tests use it, the loop never does.
+  async settle(): Promise<void> {
+    await this.diskScan;
+  }
+
   // One sample. A slow engine must not pile up ticks: if the previous one is
   // still running this one is skipped, and the next tick's window is simply
   // wider (rates divide by the measured window, not by TICK_MS).
@@ -112,9 +186,10 @@ export class Sampler {
     try {
       const reading = await readEngine(this.engine);
       const t = this.now();
+      const host = this.probeHost();
       let sample: Sample;
       if (!reading) {
-        sample = downSample(t, this.epoch);
+        sample = downSample(t, this.epoch, host);
         // a dead engine breaks the window: the next reading starts fresh
         // rather than computing rates over the outage
         this.prev = null;
@@ -146,7 +221,7 @@ export class Sampler {
             // keep the last list; the next tick retries
           }
         }
-        sample = buildSample(reading, rates, this.models);
+        sample = buildSample(reading, rates, this.models, host);
         this.prev = reading;
         this.history.saveSamplerState({
           epoch: this.epoch,

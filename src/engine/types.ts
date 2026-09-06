@@ -85,4 +85,6 @@ export interface Engine {
   cacheDirs(): string[];
   // per-request log to tail, null when the engine has none
   logFile(): string | null;
+  // executable basenames the host probe may match for the engine's pid
+  processNames(): string[];
 }

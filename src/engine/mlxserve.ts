@@ -157,4 +157,8 @@ export class MlxServe implements Engine {
     const port = new URL(this.url).port || "80";
     return join(homedir(), ".mlx-serve", "logs", `mlx-serve-${port}.log`);
   }
+
+  processNames(): string[] {
+    return ["mlx-serve"];
+  }
 }
