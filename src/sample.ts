@@ -89,10 +89,15 @@ function liveRate(prev: number, cur: number, running: boolean, secs: number) {
 
 // Pure: rates between two readings. A counter going backwards means the
 // engine restarted: start a new epoch and publish no rates for that window.
+// `base` is the older reading the live token gauges are rated against: the
+// engine advances them in bursts (MTP emits several tokens per step), so a
+// one second window alternates between zero and a double count; a few
+// seconds smooths that. Counters still use the previous reading.
 export function computeRates(
   prev: Reading | null,
   cur: Reading,
   prevEpoch: number,
+  base: Reading | null = prev,
 ): Rates {
   const none = {
     windowMs: null,
@@ -104,13 +109,14 @@ export function computeRates(
   };
   if (!prev) return { epoch: prevEpoch, ...none };
   const a = prev.metrics.counters;
-  const b = cur.metrics.counters;
-  const reset = (Object.keys(b) as (keyof typeof b)[]).some((k) => b[k] < a[k]);
+  const c = cur.metrics.counters;
+  const reset = (Object.keys(c) as (keyof typeof c)[]).some((k) => c[k] < a[k]);
   if (reset) return { epoch: prevEpoch + 1, ...none };
   const windowMs = cur.t - prev.t;
   if (windowMs <= 0) return { epoch: prevEpoch, ...none };
-  const secs = windowMs / 1000;
-  const g0 = prev.metrics.gauges;
+  const b = base ?? prev;
+  const liveSecs = Math.max(cur.t - b.t, 1) / 1000;
+  const g0 = b.metrics.gauges;
   const g1 = cur.metrics.gauges;
   const running = g1.requestsRunning > 0 || g1.requestsPrefilling > 0;
   return {
@@ -120,21 +126,21 @@ export function computeRates(
       g0.generationTokensLive,
       g1.generationTokensLive,
       running,
-      secs,
+      liveSecs,
     ),
     prefillTps: liveRate(
       g0.prefillTokensLive,
       g1.prefillTokensLive,
       running,
-      secs,
+      liveSecs,
     ),
     cacheHitPct: pct(
-      b.cacheHits - a.cacheHits,
-      b.cacheQueries - a.cacheQueries,
+      c.cacheHits - a.cacheHits,
+      c.cacheQueries - a.cacheQueries,
     ),
     cacheTokenPct: pct(
-      b.cachedPromptTokens - a.cachedPromptTokens,
-      b.promptTokens - a.promptTokens,
+      c.cachedPromptTokens - a.cachedPromptTokens,
+      c.promptTokens - a.promptTokens,
     ),
     ttftMs: histMean(
       prev.metrics.histograms.ttftSeconds,

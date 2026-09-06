@@ -137,3 +137,40 @@ describe("buildSample", () => {
     expect(s.mem.hotCacheEst).toBe(0);
   });
 });
+
+describe("computeRates live window", () => {
+  test("bursty live gauge smooths over the base reading", () => {
+    // the gauge moves every other second: 0, +40, +0, +40
+    const r0 = reading(1000, {}, { generation_tokens_live: 100 });
+    const r1 = reading(
+      2000,
+      {},
+      { generation_tokens_live: 140, requests_running: 1 },
+    );
+    const r2 = reading(
+      3000,
+      {},
+      { generation_tokens_live: 140, requests_running: 1 },
+    );
+    // one second windows alternate between 40 and 0
+    expect(computeRates(r0, r1, 0).decodeTps).toBe(40);
+    expect(computeRates(r1, r2, 0).decodeTps).toBe(0);
+    // rated against a base two seconds back the line reads 20 both times
+    expect(computeRates(r1, r2, 0, r0).decodeTps).toBe(20);
+  });
+
+  test("counters and epoch still come from the previous reading", () => {
+    const r0 = reading(1000);
+    const r1 = reading(2000, {
+      prefix_cache_queries_total: 3,
+      prefix_cache_hits_total: 2,
+    });
+    const r2 = reading(3000, {
+      prefix_cache_queries_total: 4,
+      prefix_cache_hits_total: 2,
+    });
+    const r = computeRates(r1, r2, 0, r0);
+    expect(r.cacheHitPct).toBe(0); // 0 of 1 new query, not 1 of 3
+    expect(r.windowMs).toBe(1000);
+  });
+});
