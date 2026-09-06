@@ -216,14 +216,27 @@ describe("web", () => {
     await sampler.tick();
     c.advance(1000);
     await sampler.tick();
-    return { engine, sampler, history, version: "vtest", now: c.now };
+    return {
+      engine,
+      sampler,
+      history,
+      version: "vtest",
+      local: false,
+      now: c.now,
+    };
   }
 
   test("snapshot carries the latest sample and models", async () => {
     const d = await deps();
     const snap = snapshot(d);
     expect(snap.version).toBe("vtest");
-    expect(snap.engine).toEqual({ id: "mlxserve", url: "http://fake:11234" });
+    expect(snap.engine).toEqual({
+      id: "mlxserve",
+      url: "http://fake:11234",
+      local: false,
+      capabilities: [],
+    });
+    expect(snap.disk).toEqual([]);
     expect(snap.sample?.windowMs).toBe(1000);
     expect(snap.models).toHaveLength(3);
     d.history.close();

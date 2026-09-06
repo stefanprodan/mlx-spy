@@ -21,6 +21,7 @@ import { createHostProbes } from "./host/index.ts";
 import { isLocalUrl } from "./host/local.ts";
 import { takeSample } from "./sample.ts";
 import { Sampler } from "./sampler.ts";
+import page from "./ui/index.html";
 import { DEFAULT_PORT, serve, tailscaleAddress } from "./web.ts";
 
 export const VERSION = `v${pkg.version}`;
@@ -48,8 +49,10 @@ const HELP = `\x1b[1mmlx-spy\x1b[0m - monitor and control an LLM inference serve
   -h, --help           show this help
 
 \x1b[1mAPI:\x1b[0m
+  GET /                        the dashboard
   GET /api/snapshot            latest sample and model list
   GET /api/history?range=1h    series for 1h, 6h, 24h or 7d
+  WS  /ws                      snapshot on connect, then one sample per second
 
 \x1b[1mExamples:\x1b[0m
   mlx-spy --engine http://127.0.0.1:11234 --once
@@ -137,18 +140,19 @@ const log = (line: string) =>
 if (dbPath !== ":memory:") mkdirSync(dirname(dbPath), { recursive: true });
 const history = new History(dbPath, retentionDays);
 const sampler = new Sampler(engine, history, { log, probes, local });
-const server = serve(
-  { engine, sampler, history, version: VERSION },
+const web = serve(
+  { engine, sampler, history, version: VERSION, local },
   { hostname, port },
+  page,
 );
 sampler.start();
 log(
-  `mlx-spy ${VERSION} on http://${server.hostname}:${server.port}, engine ${engineUrl} (${local ? "local" : "remote"}), history ${dbPath}`,
+  `mlx-spy ${VERSION} on http://${web.server.hostname}:${web.server.port}, engine ${engineUrl} (${local ? "local" : "remote"}), history ${dbPath}`,
 );
 
 const shutdown = () => {
   sampler.stop();
-  server.stop(true);
+  web.stop();
   history.close();
   process.exit(0);
 };
