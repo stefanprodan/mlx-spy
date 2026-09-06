@@ -9,8 +9,10 @@ engine endpoints that trigger a model load. See `plans/` for the roadmap.
 
 ## Status
 
-Milestone 2: the sampler runs at 1 Hz, keeps 7 days of history in SQLite
-and serves a JSON API. No page yet.
+Milestone 3: the sampler runs at 1 Hz, keeps 7 days of history in SQLite,
+reads host memory, the engine process footprint and the SSD cache tier size
+through libproc and Mach (no subprocesses), and serves a JSON API. No page
+yet.
 
 ```sh
 bun src/main.ts --engine http://127.0.0.1:11234            # serve the API
@@ -26,8 +28,10 @@ is the boundary.
   longer ranges
 
 A sample carries the engine state, windowed decode and prefill tok/s, cache
-hit ratios, the memory split (weights, estimated hot cache, MLX pool, process
-footprint) and the model list.
+hit ratios, the memory split (host free, inactive, wired and compressed;
+engine footprint and RSS; weights, estimated hot cache, MLX pool), the cache
+tier directories and the model list. The engine pid, RSS and disk tier are
+only probed when the engine runs on the same host.
 
 ## Development
 

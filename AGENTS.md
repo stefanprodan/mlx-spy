@@ -85,13 +85,26 @@ src/history.ts       ring buffer (1 h) plus bun:sqlite: samples table, 7 day
 src/web.ts           Bun.serve: /api/snapshot, /api/history?range=; handle()
                      is separate from serve() so tests call it with a Request;
                      tailscaleAddress() picks the default bind
+src/host/index.ts    probe facade: darwin FFI on macOS, NULL_PROBES elsewhere
+src/host/darwin.ts   bun:ffi: host_statistics64 (host memory), proc_pid_rusage
+                     (engine footprint and RSS), proc_listallpids + proc_pidpath
+                     (pid by executable basename). Offsets verified with
+                     offsetof(); load-bearing comments
+src/host/disk.ts     cacheDirSizes(): one entry per child dir of each cache
+                     root, allocated bytes like du, async, no spawn
+src/host/local.ts    isLocalUrl(): is the engine on this host (loopback, own
+                     interface address or host name); gates the pid probe,
+                     the disk walk and later the local-only actions
+src/host/types.ts    HostProbes, HostMemory, ProcessMemory, DiskDir, HostSnapshot
 test/                bun test suites; fixtures/ holds /metrics.json and
                      /v1/models bodies recorded from the live engine
 plans/               the development plan and milestones
 ```
 
 Data flow: adapter (`/metrics.json`, `/v1/models`) → `Reading` → `computeRates`
-over the previous reading → `buildSample` → History (ring + SQLite) and
+over the previous reading, joined with the host probes (memory every tick,
+pid rescanned every 5 s when unknown, disk tier every 30 s) → `buildSample` →
+History (ring + SQLite) and
 listeners → `/api/snapshot` and `/api/history`. `--once` short-circuits to a
 single sample on stdout. The page, WebSocket push and actions land in later
 milestones.
@@ -112,6 +125,13 @@ milestones.
   undefined for it.
 - Disk tier at `~/.mlx-serve/kv-cache/<fingerprint>/`; server log at
   `~/.mlx-serve/logs/mlx-serve-<port>.log`.
+- The engine's `memory_mb` matches libproc's `ri_phys_footprint` (41.36 GB
+  both, measured 2026-09-07), so the remote dev loop shows the same footprint
+  number as the Studio; only RSS and the pid need the probe to be local.
+- Host memory on macOS: `free` is small by design; free + inactive is the
+  practical headroom (what `mlxctl status` prints). `compressed` is the
+  compressor's page count.
+
 
 ## Conventions
 
@@ -136,7 +156,11 @@ milestones.
 - Against a live engine over the tailnet (no ssh needed):
   `bun src/main.ts --engine http://<studio>:11234 --once`. Exit code 0 when
   the engine answered, 2 when it did not (`engineUp: false`), 1 on bad
-  arguments.
+  arguments. From the MacBook the engine is remote: `enginePid` is null,
+  `procRss` 0 and `disk` empty by design; host memory is the MacBook's.
+- The full picture needs the binary on the Studio: `make build`, scp it to
+  `/tmp`, run `--once --engine http://127.0.0.1:11234` over ssh, remove it.
+  Read the homelab `studio-ops.md` rules before any ssh command.
 - Record new fixtures with `curl <engine>/metrics.json` and
   `curl <engine>/v1/models`, pretty-printed, into `test/fixtures/`. Never
   record `/props`.
