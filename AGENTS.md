@@ -65,7 +65,8 @@ type-check) and **`make test`** when you touch the adapter or sampler.
 ## Layout
 
 ```
-src/main.ts          entry: CLI parsing, --once (one JSON sample), -h, -v;
+src/main.ts          entry: CLI parsing (--engine, --listen, --db, --retention,
+                     --once, -h, -v); wires sampler, history and server;
                      VERSION derived from package.json
 src/engine/types.ts  the Engine interface and the normalised metric types;
                      adapters translate their server's names into these
@@ -75,14 +76,25 @@ src/engine/mlxserve.ts
 src/sample.ts        Sample type; computeRates (windowed tok/s, cache ratios,
                      epoch detection on counter reset) and buildSample are pure
                      and tested; takeSample does the I/O for --once
+src/sampler.ts       the 1 Hz loop: reads metrics each tick, models every 5 s,
+                     carries epoch and last counters across restarts through
+                     the history meta table; tick() is public for tests
+src/history.ts       ring buffer (1 h) plus bun:sqlite: samples table, 7 day
+                     retention pruned from the writer, bucketed series() per
+                     range in columnar form for uPlot
+src/web.ts           Bun.serve: /api/snapshot, /api/history?range=; handle()
+                     is separate from serve() so tests call it with a Request;
+                     tailscaleAddress() picks the default bind
 test/                bun test suites; fixtures/ holds /metrics.json and
                      /v1/models bodies recorded from the live engine
 plans/               the development plan and milestones
 ```
 
 Data flow: adapter (`/metrics.json`, `/v1/models`) → `Reading` → `computeRates`
-over the previous reading → `buildSample` → JSON on stdout (milestone 1); the
-1 Hz loop, history and web layers land in later milestones.
+over the previous reading → `buildSample` → History (ring + SQLite) and
+listeners → `/api/snapshot` and `/api/history`. `--once` short-circuits to a
+single sample on stdout. The page, WebSocket push and actions land in later
+milestones.
 
 ## mlx-serve specifics worth knowing
 
