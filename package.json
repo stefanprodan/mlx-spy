@@ -1,0 +1,28 @@
+{
+  "name": "mlx-spy",
+  "version": "0.1.0",
+  "description": "Monitoring and control for LLM inference servers on Apple Silicon",
+  "type": "module",
+  "bin": {
+    "mlx-spy": "./src/main.ts"
+  },
+  "scripts": {
+    "start": "bun src/main.ts",
+    "dev": "bun --watch src/main.ts",
+    "test": "bun test",
+    "lint": "bun biome check --write . && bun tsc --noEmit",
+    "build": "mkdir -p bin && bun build src/main.ts --compile --outfile bin/mlx-spy && rm -f .*.bun-build",
+    "clean": "rm -rf bin .*.bun-build",
+    "install-bin": "bun run build && mkdir -p \"${PREFIX:-$HOME/.local}/bin\" && install -m 0755 bin/mlx-spy \"${PREFIX:-$HOME/.local}/bin/mlx-spy\"",
+    "uninstall-bin": "rm -f \"${PREFIX:-$HOME/.local}/bin/mlx-spy\""
+  },
+  "license": "Apache-2.0",
+  "engines": {
+    "bun": ">=1.4.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.9",
+    "@types/bun": "1.4.0",
+    "typescript": "7.0.2"
+  }
+}
