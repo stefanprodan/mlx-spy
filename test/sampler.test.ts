@@ -1,0 +1,252 @@
+import { describe, expect, test } from "bun:test";
+import { parseMetrics, parseModels } from "../src/engine/mlxserve.ts";
+import type {
+  Capability,
+  Engine,
+  EngineMetrics,
+  ModelInfo,
+} from "../src/engine/types.ts";
+import { History } from "../src/history.ts";
+import { Sampler } from "../src/sampler.ts";
+import { handle, isRange, snapshot } from "../src/web.ts";
+import metricsFixture from "./fixtures/metrics.json";
+import modelsFixture from "./fixtures/models.json";
+
+// A scripted engine: each metrics() call pops the next body (a function of
+// the fixture), or throws when the script says the engine is down.
+type Step = ((body: any) => void) | "down";
+
+class FakeEngine implements Engine {
+  readonly id = "mlxserve" as const;
+  readonly url = "http://fake:11234";
+  metricsCalls = 0;
+  modelsCalls = 0;
+  constructor(private readonly steps: Step[]) {}
+  async health() {
+    return true;
+  }
+  async models(): Promise<ModelInfo[]> {
+    this.modelsCalls++;
+    return parseModels(modelsFixture);
+  }
+  async metrics(): Promise<EngineMetrics> {
+    this.metricsCalls++;
+    const step = this.steps.shift();
+    if (step === undefined) throw new Error("script exhausted");
+    if (step === "down") throw new Error("connection refused");
+    const body = structuredClone(metricsFixture) as any;
+    step(body);
+    return parseMetrics(body);
+  }
+  async load() {}
+  async unload() {}
+  capabilities(): Set<Capability> {
+    return new Set();
+  }
+  cacheDirs() {
+    return [];
+  }
+  logFile() {
+    return null;
+  }
+}
+
+function clock(start = 1_000_000) {
+  let t = start;
+  return { now: () => t, advance: (ms: number) => (t += ms) };
+}
+
+const idle = () => {};
+
+describe("Sampler", () => {
+  test("first tick fetches models and has no rates; second has a window", async () => {
+    const engine = new FakeEngine([idle, idle]);
+    const history = new History(":memory:");
+    const c = clock();
+    const s = new Sampler(engine, history, { now: c.now });
+    const a = await s.tick();
+    expect(a?.engineUp).toBe(true);
+    expect(a?.windowMs).toBeNull();
+    expect(a?.models).toHaveLength(3);
+    expect(engine.modelsCalls).toBe(1);
+    c.advance(1000);
+    const b = await s.tick();
+    expect(b?.windowMs).toBe(1000);
+    expect(b?.decodeTps).toBe(0);
+    expect(engine.modelsCalls).toBe(1); // carried between refreshes
+    expect(history.count()).toBe(2);
+    history.close();
+  });
+
+  test("decode tok/s from the live gauge across ticks", async () => {
+    const engine = new FakeEngine([
+      (b) => {
+        b.gauges.generation_tokens_live = 0;
+      },
+      (b) => {
+        b.gauges.generation_tokens_live = 45;
+        b.gauges.requests_running = 1;
+      },
+    ]);
+    const history = new History(":memory:");
+    const c = clock();
+    const s = new Sampler(engine, history, { now: c.now });
+    await s.tick();
+    c.advance(1500);
+    const b = await s.tick();
+    expect(b?.decodeTps).toBe(30);
+    expect(b?.requestsRunning).toBe(1);
+    history.close();
+  });
+
+  test("a counter reset bumps the epoch, logs, and persists", async () => {
+    const engine = new FakeEngine([
+      idle,
+      (b) => {
+        b.counters.prompt_tokens_total = 5;
+        b.counters.requests_success_total = 0;
+      },
+      idle,
+    ]);
+    const history = new History(":memory:");
+    const lines: string[] = [];
+    const c = clock();
+    const s = new Sampler(engine, history, {
+      now: c.now,
+      log: (l) => lines.push(l),
+    });
+    await s.tick();
+    c.advance(1000);
+    const b = await s.tick();
+    expect(b?.epoch).toBe(1);
+    expect(b?.windowMs).toBeNull();
+    expect(lines).toEqual(["engine counters reset: epoch 0 -> 1"]);
+    c.advance(1000);
+    const d = await s.tick();
+    expect(d?.epoch).toBe(1);
+    expect(d?.windowMs).toBe(1000);
+    expect(history.loadSamplerState().epoch).toBe(1);
+    history.close();
+  });
+
+  test("a restart of mlx-spy still detects an engine restart", async () => {
+    const history = new History(":memory:");
+    // previous mlx-spy run saw these counters and was on epoch 2
+    history.saveSamplerState({
+      epoch: 2,
+      counters: parseMetrics(metricsFixture).counters,
+    });
+    const engine = new FakeEngine([
+      (b) => {
+        b.counters.generation_tokens_total = 1; // below the saved 26
+      },
+      idle,
+    ]);
+    const c = clock();
+    const s = new Sampler(engine, history, { now: c.now });
+    const a = await s.tick();
+    expect(a?.epoch).toBe(3);
+    c.advance(1000);
+    const b = await s.tick();
+    expect(b?.epoch).toBe(3);
+    expect(b?.windowMs).toBe(1000);
+    history.close();
+  });
+
+  test("a restart with unchanged counters keeps the epoch and no rates", async () => {
+    const history = new History(":memory:");
+    history.saveSamplerState({
+      epoch: 2,
+      counters: parseMetrics(metricsFixture).counters,
+    });
+    const engine = new FakeEngine([idle]);
+    const s = new Sampler(engine, history, { now: clock().now });
+    const a = await s.tick();
+    expect(a?.epoch).toBe(2);
+    // the restored reading has no timestamp or gauges: no window to rate over
+    expect(a?.windowMs).toBeNull();
+    expect(a?.decodeTps).toBeNull();
+    history.close();
+  });
+
+  test("engine down yields engineUp=false and restarts the window", async () => {
+    const engine = new FakeEngine([idle, "down", idle, idle]);
+    const history = new History(":memory:");
+    const c = clock();
+    const s = new Sampler(engine, history, { now: c.now });
+    await s.tick();
+    c.advance(1000);
+    const down = await s.tick();
+    expect(down?.engineUp).toBe(false);
+    expect(down?.models).toEqual([]);
+    c.advance(1000);
+    const back = await s.tick();
+    expect(back?.engineUp).toBe(true);
+    expect(back?.windowMs).toBeNull();
+    c.advance(1000);
+    expect((await s.tick())?.windowMs).toBe(1000);
+    expect(history.count()).toBe(4);
+    history.close();
+  });
+
+  test("listeners get every sample", async () => {
+    const engine = new FakeEngine([idle, idle]);
+    const history = new History(":memory:");
+    const s = new Sampler(engine, history, { now: clock().now });
+    const seen: number[] = [];
+    const off = s.onSample((x) => seen.push(x.t));
+    await s.tick();
+    off();
+    await s.tick();
+    expect(seen).toHaveLength(1);
+    history.close();
+  });
+});
+
+describe("web", () => {
+  async function deps() {
+    const engine = new FakeEngine([idle, idle]);
+    const history = new History(":memory:");
+    const c = clock();
+    const sampler = new Sampler(engine, history, { now: c.now });
+    await sampler.tick();
+    c.advance(1000);
+    await sampler.tick();
+    return { engine, sampler, history, version: "vtest", now: c.now };
+  }
+
+  test("snapshot carries the latest sample and models", async () => {
+    const d = await deps();
+    const snap = snapshot(d);
+    expect(snap.version).toBe("vtest");
+    expect(snap.engine).toEqual({ id: "mlxserve", url: "http://fake:11234" });
+    expect(snap.sample?.windowMs).toBe(1000);
+    expect(snap.models).toHaveLength(3);
+    d.history.close();
+  });
+
+  test("routes", async () => {
+    const d = await deps();
+    const get = (p: string) => handle(new Request(`http://x${p}`), d);
+    expect(get("/api/snapshot").status).toBe(200);
+    const h = get("/api/history?range=1h");
+    expect(h.status).toBe(200);
+    const body = (await h.json()) as any;
+    expect(body.range).toBe("1h");
+    expect(body.series.t).toHaveLength(2);
+    expect(get("/api/history").status).toBe(200);
+    expect(get("/api/history?range=2h").status).toBe(400);
+    expect(get("/nope").status).toBe(404);
+    expect(
+      handle(new Request("http://x/api/snapshot", { method: "POST" }), d)
+        .status,
+    ).toBe(405);
+    d.history.close();
+  });
+
+  test("isRange", () => {
+    expect(isRange("7d")).toBe(true);
+    expect(isRange("2d")).toBe(false);
+    expect(isRange(null)).toBe(false);
+  });
+});
