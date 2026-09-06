@@ -1,0 +1,220 @@
+/* Dark only, like the engine's console. Series colours are the dark steps of
+   the reference categorical palette (validated for the dark surface, fixed
+   slot order). */
+:root {
+  color-scheme: dark;
+  --surface: #1a1a19;
+  --surface-2: #232322;
+  --border: #2f2f2d;
+  --text: #f2f1ea;
+  --text-2: #c3c2b7;
+  --muted: #8a897f;
+  --ok: #0ca30c;
+  --bad: #d03b3b;
+  --s1: #3987e5; /* blue */
+  --s2: #d95926; /* orange */
+  --s3: #199e70; /* aqua */
+  --s4: #c98500; /* yellow */
+  --s5: #d55181; /* magenta */
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--text);
+  font:
+    14px / 1.4 -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Helvetica,
+    Arial,
+    sans-serif;
+  padding: 0 16px 24px;
+  max-width: 1400px;
+  margin-inline: auto;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.dot.up {
+  background: var(--ok);
+}
+.dot.down {
+  background: var(--bad);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.ranges button {
+  background: var(--surface-2);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  margin-left: 4px;
+  cursor: pointer;
+  font: inherit;
+}
+.ranges button.active {
+  color: var(--text);
+  border-color: var(--s1);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  padding: 12px 0;
+}
+
+.tile {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+.tile .label {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tile .value {
+  font: 22px / 1.2 var(--mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tile .unit {
+  color: var(--muted);
+  font-size: 12px;
+  margin-left: 6px;
+}
+.tile .sub {
+  color: var(--muted);
+  font: 12px var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 1000px) {
+  .charts {
+    grid-template-columns: 1fr 1fr;
+  }
+  .charts #c-tokens,
+  .charts #c-memory {
+    grid-column: span 2;
+  }
+}
+
+.chart {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 8px 4px;
+  min-width: 0;
+}
+h2 {
+  margin: 0 0 4px 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* uPlot: recessive axes, mono legend numbers */
+.uplot {
+  font-family: inherit;
+}
+.uplot .u-legend {
+  font: 12px var(--mono);
+  color: var(--text-2);
+  text-align: left;
+  padding-left: 4px;
+}
+.uplot .u-legend .u-value {
+  font-variant-numeric: tabular-nums;
+  min-width: 6ch;
+}
+.u-select {
+  background: rgba(57, 135, 229, 0.15);
+}
+
+.panel {
+  margin-top: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th,
+td {
+  text-align: left;
+  padding: 6px 8px;
+  border-top: 1px solid var(--border);
+}
+th {
+  color: var(--muted);
+  font-weight: 500;
+  border-top: none;
+}
+td.num,
+th.num {
+  text-align: right;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+td.id {
+  font-family: var(--mono);
+}
+.state {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  background: var(--border);
+  color: var(--text-2);
+}
+.state.ready {
+  color: var(--ok);
+}
+
+footer {
+  margin-top: 16px;
+  font-size: 12px;
+}
