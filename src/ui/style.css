@@ -309,10 +309,10 @@ h2 {
   width: 100%;
 }
 .spark .plot {
-  height: 120px;
+  height: 72px;
 }
 .spark.tall .plot {
-  height: 220px;
+  height: 200px;
 }
 
 /* uPlot: no legend of its own, quiet axes */
@@ -327,6 +327,20 @@ h2 {
 }
 .u-cursor-x {
   border-right: 1px dashed #3a4048 !important;
+}
+.stamp {
+  position: absolute;
+  bottom: 2px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #1a1e25;
+  color: var(--dim);
+  font: 11px var(--mono);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.stamp[hidden] {
+  display: none;
 }
 
 /* models */

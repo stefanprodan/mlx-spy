@@ -55,29 +55,33 @@ function renderTiles(s: Sample) {
   $("engine-dot").className = `dot ${s.engineUp ? "up" : "down"}`;
   $("t-decode").textContent = num(s.decodeTps, 1);
   $("t-decode-sub").textContent = s.engineUp
-    ? s.windowMs == null
-      ? "first sample"
-      : `over ${(s.windowMs / 1000).toFixed(0)} s`
+    ? `peak ${num(peakInView("decodeTps"))} tok/s in view`
     : "engine unreachable";
   $("t-prefill").textContent = num(s.prefillTps);
-  $("t-prefill-sub").textContent = s.requestsRunning
-    ? `${s.requestsRunning} request${s.requestsRunning === 1 ? "" : "s"} in flight`
-    : "idle";
+  if (s.ttftMs != null) lastTtft = s.ttftMs;
+  $("t-prefill-sub").textContent =
+    lastTtft == null
+      ? "no request yet"
+      : `TTFT ${(lastTtft / 1000).toFixed(2)} s on the last request`;
   $("t-requests").textContent = `${s.requestsRunning}`;
   $("t-requests-sub").textContent =
     `${s.requestsWaiting} waiting · ${count(s.requestsTotal)} served`;
-  if (s.ttftMs != null) lastTtft = s.ttftMs;
-  $("t-ttft").textContent =
-    lastTtft == null ? "-" : (lastTtft / 1000).toFixed(2);
-  $("t-ttft-sub").textContent =
-    lastTtft == null ? "no request yet" : "last finished request";
   if (s.cacheHitPct != null) lastCacheHit = s.cacheHitPct;
   if (s.cacheTokenPct != null) lastCacheTok = s.cacheTokenPct;
-  $("t-cache").textContent = num(lastCacheHit);
+  $("t-cache").textContent = s.engineUp ? gb(s.mem.hotCacheEst) : "-";
   $("t-cache-sub").textContent =
-    lastCacheTok == null
+    lastCacheHit == null
       ? "no lookup yet"
-      : `${num(lastCacheTok)}% of prompt tokens reused`;
+      : `${num(lastCacheHit)}% hit rate · ${num(lastCacheTok)}% tokens reused`;
+  const resident = s.models.filter((m) => m.loaded);
+  $("t-resident").textContent = `${resident.length}`;
+  $("t-resident-sub").textContent = resident.length
+    ? resident
+        .map((m) => `${m.id.split("/").pop()} ${gb(m.bytesResident)} GB`)
+        .join(" · ")
+    : s.engineUp
+      ? "nothing loaded"
+      : "";
   $("t-gpu").textContent = num(s.gpuPct);
   setBar("t-gpu-bar", s.gpuPct, 101, 101);
   $("t-mem").textContent = gb(s.mem.procFootprint);
@@ -92,6 +96,13 @@ function renderTiles(s: Sample) {
   $("t-generated").textContent = count(s.generatedTokens);
   $("t-generated-sub").textContent =
     `${count(s.requestsTotal)} request${s.requestsTotal === 1 ? "" : "s"} this run`;
+}
+
+// highest value of a series in the loaded range, for the decode tile
+function peakInView(k: "decodeTps" | "prefillTps"): number {
+  let peak = 0;
+  for (const v of series?.[k] ?? []) if (v != null && v > peak) peak = v;
+  return peak;
 }
 
 // ---------- models ----------
@@ -166,8 +177,6 @@ const charts: Chart[] = [];
 
 const AXIS_FONT = "11px ui-monospace, Menlo, monospace";
 
-// One-line time labels: the clock for short ranges, weekday plus clock once
-// the range spans days (uPlot's default stacks a date line under the time).
 const fmtClock = new Intl.DateTimeFormat(undefined, {
   hour: "2-digit",
   minute: "2-digit",
@@ -185,36 +194,29 @@ const fmtSecs = new Intl.DateTimeFormat(undefined, {
   second: "2-digit",
   hour12: false,
 });
-const xValues: uPlot.Axis["values"] = (u, vals) => {
+// the moment under the cursor: seconds on the 1h range, weekday once the
+// range spans days
+function cursorTime(u: uPlot, secsSinceEpoch: number): string {
   const span = (u.scales.x.max ?? 0) - (u.scales.x.min ?? 0);
-  const f = span > 86_400 ? fmtDay : span < 600 ? fmtSecs : fmtClock;
-  return vals.map((v) => f.format(new Date(v * 1000)));
-};
+  const f = span > 86_400 ? fmtDay : span <= 3_700 ? fmtSecs : fmtClock;
+  return f.format(new Date(secsSinceEpoch * 1000));
+}
 
+// Sparklines carry no axes at all, like the console's: the head chips hold
+// the numbers. The tall memory chart keeps three y labels and no grid.
 function axes(yValues?: uPlot.Axis["values"]): uPlot.Axis[] {
-  const line = css("--line-2");
-  const text = css("--faint");
+  const x: uPlot.Axis = { show: false };
+  if (!yValues) return [x, { show: false }];
   return [
+    x,
     {
-      stroke: text,
+      stroke: css("--faint-2"),
       font: AXIS_FONT,
       grid: { show: false },
       ticks: { show: false },
-      gap: 6,
-      size: 24,
-      values: xValues,
-    },
-    {
-      stroke: text,
-      font: AXIS_FONT,
-      grid: { stroke: line, width: 1 },
-      ticks: { show: false },
       gap: 8,
-      size: 44,
-      splits: (_u, _ax, min, max) => {
-        const mid = (min + max) / 2;
-        return [min, mid, max];
-      },
+      size: 40,
+      splits: (_u, _ax, min, max) => [min, (min + max) / 2, max],
       values: yValues,
     },
   ];
@@ -253,6 +255,8 @@ function mkChart(
     build,
     raw: [],
   };
+  // time label that rides the cursor bar
+  const stamp = el("div", "stamp");
   const plot = new uPlot(
     {
       width: plotEl.clientWidth,
@@ -267,10 +271,25 @@ function mkChart(
       axes: axes(),
       series: [{}],
       hooks: {
+        ready: [(u) => u.over.append(stamp)],
         setCursor: [
           (u) => {
             const idx = u.cursor.idx;
             showValues(chart, idx == null ? null : idx);
+            const left = u.cursor.left ?? -1;
+            if (idx == null || left < 0) {
+              stamp.hidden = true;
+              return;
+            }
+            stamp.hidden = false;
+            stamp.textContent = cursorTime(u, u.data[0][idx]);
+            // keep the label inside the plot near either edge
+            const w = stamp.offsetWidth;
+            const x = Math.min(
+              Math.max(left - w / 2, 0),
+              u.over.clientWidth - w,
+            );
+            stamp.style.left = `${x}px`;
           },
         ],
       },
@@ -297,10 +316,25 @@ const pct = (v: number | null) => (v == null ? "-" : `${v.toFixed(0)}%`);
 const gbv = (v: number | null) => (v == null ? "-" : `${gb(v)} GB`);
 const int = (v: number | null) => (v == null ? "-" : `${Math.round(v)}`);
 
-const yPct: uPlot.Axis["values"] = (_u, v) => v.map((x) => `${x}%`);
+// nulls take the last value seen; leading nulls stay null
+function carry(a: (number | null)[]): (number | null)[] {
+  let last: number | null = null;
+  return a.map((v) => {
+    if (v != null) last = v;
+    return last;
+  });
+}
+// the un-carried cache series, so points draw only where a request ended
+let cacheEvents: (number | null)[][] = [];
+const eventPoints =
+  (k: number): uPlot.Series.Points.Filter =>
+  (_u, _sidx, show) =>
+    show
+      ? (cacheEvents[k]?.flatMap((v, i) => (v == null ? [] : [i])) ?? [])
+      : null;
+
 const yGb: uPlot.Axis["values"] = (_u, v) =>
   v.map((x) => `${(x / GB).toFixed(0)}G`);
-const yInt: uPlot.Axis["values"] = (_u, v) => v.map((x) => `${Math.round(x)}`);
 
 function setupCharts() {
   const green = css("--green");
@@ -317,7 +351,7 @@ function setupCharts() {
     {
       series: [{}, line(green, { fill: `${green}22` })],
       scales: { x: { time: true }, y: { range: floor(10) } },
-      axes: axes(yInt),
+      axes: axes(),
     },
     (s) => ({ data: [secs(s.t), s.decodeTps], raw: [s.decodeTps] }),
   );
@@ -327,7 +361,7 @@ function setupCharts() {
     {
       series: [{}, line(blue, { fill: `${blue}22` })],
       scales: { x: { time: true }, y: { range: floor(10) } },
-      axes: axes(yInt),
+      axes: axes(),
     },
     (s) => ({ data: [secs(s.t), s.prefillTps], raw: [s.prefillTps] }),
   );
@@ -341,6 +375,8 @@ function setupCharts() {
       { label: "weights", color: m1, fmt: gbv },
       { label: "hot cache est.", color: m2, fmt: gbv },
       { label: "other", color: m3, fmt: gbv },
+      // read from the data at the cursor, not plotted: on the same axis it
+      // would flatten the stack to a fifth of the plot
       { label: "host free", color: m4, fmt: gbv },
     ],
     {
@@ -349,7 +385,6 @@ function setupCharts() {
         line(m3, { fill: `${m3}44` }),
         line(m2, { fill: `${m2}44` }),
         line(m1, { fill: `${m1}44` }),
-        line(m4, { dash: [5, 4] }),
       ],
       bands: [{ series: [1, 2] }, { series: [2, 3] }],
       scales: { x: { time: true }, y: { range: floor(GB) } },
@@ -365,7 +400,7 @@ function setupCharts() {
       const top2 = weights.map((w, i) => w + hot[i]);
       const top3 = top2.map((w, i) => w + other[i]);
       return {
-        data: [secs(s.t), top3, top2, weights, avail],
+        data: [secs(s.t), top3, top2, weights],
         raw: [weights, hot, other, avail],
       };
     },
@@ -373,22 +408,34 @@ function setupCharts() {
   mkChart(
     "c-cache",
     [
-      { label: "hit rate", color: green, fmt: pct },
-      { label: "tokens reused", color: accent, fmt: pct },
+      { label: "hit", color: green, fmt: pct },
+      { label: "reused", color: accent, fmt: pct },
     ],
     {
+      // Values exist only where a request finished; between requests the
+      // cache state is unchanged, so each value is carried forward as a step
+      // and a dot marks the request itself.
       series: [
         {},
-        line(green, { spanGaps: true, points: { show: true, size: 5 } }),
-        line(accent, { spanGaps: true, points: { show: true, size: 5 } }),
+        line(green, {
+          paths: uPlot.paths.stepped!({ align: 1 }),
+          points: { show: true, size: 5, filter: eventPoints(0) },
+        }),
+        line(accent, {
+          paths: uPlot.paths.stepped!({ align: 1 }),
+          points: { show: true, size: 5, filter: eventPoints(1) },
+        }),
       ],
-      scales: { x: { time: true }, y: { range: [0, 100] } },
-      axes: axes(yPct),
+      scales: { x: { time: true }, y: { range: [0, 105] } },
+      axes: axes(),
     },
-    (s) => ({
-      data: [secs(s.t), s.cacheHitPct, s.cacheTokenPct],
-      raw: [s.cacheHitPct, s.cacheTokenPct],
-    }),
+    (s) => {
+      cacheEvents = [s.cacheHitPct, s.cacheTokenPct];
+      return {
+        data: [secs(s.t), carry(s.cacheHitPct), carry(s.cacheTokenPct)],
+        raw: [carry(s.cacheHitPct), carry(s.cacheTokenPct)],
+      };
+    },
   );
   mkChart(
     "c-gpu",
@@ -396,7 +443,7 @@ function setupCharts() {
     {
       series: [{}, line(accent, { fill: `${accent}22` })],
       scales: { x: { time: true }, y: { range: [0, 100] } },
-      axes: axes(yPct),
+      axes: axes(),
     },
     (s) => ({ data: [secs(s.t), s.gpuPct], raw: [s.gpuPct] }),
   );
@@ -416,7 +463,7 @@ function setupCharts() {
         line(amber, { paths: uPlot.paths.stepped!({ align: 1 }) }),
       ],
       scales: { x: { time: true }, y: { range: floor(2) } },
-      axes: axes(yInt),
+      axes: axes(),
     },
     (s) => ({
       data: [secs(s.t), s.requestsRunning, s.requestsWaiting],
