@@ -207,6 +207,7 @@ export class Sampler {
           this.epoch = rates.epoch;
         }
         if (restored) {
+          rates.ttftMs = null;
           rates.windowMs = null;
           rates.decodeTps = null;
           rates.prefillTps = null;

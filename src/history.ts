@@ -49,6 +49,9 @@ export type Series = {
   hostCompressed: number[];
   procRss: number[];
   diskBytes: number[];
+  ttftMs: (number | null)[];
+  generationTokens: number[];
+  requestsTotal: number[];
 };
 
 // What the sampler needs back after a restart to keep the epoch honest:
@@ -91,7 +94,10 @@ export class History {
       host_wired INTEGER NOT NULL DEFAULT 0,
       host_compressed INTEGER NOT NULL DEFAULT 0,
       proc_rss INTEGER NOT NULL DEFAULT 0,
-      disk_bytes INTEGER NOT NULL DEFAULT 0
+      disk_bytes INTEGER NOT NULL DEFAULT 0,
+      ttft_ms REAL,
+      generation_tokens INTEGER NOT NULL DEFAULT 0,
+      requests_total INTEGER NOT NULL DEFAULT 0
     )`);
     this.migrate();
     this.db.run(
@@ -101,7 +107,8 @@ export class History {
       $t, $engineUp, $epoch, $decodeTps, $prefillTps, $requestsRunning,
       $requestsWaiting, $cacheHitPct, $cacheTokenPct, $gpuPct, $procFootprint,
       $weights, $hotCacheEst, $mlxActive, $mlxPool, $hostTotal, $hostFree,
-      $hostInactive, $hostWired, $hostCompressed, $procRss, $diskBytes)`);
+      $hostInactive, $hostWired, $hostCompressed, $procRss, $diskBytes,
+      $ttftMs, $generationTokens, $requestsTotal)`);
     this.prune = this.db.prepare("DELETE FROM samples WHERE t < $before");
   }
 
@@ -121,12 +128,17 @@ export class History {
       "host_compressed",
       "proc_rss",
       "disk_bytes",
+      "generation_tokens",
+      "requests_total",
     ]) {
       if (!have.has(col)) {
         this.db.run(
           `ALTER TABLE samples ADD COLUMN ${col} INTEGER NOT NULL DEFAULT 0`,
         );
       }
+    }
+    if (!have.has("ttft_ms")) {
+      this.db.run("ALTER TABLE samples ADD COLUMN ttft_ms REAL");
     }
   }
 
@@ -156,6 +168,9 @@ export class History {
       hostCompressed: s.mem.hostCompressed,
       procRss: s.mem.procRss,
       diskBytes: s.disk.reduce((n, d) => n + d.bytes, 0),
+      ttftMs: s.ttftMs,
+      generationTokens: s.generatedTokens,
+      requestsTotal: s.requestsTotal,
     });
     // once a minute is plenty; the delete is a range scan on the primary key
     if (s.t - this.lastPruneAt >= 60_000) {
@@ -205,7 +220,9 @@ export class History {
           avg(host_total) AS hostTotal, avg(host_free) AS hostFree,
           avg(host_inactive) AS hostInactive, avg(host_wired) AS hostWired,
           avg(host_compressed) AS hostCompressed, avg(proc_rss) AS procRss,
-          avg(disk_bytes) AS diskBytes
+          avg(disk_bytes) AS diskBytes, avg(ttft_ms) AS ttftMs,
+          max(generation_tokens) AS generationTokens,
+          max(requests_total) AS requestsTotal
         FROM samples WHERE t >= $since AND t <= $now
         GROUP BY 1 ORDER BY 1`,
       )
@@ -233,6 +250,9 @@ export class History {
       hostCompressed: [],
       procRss: [],
       diskBytes: [],
+      ttftMs: [],
+      generationTokens: [],
+      requestsTotal: [],
     };
     for (const r of rows) {
       out.t.push(r.t);
@@ -257,6 +277,9 @@ export class History {
       out.hostCompressed.push(Math.round(r.hostCompressed));
       out.procRss.push(Math.round(r.procRss));
       out.diskBytes.push(Math.round(r.diskBytes));
+      out.ttftMs.push(r.ttftMs === null ? null : Math.round(r.ttftMs));
+      out.generationTokens.push(r.generationTokens);
+      out.requestsTotal.push(r.requestsTotal);
     }
     return out;
   }

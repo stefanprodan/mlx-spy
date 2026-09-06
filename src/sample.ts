@@ -6,7 +6,12 @@
 // The pure parts (rates, epoch detection, assembly) are here and unit
 // tested; takeSample() does the I/O for --once.
 
-import type { Engine, EngineMetrics, ModelInfo } from "./engine/types.ts";
+import type {
+  Engine,
+  EngineMetrics,
+  HistogramSummary,
+  ModelInfo,
+} from "./engine/types.ts";
 import { cacheDirSizes } from "./host/disk.ts";
 import { isLocalUrl } from "./host/local.ts";
 import {
@@ -27,7 +32,10 @@ export type Sample = {
   requestsWaiting: number;
   cacheHitPct: number | null; // hits / queries over the window
   cacheTokenPct: number | null; // cached prompt tokens / prompt tokens, windowed
+  ttftMs: number | null; // mean TTFT of requests that finished in the window
   gpuPct: number;
+  generatedTokens: number; // lifetime counter (this epoch)
+  requestsTotal: number; // lifetime successful requests (this epoch)
   enginePid: number | null; // only when the engine runs on this host
   mem: {
     hostTotal: number;
@@ -57,10 +65,18 @@ export type Rates = {
   prefillTps: number | null;
   cacheHitPct: number | null;
   cacheTokenPct: number | null;
+  ttftMs: number | null;
 };
 
 const pct = (num: number, den: number) =>
   den > 0 ? Math.round((num / den) * 1000) / 10 : null;
+
+// Histogram sums only move when a request ends, so the delta over a window is
+// the mean for the requests that finished in it (ms), or null when none did.
+function histMean(a: HistogramSummary, b: HistogramSummary): number | null {
+  const n = b.count - a.count;
+  return n > 0 ? Math.round(((b.sum - a.sum) / n) * 1000) : null;
+}
 
 // A *_live gauge holds the token count of the current request and drops back
 // when a new one starts, so a negative delta means "new request, cur tokens
@@ -84,6 +100,7 @@ export function computeRates(
     prefillTps: null,
     cacheHitPct: null,
     cacheTokenPct: null,
+    ttftMs: null,
   };
   if (!prev) return { epoch: prevEpoch, ...none };
   const a = prev.metrics.counters;
@@ -118,6 +135,10 @@ export function computeRates(
     cacheTokenPct: pct(
       b.cachedPromptTokens - a.cachedPromptTokens,
       b.promptTokens - a.promptTokens,
+    ),
+    ttftMs: histMean(
+      prev.metrics.histograms.ttftSeconds,
+      cur.metrics.histograms.ttftSeconds,
     ),
   };
 }
@@ -156,7 +177,10 @@ export function buildSample(
     requestsWaiting: g.requestsWaiting,
     cacheHitPct: rates.cacheHitPct,
     cacheTokenPct: rates.cacheTokenPct,
+    ttftMs: rates.ttftMs,
     gpuPct: g.gpuPct,
+    generatedTokens: cur.metrics.counters.generationTokens,
+    requestsTotal: cur.metrics.counters.requestsSuccess,
     enginePid: host.pid,
     mem: {
       ...hostMem(host),
@@ -189,7 +213,10 @@ export function downSample(
     requestsWaiting: 0,
     cacheHitPct: null,
     cacheTokenPct: null,
+    ttftMs: null,
     gpuPct: 0,
+    generatedTokens: 0,
+    requestsTotal: 0,
     enginePid: null,
     mem: {
       ...hostMem(host),

@@ -27,7 +27,16 @@ describe("computeRates", () => {
       prefillTps: null,
       cacheHitPct: null,
       cacheTokenPct: null,
+      ttftMs: null,
     });
+  });
+
+  test("TTFT is the mean of requests finished in the window", () => {
+    const a = reading(1000);
+    const b = reading(2000);
+    b.metrics.histograms.ttftSeconds = { count: 3, sum: 11.258592084 + 0.5 };
+    expect(computeRates(a, b, 0).ttftMs).toBe(250);
+    expect(computeRates(a, reading(2000), 0).ttftMs).toBeNull();
   });
 
   test("idle window: zero token rates, no cache ratio", () => {

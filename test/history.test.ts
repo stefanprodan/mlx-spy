@@ -14,7 +14,10 @@ function sample(t: number, over: Partial<Sample> = {}): Sample {
     requestsWaiting: 0,
     cacheHitPct: null,
     cacheTokenPct: null,
+    ttftMs: null,
     gpuPct: 50,
+    generatedTokens: 0,
+    requestsTotal: 0,
     enginePid: null,
     mem: {
       hostTotal: 96_000,
