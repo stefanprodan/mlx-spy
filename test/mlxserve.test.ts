@@ -56,6 +56,8 @@ describe("parseModels", () => {
     expect(qwen.state).toBe("ready");
     expect(qwen.bytesResident).toBe(16971681558);
     expect(qwen.contextLength).toBe(133120);
+    expect(qwen.capabilities).toContain("tool_use");
+    expect(apodex.capabilities).not.toContain("reasoning");
     expect(apodex.loaded).toBe(false);
     expect(apodex.state).toBe("unloaded");
     expect(apodex.bytesResident).toBe(0);

@@ -22,6 +22,7 @@ export type ModelInfo = {
   bytesResident: number;
   bytesOnDisk: number;
   contextLength: number | null;
+  capabilities: string[]; // engine words: chat, tool_use, vision, ...
   // undefined when the engine does not expose which model is its default
   isDefault?: boolean;
 };

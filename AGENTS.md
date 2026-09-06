@@ -93,8 +93,13 @@ src/ui/index.html    the dashboard: tile row, five uPlot charts, models table;
 src/ui/app.ts        browser client: WebSocket, tiles, uPlot charts with a
                      shared cursor, range picker (1h raw and live-appended,
                      longer ranges bucketed and re-fetched every minute)
-src/ui/style.css     dark theme; series colours are the dark steps of the
-                     validated reference categorical palette, fixed slot order
+src/ui/style.css     follows the engine's own console (its tokens: #131314 page,
+                     #1e1f20 cards, #0f1216 inset tiles, 10px uppercase labels,
+                     26px bold mono values); single-series sparklines use the
+                     console's green and blue, the stacked memory chart a
+                     validated four-colour set. uPlot's legend is hidden; each
+                     box shows its values in the head (latest, or at the
+                     shared cursor)
 src/host/index.ts    probe facade: darwin FFI on macOS, NULL_PROBES elsewhere
 src/host/darwin.ts   bun:ffi: host_statistics64 (host memory), proc_pid_rusage
                      (engine footprint and RSS), proc_listallpids + proc_pidpath

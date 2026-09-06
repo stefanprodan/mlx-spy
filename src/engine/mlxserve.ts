@@ -86,6 +86,9 @@ export function parseModels(body: any): ModelInfo[] {
       bytesOnDisk: num(m.bytes_on_disk),
       contextLength:
         typeof m.context_length === "number" ? m.context_length : null,
+      capabilities: Array.isArray(m.capabilities)
+        ? m.capabilities.filter((c: unknown) => typeof c === "string")
+        : [],
     }));
 }
 
