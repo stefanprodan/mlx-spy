@@ -16,9 +16,9 @@ milestone list there is the roadmap.
 - **Platforms:** macOS on Apple Silicon. Host probes use `bun:ffi` against
   libproc and Mach, as cctop does.
 - **Zero runtime dependencies.** `package.json` has no `dependencies` field.
-  The one planned exception is uPlot, pinned exactly, embedded at build time
-  as a devDependency so the binary and the page load nothing remote. Do not
-  add other packages.
+  The one exception is uPlot (`uplot.6.32`, exact pin, a devDependency):
+  Bun bundles it into the page at build time, so the binary and the page
+  load nothing remote. Do not add other packages.
 
 ## Rules that protect the engine
 
@@ -82,9 +82,19 @@ src/sampler.ts       the 1 Hz loop: reads metrics each tick, models every 5 s,
 src/history.ts       ring buffer (1 h) plus bun:sqlite: samples table, 7 day
                      retention pruned from the writer, bucketed series() per
                      range in columnar form for uPlot
-src/web.ts           Bun.serve: /api/snapshot, /api/history?range=; handle()
+src/web.ts           Bun.serve: the page (HTML import passed in from main.ts),
+                     /api/snapshot, /api/history?range=, /ws (snapshot on
+                     connect, then pub/sub of one sample per tick); handle()
                      is separate from serve() so tests call it with a Request;
                      tailscaleAddress() picks the default bind
+src/ui/index.html    the dashboard: tile row, five uPlot charts, models table;
+                     Bun bundles style.css and app.ts from it (also into the
+                     compiled binary, Bun 1.2.17+)
+src/ui/app.ts        browser client: WebSocket, tiles, uPlot charts with a
+                     shared cursor, range picker (1h raw and live-appended,
+                     longer ranges bucketed and re-fetched every minute)
+src/ui/style.css     dark theme; series colours are the dark steps of the
+                     validated reference categorical palette, fixed slot order
 src/host/index.ts    probe facade: darwin FFI on macOS, NULL_PROBES elsewhere
 src/host/darwin.ts   bun:ffi: host_statistics64 (host memory), proc_pid_rusage
                      (engine footprint and RSS), proc_listallpids + proc_pidpath
@@ -105,9 +115,9 @@ Data flow: adapter (`/metrics.json`, `/v1/models`) → `Reading` → `computeRat
 over the previous reading, joined with the host probes (memory every tick,
 pid rescanned every 5 s when unknown, disk tier every 30 s) → `buildSample` →
 History (ring + SQLite) and
-listeners → `/api/snapshot` and `/api/history`. `--once` short-circuits to a
-single sample on stdout. The page, WebSocket push and actions land in later
-milestones.
+listeners → `/api/snapshot`, `/api/history` and the `/ws` push → the page.
+`--once` short-circuits to a single sample on stdout. Actions land in the next
+milestone.
 
 ## mlx-serve specifics worth knowing
 
@@ -138,7 +148,9 @@ milestones.
 - **Style is enforced by Biome** (`biome.json`): 2-space indent, double
   quotes, semicolons, trailing commas, 80 columns. `noExplicitAny` is off
   for FFI and JSON parsing, `noNonNullAssertion` is off.
-- **Types** are checked by `bun tsc --noEmit` as part of `make lint`.
+- **Types** are checked by `bun tsc --noEmit` as part of `make lint`. The
+  browser client shares the tsconfig (lib includes DOM); `src/ui/env.d.ts`
+  declares the CSS side-effect import.
 - **Comments explain why, not what.** The engine caveats above are
   load-bearing where they appear in code; keep them.
 - **Version is single-sourced** in `package.json`; `src/main.ts` derives
@@ -153,6 +165,11 @@ milestones.
 ## Verifying changes
 
 - `make lint`, `make test`.
+- The page: run against the Studio with `--listen 127.0.0.1:11299 --db
+  :memory:`, open it in Chrome (the DevTools MCP works for screenshots and
+  the console), check the console is empty and the range picker switches.
+  The bundle is built at startup with `development: false`, so restart the
+  process after a UI change (`bun --watch` does that).
 - Against a live engine over the tailnet (no ssh needed):
   `bun src/main.ts --engine http://<studio>:11234 --once`. Exit code 0 when
   the engine answered, 2 when it did not (`engineUp: false`), 1 on bad
