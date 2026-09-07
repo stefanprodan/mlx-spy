@@ -31,7 +31,11 @@ milestone list there is the roadmap.
    `src/server.zig` before use.
 2. **The sampler is read-only.** `load`, `unload`, `restart` and `diskClear`
    run only from an explicit user action through the actions layer, are
-   logged, and are disabled when the engine URL is not local.
+   logged, and are disabled when the engine URL is not local. The chat
+   runner is the only other engine caller: it posts to
+   `/v1/chat/completions` (always streaming, so the engine cancels the
+   slot when mlx-spy aborts the request) only when a user sends a message,
+   and a message naming a non-resident model cold-loads it on purpose.
 3. **Spawn exceptions.** The monitor path spawns no processes: host numbers
    come from FFI, directory sizes from recursive stat. The only spawns are the
    two local-only actions: `launchctl kickstart -k gui/<uid>/<label>` for
@@ -93,6 +97,18 @@ src/history.ts       ring buffer (1 h) plus bun:sqlite: samples table, 7 day
                      requests table (the last 50 finished or cancelled
                      requests as the tracker saw them, plus the model when
                      exactly one was resident)
+src/chats.ts         ChatStore over the same bun:sqlite file: chats (settings
+                     live on the chat) and messages (status done, streaming,
+                     stopped, interrupted, error; the reply's stats from the
+                     usage chunk); streaming rows become interrupted at boot
+src/chat.ts          ChatRunner: owns the one generation in flight (the
+                     browser never talks to the engine), writes the partial
+                     reply every 250 ms or 2 KB, publishes offset-tagged
+                     deltas and server-rendered HTML on /ws, stop from any
+                     tab, regenerate, edit, shutdown marks the row interrupted
+src/markdown.ts      renderMarkdown(): Bun.markdown.render() with a full
+                     callback set, the safety boundary for model output
+                     (raw HTML as text, http/https/mailto links only, no img)
 src/actions.ts       the control actions: load (as the engine default),
                      unload (hands the default to a model still resident,
                      the favorite first) and default through the
@@ -107,20 +123,26 @@ src/actions.ts       the control actions: load (as the engine default),
 src/web.ts           Bun.serve: the page (HTML import passed in from main.ts),
                      /api/snapshot, /api/history?range=, /api/requests,
                      POST /api/actions/
-                     <name>, /ws (snapshot on connect, then pub/sub of one
-                     sample per tick and one event per finished action);
+                     <name>, /api/chats and its sub-routes, /ws (snapshot on
+                     connect, then pub/sub of one sample per tick, one event
+                     per finished action and the chat events);
                      handle() is separate from serve() so tests call it with
                      a Request; tailscaleAddress() picks the default bind
-src/ui/index.html    the dashboard, one bundle for two paths: / (monitor) and
+src/ui/index.html    the dashboard, one bundle for three paths: / (monitor),
                      /requests (the live bar moved over, then the stored
-                     list); tile row, five uPlot charts, models table
+                     list) and /chat, /chat/<id> (the chat frame); tile row, five uPlot charts, models table
                      with load/unload/default buttons, Restart engine and Clear
                      disk cache in the section head, a confirm dialog;
                      Bun bundles style.css and app.ts from it (also into the
                      compiled binary, Bun 1.2.17+)
 src/ui/app.ts        browser client: WebSocket, tiles, uPlot charts with a
                      shared cursor, range picker (1h raw and live-appended,
-                     longer ranges bucketed and re-fetched every minute)
+                     longer ranges bucketed and re-fetched every minute);
+                     hands the chat view its snapshot, samples and events
+src/ui/chat.ts       the Chat view: list, transcript, composer; applies
+                     deltas by offset so a reload or a second tab resumes a
+                     streaming reply from the row in the DB; shows the
+                     server's HTML plus a plain-text tail while streaming
 src/ui/style.css     follows the engine's own console (its tokens: #131314 page,
                      #1e1f20 cards, #0f1216 inset tiles, 10px uppercase labels,
                      26px bold mono values); single-series sparklines use the
@@ -145,6 +167,8 @@ src/host/local.ts    isLocalUrl(): is the engine on this host (loopback, own
 src/host/types.ts    HostProbes, HostMemory, ProcessMemory, DiskDir, HostSnapshot
 test/                bun test suites; fixtures/ holds /metrics.json and
                      /v1/models bodies recorded from the live engine
+docs/                user docs: monitor, chat, api, development (keep the
+                     API page in step with web.ts)
 plans/               the development plan and milestones
 ```
 
@@ -156,7 +180,12 @@ listeners → `/api/snapshot`, `/api/history` and the `/ws` push → the page.
 `--once` short-circuits to a single sample on stdout. Actions go the other
 way: a button → confirm dialog → `POST /api/actions/<name>` → `Actions.run`
 (guards, adapter call or spawn, model refresh, log) → an event on `/ws` that
-every tab shows under the models table.
+every tab shows under the models table. A chat message: composer →
+`POST /api/chats/<id>/messages` → `ChatRunner.send` (rows inserted with
+status streaming, `engine.chat()` streamed, the row written as it grows)
+→ `{type: "chat"}` events on `/ws` in every tab → `done` with the final row
+and its stats. A tab that opens mid-answer fetches the chat and applies
+only the deltas whose offset continues the text it has.
 
 ## mlx-serve specifics worth knowing
 
@@ -214,7 +243,8 @@ every tab shows under the models table.
 
 - `make lint`, `make test`.
 - The page: run against the Studio with `--listen 127.0.0.1:11299 --db
-  :memory:`, open it in Chrome (the DevTools MCP works for screenshots and
+  :memory:` (the chat needs a file db to survive a restart; use a scratch
+  path), open it in Chrome (the DevTools MCP works for screenshots and
   the console), check the console is empty and the range picker switches.
   The bundle is built at startup with `development: false`, so restart the
   process after a UI change (`bun --watch` does that).

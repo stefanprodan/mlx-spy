@@ -1,0 +1,45 @@
+# Monitor and Requests
+
+## Monitor
+
+The Monitor page is the engine at a glance, one sample per second, with
+seven days of history in SQLite so every tab and every reload shows the
+same series.
+
+- **Tiles**: requests served, tokens generated, prefill and decode tok/s,
+  cache efficiency, memory, RAM cache and SSD cache. The cache tiles draw
+  a bar against the engine's per-model budgets, read from its launchd
+  plist when the engine is local or given with `--hot-cache-max` and
+  `--disk-cache-max`.
+- **Charts** with a shared cursor and a 1h, 6h, 24h, 7d range picker. The
+  1h range is raw seconds and grows live; longer ranges are bucket
+  averages, re-fetched every minute.
+- **The request bar**: the request in flight (start time, tokens so far,
+  time spent prefilling and decoding) or the last one finished with its
+  prompt size and cached share.
+- **Models**: every model the engine lists with its state, size and
+  context, and the buttons: load, unload, make default, plus the
+  daily-driver star (mlx-spy's own mark). Every action asks for
+  confirmation and is logged under the table.
+- **Runtime**: the engine process (pid, RSS, CPU, GPU, weights) next to
+  host facts (OS, chip, cores, GPU cores, memory, disk), plus Restart
+  engine and Clear disk cache. Those two, and the process probes, only
+  work when the engine runs on the same host.
+
+The engine reports counts, not requests: with several requests in flight
+the bar and the tiles describe the engine as a whole.
+
+## Requests
+
+The Requests page moves the live bar over and lists the last 50 finished or
+cancelled requests under it: when it finished, the model (known when
+exactly one was resident), prompt and cached tokens, generated tokens,
+prefill and decode time, time to first token and the total.
+
+## Memory numbers
+
+Memory is shown in binary GB, the unit About This Mac uses; only the host
+disk is decimal, as Finder labels it. The engine's footprint is what it
+reports itself; RSS comes from libproc when the engine is local. "RAM
+cache" is an estimate: the MLX allocator's active bytes minus the loaded
+weights, because the engine has no gauge for its hot prefix cache.

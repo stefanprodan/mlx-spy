@@ -1,74 +1,63 @@
 # mlx-spy
 
-Monitoring and control for LLM inference servers on Apple Silicon.
+Monitoring, control and chat for LLM inference servers on Apple Silicon.
 
-mlx-spy runs next to an inference engine (mlx-serve first), samples the
-engine and the host once a second, keeps history, and serves a dashboard
-with the control actions the engine's own console lacks. It never calls the
-engine endpoints that trigger a model load. See `plans/` for the roadmap.
+mlx-spy runs next to an inference engine (mlx-serve first), samples it and
+the host once a second, keeps a week of history, and serves three pages:
 
-## Status
+- **Monitor**: live tok/s, cache efficiency, memory split, charts with a
+  1h to 7d range, the models table with load, unload and default buttons,
+  restart engine and clear disk cache.
+- **Requests**: the request in flight and the last 50 finished ones with
+  their prompt, cached share, prefill, decode and time to first token.
+- **Chat**: a chat on the engine with the engine's own timings under every
+  reply. Replies stream on the server, so a reload or a second tab picks
+  up where the reply is, and Stop works from anywhere at any point.
 
-Milestone 5: the sampler runs at 1 Hz, keeps 7 days of history in SQLite,
-reads host memory, the engine process footprint and the SSD cache tier size
-through libproc and Mach (no subprocesses), and serves a dark dashboard:
-tile row, uPlot graphs with a shared cursor and a 1h/6h/24h/7d range
-picker, and the models table with the control buttons: load, unload, set
-default, free RAM (a launchd restart of the service) and clear disk cache.
-Every action asks for confirmation, is logged, and the last two only work
-when the engine runs on the same host.
+One Bun binary, no runtime dependencies, nothing loaded from the internet.
 
-```sh
-bun src/main.ts --engine http://127.0.0.1:11234            # serve the dashboard
-bun src/main.ts --engine http://127.0.0.1:11234 --once     # one sample
-```
+<!-- screenshots -->
 
-By default it binds the host's Tailscale address (else 127.0.0.1) on port
-11235 and writes `~/.mlx-spy/history.sqlite`, which holds the samples and
-the model list with your daily-driver star (dropped when the engine stops
-listing a model). There is no auth: the tailnet is the boundary.
-
-- `GET /` the dashboard, `GET /requests` the request in flight and the
-  last 50 finished ones
-- `GET /api/snapshot` latest sample and the model list
-- `GET /api/requests` the last 50 finished requests, newest first
-- `GET /api/history?range=1h|6h|24h|7d` columnar series, bucketed for the
-  longer ranges
-- `WS /ws` a snapshot on connect, then one sample per second and an event
-  per finished action
-- `POST /api/actions/load|unload|default` with `{"model": "<id>"}`, and
-  `POST /api/actions/free|diskClear` (local engine only), and
-  `POST /api/actions/historyClear` (wipes mlx-spy's own sample database),
-  `POST /api/actions/favorite` with `{"model"}` (toggles the daily-driver star)
-
-A sample carries the engine state, live decode and prefill tok/s (rated between
-moves of the engine's 2 s live gauges, carried while the phase runs), cache
-hit ratios, the memory split (host free, inactive, wired and compressed;
-engine footprint and RSS; weights, estimated RAM cache, MLX pool), the cache
-tier directories, the model list, and the request in flight or the last one
-finished (start time, tokens generated, prompt size and cached share, prefill
-and decode time; the engine reports counts, not requests, so with several
-in flight the bar shows the engine as a whole). Every finished or
-cancelled request is also kept, the last 50, with the model it ran on when
-exactly one was resident (the engine reports nothing per model); the
-Requests page lists them under the live bar. The engine pid, RSS, CPU, start time
-and disk tier are only probed when the engine runs on the same host; the
-Runtime section shows them next to facts about the host (OS, chip, cores,
-GPU cores, memory, disk). The RAM cache and SSD
-cache tiles draw a bar against the engine's per-model budgets, read from its
-launchd plist for a local engine or given with `--hot-cache-max` and
-`--disk-cache-max`.
-
-## Development
+## Install
 
 Requires Bun 1.4 or newer.
 
 ```sh
+git clone https://github.com/stefanprodan/mlx-spy
+cd mlx-spy
 bun install --ignore-scripts
-make lint    # Biome + tsc
-make test    # bun test
-make build   # standalone binary in bin/
+make install-bin        # builds a standalone binary into ~/.local/bin
 ```
+
+## Run
+
+```sh
+mlx-spy                                    # engine at http://127.0.0.1:11234
+mlx-spy --engine http://studio:11234       # a remote engine
+mlx-spy --once                             # one JSON sample on stdout
+```
+
+The dashboard binds the host's Tailscale address (else 127.0.0.1) on port
+11235. There is no authentication: the tailnet is the boundary. History and
+chats live in `~/.mlx-spy/history.sqlite`.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--engine <url>` | `http://127.0.0.1:11234` | engine base URL |
+| `--listen <host:port>` | Tailscale address, port 11235 | bind address |
+| `--db <path>` | `~/.mlx-spy/history.sqlite` | SQLite file; `:memory:` keeps nothing |
+| `--retention <days>` | 7 | sample history kept |
+| `--hot-cache-max`, `--disk-cache-max` | from the engine's launchd plist | per-model cache budgets for the tiles, e.g. `16GB` |
+
+Restart engine, clear disk cache and the process probes (pid, RSS, CPU)
+only work when the engine runs on the same host.
+
+## Docs
+
+- [Monitor and Requests](docs/monitor.md)
+- [Chat](docs/chat.md)
+- [API](docs/api.md)
+- [Development](docs/development.md)
 
 ## License
 
