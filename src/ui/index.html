@@ -4,29 +4,34 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>mlx-spy</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='11' fill='%2310b981'/%3E%3C/svg%3E" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23a78bfa' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M13.5 4H11C6.757 4 4.636 4 3.318 5.318S2 8.758 2 13s0 6.364 1.318 7.682S6.758 22 11 22s6.364 0 7.682-1.318S20 17.242 20 13v-2.5M6 8l10 10M6 14l4 4m2-10l4 4m3.5-9.062V4.5m0 0v1.563m0-1.563h-1.25m1.25 0h1.25m1.25 0l-1.084-.361a1.67 1.67 0 0 1-1.055-1.055L19.5 2l-.361 1.084a1.67 1.67 0 0 1-1.055 1.055L17 4.5l1.084.361c.498.166.889.557 1.055 1.055L19.5 7l.361-1.084a1.67 1.67 0 0 1 1.055-1.055z'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
     <div class="page">
       <header class="top">
-        <div class="wordmark"><span class="mark"></span>mlx-spy</div>
-        <span class="grow"></span>
-        <div class="seg" id="ranges">
-          <button type="button" data-range="1h" class="active">1h</button>
-          <button type="button" data-range="6h">6h</button>
-          <button type="button" data-range="24h">24h</button>
-          <button type="button" data-range="7d">7d</button>
-        </div>
+        <div class="wordmark"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.5 4H11C6.757 4 4.636 4 3.318 5.318S2 8.758 2 13s0 6.364 1.318 7.682S6.758 22 11 22s6.364 0 7.682-1.318S20 17.242 20 13v-2.5M6 8l10 10M6 14l4 4m2-10l4 4m3.5-9.062V4.5m0 0v1.563m0-1.563h-1.25m1.25 0h1.25m1.25 0l-1.084-.361a1.67 1.67 0 0 1-1.055-1.055L19.5 2l-.361 1.084a1.67 1.67 0 0 1-1.055 1.055L17 4.5l1.084.361c.498.166.889.557 1.055 1.055L19.5 7l.361-1.084a1.67 1.67 0 0 1 1.055-1.055z"/></svg>MLX Spy</div>
+        <nav class="menu">
+          <a href="/" class="active">Monitor</a>
+          <a href="/bench" aria-disabled="true">Benchmarks</a>
+          <a href="/chat" aria-disabled="true">Chat</a>
+        </nav>
       </header>
 
       <div class="shead">
         <h2>Stats</h2>
         <span class="pill" id="ws-state">connecting</span>
         <span class="grow"></span>
-        <span class="btns">
-          <button type="button" class="btn" id="a-history" data-action="historyClear">Clear history</button>
-        </span>
+        <div class="seg" id="ranges">
+          <button type="button" data-range="1h" class="active">1h</button>
+          <button type="button" data-range="6h">6h</button>
+          <button type="button" data-range="24h">24h</button>
+          <button type="button" data-range="7d">7d</button>
+          <span class="sep"></span>
+          <button type="button" class="trash" id="a-history" data-action="historyClear" title="Clear history" aria-label="Clear history">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5L18 7M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7"/></svg>
+          </button>
+        </div>
       </div>
       <section class="card">
         <div class="tiles">
@@ -97,7 +102,10 @@
         <span class="hint" id="host-note"></span>
         <span class="grow"></span>
         <span class="btns">
-          <button type="button" class="btn" id="a-free" data-action="free">Restart engine</button>
+          <button type="button" class="btn" id="a-free" data-action="free">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4.5h-4.5"/></svg>
+            Restart engine
+          </button>
         </span>
       </div>
       <section class="card">
@@ -121,7 +129,11 @@
         </div>
       </section>
 
-      <footer><span id="version"></span></footer>
+      <footer>
+        <a class="footlink" href="https://github.com/stefanprodan/mlx-spy" target="_blank" rel="noopener" id="version">mlx-spy</a>
+        <span class="grow"></span>
+        <span>&copy; 2026 <a class="footlink" href="https://stefanprodan.com" target="_blank" rel="noopener">Stefan Prodan</a></span>
+      </footer>
     </div>
     <dialog id="confirm">
       <form method="dialog">

@@ -548,7 +548,7 @@ function confirmText(action: ActionName, model: string | null): string {
     case "diskClear":
       return `Restart the engine service and delete the SSD cache tier (${gb(diskTotal)} GB)? Every model is unloaded and every cached prefix is gone.`;
     case "historyClear":
-      return "Delete the stored history? Every sample of the last 7 days is removed from mlx-spy's database and the graphs start over. The engine is not touched.";
+      return "Delete the stored history? Every sample of the last 7 days is removed from mlx-spy's database and the graphs start over.";
     case "favorite":
       return ""; // a toggle, no dialog
   }
@@ -578,9 +578,12 @@ function confirm(
 
 function setBusy(action: ActionName | null) {
   busy = action;
-  for (const b of document.querySelectorAll<HTMLButtonElement>(".btn, .ibtn")) {
+  for (const b of document.querySelectorAll<HTMLButtonElement>(
+    ".btn, .ibtn, .trash",
+  )) {
     if (b.closest("dialog")) continue;
-    b.disabled = action !== null || b.title !== "";
+    b.disabled =
+      action !== null || (b.classList.contains("btn") && b.title !== "");
   }
   if (action) {
     const ev = $("event");
@@ -1000,15 +1003,15 @@ function connect() {
 // ---------- boot ----------
 
 for (const b of document.querySelectorAll<HTMLButtonElement>(
-  ".btns [data-action]",
+  ".shead [data-action]",
 )) {
   b.onclick = () => void runAction(b.dataset.action as ActionName, null);
 }
 
 $("ranges").addEventListener("click", (ev) => {
   const btn = (ev.target as HTMLElement).closest("button");
-  if (!btn) return;
-  for (const b of $("ranges").querySelectorAll("button")) {
+  if (!btn?.dataset.range) return;
+  for (const b of $("ranges").querySelectorAll("[data-range]")) {
     b.classList.toggle("active", b === btn);
   }
   void loadRange(btn.dataset.range as Range);

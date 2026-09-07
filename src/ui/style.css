@@ -19,6 +19,7 @@
   --blue: #3b82f6;
   --amber: #f59e0b;
   --red: #ef4444;
+  --brand: #a78bfa;
   --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -57,8 +58,31 @@ button {
 .top {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 28px;
   margin-bottom: 26px;
+}
+.menu {
+  display: flex;
+  gap: 18px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.menu a {
+  color: var(--dim);
+  text-decoration: none;
+  padding: 2px 0;
+  border-bottom: 1px solid transparent;
+}
+.menu a:hover {
+  color: var(--fg);
+}
+.menu a.active {
+  color: var(--fg);
+  border-bottom-color: var(--brand);
+}
+.menu a[aria-disabled="true"] {
+  color: var(--faint);
+  pointer-events: none;
 }
 .wordmark {
   display: flex;
@@ -69,10 +93,9 @@ button {
   letter-spacing: -0.01em;
 }
 .mark {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #7ee2b8, #10b981 60%, #0b3a2a);
+  width: 22px;
+  height: 22px;
+  color: var(--brand);
 }
 .dot {
   width: 7px;
@@ -90,16 +113,18 @@ button {
 
 .seg {
   display: flex;
-  background: var(--card);
+  background: #26282b;
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 3px;
+  padding: 2px;
 }
 .seg button {
-  padding: 4px 13px;
+  padding: 2px 9px;
   border-radius: 999px;
   color: var(--dim);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 .seg button:hover {
   color: var(--fg);
@@ -107,6 +132,20 @@ button {
 .seg button.active {
   background: #33373b;
   color: var(--fg);
+}
+.seg .sep {
+  width: 1px;
+  margin: 4px 5px;
+  background: #45494f;
+}
+.seg .trash {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+}
+.seg .trash:hover {
+  background: #3a1a20;
+  color: #ff95a8;
 }
 .seg button:focus-visible {
   outline: 2px solid var(--accent);
@@ -173,6 +212,11 @@ h2 {
 }
 .btn:hover {
   background: #33373b;
+}
+.btn > svg {
+  width: 13px;
+  height: 13px;
+  margin: 0 4px -2px -2px;
 }
 .btn.primary {
   background: var(--accent);
@@ -568,6 +612,11 @@ td.act {
   height: 13px;
   fill: currentColor;
 }
+.seg .trash > svg {
+  width: 14px;
+  height: 14px;
+}
+
 .ibtn:hover {
   background: #26282b;
   color: var(--fg);
@@ -644,10 +693,22 @@ td.act {
 }
 
 footer {
-  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 32px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
   color: var(--faint);
   font-size: 12px;
   font-family: var(--mono);
+}
+.footlink {
+  color: var(--faint);
+  text-decoration: none;
+}
+.footlink:hover {
+  color: var(--fg);
 }
 
 @media (max-width: 860px) {
