@@ -59,6 +59,30 @@ let lastCacheTok: number | null = null;
 let lastDecode: number | null = null;
 let lastPrefill: number | null = null;
 
+// A fresh tab has no "last request" memory, but the history does: take the
+// most recent values from the raw 1h series so a reload does not blank the
+// tiles. Only fills what is still empty; a live value always wins.
+let lastSample: Sample | null = null;
+function seedTiles(s: Series) {
+  const lastNonZero = (a: (number | null)[]) => {
+    for (let i = a.length - 1; i >= 0; i--) {
+      const v = a[i];
+      if (v != null && v > 0) return v;
+    }
+    return null;
+  };
+  const lastSet = (a: (number | null)[]) => {
+    for (let i = a.length - 1; i >= 0; i--) if (a[i] != null) return a[i];
+    return null;
+  };
+  lastDecode ??= lastNonZero(s.decodeTps);
+  lastPrefill ??= lastNonZero(s.prefillTps);
+  lastTtft ??= lastSet(s.ttftMs);
+  lastCacheHit ??= lastSet(s.cacheHitPct);
+  lastCacheTok ??= lastSet(s.cacheTokenPct);
+  if (lastSample) renderTiles(lastSample);
+}
+
 function setBar(id: string, pct: number, warn = 75, crit = 90) {
   const el = $(id);
   el.style.width = `${Math.max(0, Math.min(100, pct))}%`;
@@ -66,6 +90,7 @@ function setBar(id: string, pct: number, warn = 75, crit = 90) {
 }
 
 function renderTiles(s: Sample) {
+  lastSample = s;
   $("engine-dot").className = `dot ${s.engineUp ? "up" : "down"}`;
   const decoding = (s.decodeTps ?? 0) > 0;
   if (decoding) lastDecode = s.decodeTps;
@@ -73,14 +98,14 @@ function renderTiles(s: Sample) {
   $("t-decode-sub").textContent = !s.engineUp
     ? "engine unreachable"
     : lastDecode == null
-      ? "no request yet"
+      ? "no request in the last hour"
       : `${decoding ? "" : "last request · "}peak ${num(peakInView("decodeTps"))} tok/s in view`;
   if ((s.prefillTps ?? 0) > 0) lastPrefill = s.prefillTps;
   $("t-prefill").textContent = num(lastPrefill);
   if (s.ttftMs != null) lastTtft = s.ttftMs;
   $("t-prefill-sub").textContent =
     lastTtft == null
-      ? "no request yet"
+      ? "no request in the last hour"
       : `TTFT ${(lastTtft / 1000).toFixed(2)} s on the last request`;
   $("t-requests").textContent = `${s.requestsRunning}`;
   $("t-requests-sub").textContent =
@@ -95,7 +120,7 @@ function renderTiles(s: Sample) {
   $("t-cache-track").hidden = !hotMax || !s.engineUp;
   $("t-cache-sub").textContent =
     lastCacheHit == null
-      ? "no lookup yet"
+      ? "no lookup in the last hour"
       : `${num(lastCacheHit)}% of lookups hit`;
   const ssd = s.disk.reduce((n, d) => n + d.bytes, 0);
   const dirs = s.disk.length;
@@ -116,7 +141,7 @@ function renderTiles(s: Sample) {
   setBar("t-eff-bar", lastCacheTok ?? 0, 101, 101);
   $("t-eff-sub").textContent =
     lastCacheTok == null
-      ? "no request yet"
+      ? "no request in the last hour"
       : "of prompt tokens on the last request";
   $("t-mem").textContent = gb(s.mem.procFootprint);
   const total = s.mem.hostTotal;
@@ -669,6 +694,7 @@ async function loadRange(r: Range) {
   const body = (await res.json()) as { series: Series };
   if (range !== r) return; // a later click won
   series = body.series;
+  if (r === "1h") seedTiles(series);
   redraw();
   if (refetchTimer) clearInterval(refetchTimer);
   refetchTimer =
