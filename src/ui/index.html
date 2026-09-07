@@ -93,17 +93,17 @@
 
       <div class="shead">
         <h2>Runtime</h2>
+        <span class="pill" id="engine-state">connecting</span>
         <span class="hint" id="host-note"></span>
         <span class="grow"></span>
         <span class="btns">
           <button type="button" class="btn" id="a-free" data-action="free">Restart engine</button>
-          <button type="button" class="btn" id="a-disk" data-action="diskClear">Clear disk cache</button>
         </span>
       </div>
       <section class="card">
         <div class="facts">
           <dl>
-            <dt>Engine</dt><dd><span class="dot" id="engine-dot"></span><span id="engine-name"></span><small id="engine-proc"></small></dd>
+            <dt>Engine</dt><dd><span id="engine-name"></span><small id="engine-proc"></small></dd>
             <dt>URL</dt><dd class="mono" id="engine-url"></dd>
             <dt>Weights</dt><dd id="engine-weights"></dd>
             <dt>Memory</dt><dd id="engine-mem"></dd>
@@ -126,6 +126,10 @@
     <dialog id="confirm">
       <form method="dialog">
         <p id="confirm-text"></p>
+        <label class="opt" id="confirm-opt" for="confirm-check" hidden>
+          <input type="checkbox" id="confirm-check" />
+          <span>Delete <span id="confirm-opt-size"></span> of SSD cache</span>
+        </label>
         <div class="row">
           <button type="submit" value="cancel" class="btn">Cancel</button>
           <button type="submit" value="ok" class="btn primary" id="confirm-ok">Confirm</button>

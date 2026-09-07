@@ -223,28 +223,58 @@ dialog {
   background: var(--card);
   color: var(--fg);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 20px 22px;
-  max-width: 440px;
+  border-radius: 16px;
+  padding: 0;
+  width: min(460px, calc(100vw - 32px));
   font-size: 14px;
-  line-height: 1.45;
+  line-height: 1.5;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
 }
 dialog::backdrop {
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.6);
+}
+dialog form {
+  padding: 28px 28px 24px;
 }
 dialog p {
-  margin: 0 0 16px;
+  margin: 0 0 20px;
+  font-size: 15.5px;
+  font-weight: 500;
+  color: var(--val);
 }
 dialog code {
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--accent);
   word-break: break-all;
+}
+dialog .opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 12px 14px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13.5px;
+  color: var(--fg);
+  cursor: pointer;
+}
+dialog .opt input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  margin: 0;
 }
 dialog .row {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
+}
+dialog .row .btn {
+  padding: 8px 18px;
+  font-size: 13px;
 }
 
 .card {
@@ -603,11 +633,6 @@ td.act {
   font-family: var(--mono);
   font-size: 12.5px;
   color: var(--dim);
-}
-.facts dd .dot {
-  display: inline-block;
-  margin-right: 8px;
-  vertical-align: 1px;
 }
 .facts dd small {
   color: var(--faint);

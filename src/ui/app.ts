@@ -112,7 +112,6 @@ function setBar(id: string, pct: number, warn = 75, crit = 90) {
 
 function renderTiles(s: Sample) {
   lastSample = s;
-  $("engine-dot").className = `dot ${s.engineUp ? "up" : "down"}`;
   const decoding = (s.decodeTps ?? 0) > 0;
   if (decoding) lastDecode = s.decodeTps;
   $("t-decode").textContent = num(lastDecode, 1);
@@ -225,11 +224,15 @@ function renderServer(s: Sample) {
     : s.engineUp
       ? "no mlx-serve process found"
       : "not running";
-  const up =
-    s.engineStartedAt == null
-      ? ""
-      : ` · up ${duration(s.t - s.engineStartedAt)}`;
-  $("engine-proc").textContent = pid == null ? "" : `pid ${pid}${up}`;
+  $("engine-proc").textContent = pid == null ? "" : `pid ${pid}`;
+  // the pill in the section head: uptime while online, else offline
+  const es = $("engine-state");
+  es.textContent = !s.engineUp
+    ? "offline"
+    : s.engineStartedAt == null
+      ? "online"
+      : `up ${duration(s.t - s.engineStartedAt)}`;
+  es.className = s.engineUp ? "pill live" : "pill err";
   $("engine-mem").replaceChildren(
     pid == null ? "-" : `${gb(s.mem.procFootprint)} GB`,
     el("small", "", pid == null ? why : `RSS ${gb(s.mem.procRss)} GB`),
@@ -387,6 +390,7 @@ function renderModels(snap: Snapshot) {
   const total = disk.reduce((n, d) => n + d.bytes, 0);
   diskTotal = total;
   engineLocal = snap.engine.local;
+  canDiskClear = snap.engine.capabilities.includes("diskClear") && engineLocal;
   limits = snap.engine.limits;
   loadedCount = snap.models.filter((m) => m.loaded).length;
   const can = (c: Capability) => snap.engine.capabilities.includes(c);
@@ -395,11 +399,6 @@ function renderModels(snap: Snapshot) {
     can("restart") && snap.engine.local,
     "restarts the engine service; only for a local engine",
   );
-  setEnabled(
-    $("a-disk") as HTMLButtonElement,
-    can("diskClear") && snap.engine.local,
-    "deletes the SSD cache tier; only for a local engine",
-  );
   if (snap.events.length) showEvent(snap.events[snap.events.length - 1]);
   if (snap.running) setBusy(snap.running);
 }
@@ -407,6 +406,8 @@ function renderModels(snap: Snapshot) {
 // ---------- actions ----------
 
 let diskTotal = 0;
+let canDiskClear = false;
+let engineName = "engine";
 let engineLocal = false;
 let limits: Snapshot["engine"]["limits"] = null;
 let loadedCount = 0;
@@ -543,7 +544,7 @@ function confirmText(action: ActionName, model: string | null): string {
     case "unload":
       return `Unload ${m}? Its weights and RAM prefix cache are freed; the SSD tier is kept. A model still resident becomes the default.`;
     case "free":
-      return "Restart the engine service? Every model is unloaded and its RAM is freed; the hot cache is gone. The SSD tier is kept and comes back on the next load.";
+      return `Confirm ${engineName} restart`;
     case "diskClear":
       return `Restart the engine service and delete the SSD cache tier (${gb(diskTotal)} GB)? Every model is unloaded and every cached prefix is gone.`;
     case "historyClear":
@@ -553,12 +554,23 @@ function confirmText(action: ActionName, model: string | null): string {
   }
 }
 
-function confirm(html: string, okLabel: string): Promise<boolean> {
+// `diskSize` shows the "also delete the SSD tier" checkbox, unchecked; the
+// answer carries its state.
+function confirm(
+  html: string,
+  okLabel: string,
+  diskSize?: string,
+): Promise<{ ok: boolean; checked: boolean }> {
   const dlg = $("confirm") as HTMLDialogElement;
+  const check = $("confirm-check") as HTMLInputElement;
   $("confirm-text").innerHTML = html;
   $("confirm-ok").textContent = okLabel;
+  $("confirm-opt").hidden = !diskSize;
+  $("confirm-opt-size").textContent = diskSize ?? "";
+  check.checked = false;
   return new Promise((resolve) => {
-    dlg.onclose = () => resolve(dlg.returnValue === "ok");
+    dlg.onclose = () =>
+      resolve({ ok: dlg.returnValue === "ok", checked: check.checked });
     dlg.returnValue = "";
     dlg.showModal();
   });
@@ -604,14 +616,16 @@ function showEvent(e: ActionEvent) {
 async function runAction(action: ActionName, model: string | null) {
   if (busy) return;
   const label = ACTION_LABEL[action];
-  if (
-    action !== "favorite" &&
-    !(await confirm(
+  if (action !== "favorite") {
+    // the restart dialog offers the disk wipe as an option: diskClear is a
+    // restart plus the deletion of the SSD tier
+    const a = await confirm(
       confirmText(action, model),
       label[0].toUpperCase() + label.slice(1),
-    ))
-  ) {
-    return;
+      action === "free" && canDiskClear ? `${gb(diskTotal, 0)} GB` : undefined,
+    );
+    if (!a.ok) return;
+    if (a.checked) action = "diskClear";
   }
   setBusy(action);
   try {
@@ -942,7 +956,8 @@ function connect() {
   ws.onmessage = (ev) => {
     const msg = JSON.parse(ev.data) as WsMessage;
     if (msg.type === "snapshot") {
-      $("engine-name").textContent = ENGINE_NAME[msg.data.engine.id];
+      engineName = ENGINE_NAME[msg.data.engine.id];
+      $("engine-name").textContent = engineName;
       $("engine-url").textContent = msg.data.engine.url;
       renderHost(msg.data);
       $("version").textContent = `mlx-spy ${msg.data.version}`;
@@ -969,7 +984,8 @@ function connect() {
   ws.onclose = () => {
     state.textContent = "reconnecting";
     state.className = "pill err";
-    $("engine-dot").className = "dot";
+    $("engine-state").textContent = "unknown";
+    $("engine-state").className = "pill";
     setTimeout(connect, 2000);
   };
 }
