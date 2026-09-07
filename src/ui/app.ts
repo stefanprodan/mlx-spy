@@ -12,6 +12,8 @@
 
 import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
+import type { ActionEvent, ActionName } from "../actions.ts";
+import type { Capability } from "../engine/types.ts";
 import type { Range, Series } from "../history.ts";
 import type { Sample } from "../sample.ts";
 import type { snapshot, WsMessage } from "../web.ts";
@@ -141,6 +143,7 @@ function renderModels(snap: Snapshot) {
           m.contextLength == null ? "" : `${count(m.contextLength)} ctx`,
         ),
         el("td", `state ${m.state}`, m.state),
+        modelButtons(m, snap),
       );
       return tr;
     }),
@@ -150,6 +153,184 @@ function renderModels(snap: Snapshot) {
   $("disk-note").textContent = snap.engine.local
     ? `SSD cache tier ${gb(total)} GB in ${disk.length} dir${disk.length === 1 ? "" : "s"}`
     : "remote engine: pid, RSS and SSD tier not probed";
+  diskTotal = total;
+  loadedCount = snap.models.filter((m) => m.loaded).length;
+  const can = (c: Capability) => snap.engine.capabilities.includes(c);
+  setEnabled(
+    $("a-free") as HTMLButtonElement,
+    can("restart") && snap.engine.local,
+    "restarts the engine service; only for a local engine",
+  );
+  setEnabled(
+    $("a-disk") as HTMLButtonElement,
+    can("diskClear") && snap.engine.local,
+    "deletes the SSD cache tier; only for a local engine",
+  );
+  if (snap.events.length) showEvent(snap.events[snap.events.length - 1]);
+  if (snap.running) setBusy(snap.running);
+}
+
+// ---------- actions ----------
+
+let diskTotal = 0;
+let loadedCount = 0;
+let busy: ActionName | null = null;
+
+function setEnabled(btn: HTMLButtonElement, on: boolean, why: string) {
+  btn.disabled = !on || busy !== null;
+  btn.title = on ? "" : why;
+}
+
+function modelButtons(m: Snapshot["models"][number], snap: Snapshot) {
+  const td = el("td", "act");
+  const can = (c: Capability) => snap.engine.capabilities.includes(c);
+  const btn = (label: string, action: ActionName, cls = "") => {
+    const b = el("button", `btn ${cls}`.trim(), label);
+    b.type = "button";
+    b.disabled = busy !== null;
+    b.onclick = () => void runAction(action, m.id);
+    return b;
+  };
+  if (m.loaded) {
+    if (can("default")) td.append(btn("Set default", "default"));
+    if (can("unload")) td.append(btn("Unload", "unload", "danger"));
+  } else if (can("load")) {
+    td.append(btn("Load", "load"));
+    if (can("default")) td.append(btn("Load as default", "default"));
+  }
+  return td;
+}
+
+const ACTION_LABEL: Record<ActionName, string> = {
+  load: "load",
+  unload: "unload",
+  default: "set default",
+  free: "free RAM",
+  diskClear: "clear disk cache",
+};
+
+// The dialog copy states what happens, from the engine notes: an unload
+// drops the model's RAM prefix cache, a restart drops everything but the
+// SSD tier, loading past the residency cap evicts the least recently used.
+function confirmText(action: ActionName, model: string | null): string {
+  const loaded = loadedCount;
+  const evict =
+    loaded >= 2
+      ? " Two models are resident, so the least recently used one is evicted."
+      : "";
+  const m = `<code>${model ?? ""}</code>`;
+  switch (action) {
+    case "load":
+      return `Load ${m}? Reading the weights takes a few seconds.${evict}`;
+    case "default":
+      return `Make ${m} the default model? It is loaded if needed and chat requests without a model go to it.${evict}`;
+    case "unload":
+      return `Unload ${m}? Its weights and RAM prefix cache are freed; the SSD tier is kept.`;
+    case "free":
+      return "Restart the engine service? Every model is unloaded and the RAM cache is gone. The SSD tier is kept and comes back on the next load.";
+    case "diskClear":
+      return `Restart the engine service and delete the SSD cache tier (${gb(diskTotal)} GB)? Every model is unloaded and every cached prefix is gone.`;
+  }
+}
+
+function confirm(html: string, okLabel: string): Promise<boolean> {
+  const dlg = $("confirm") as HTMLDialogElement;
+  $("confirm-text").innerHTML = html;
+  $("confirm-ok").textContent = okLabel;
+  return new Promise((resolve) => {
+    dlg.onclose = () => resolve(dlg.returnValue === "ok");
+    dlg.returnValue = "";
+    dlg.showModal();
+  });
+}
+
+function setBusy(action: ActionName | null) {
+  busy = action;
+  for (const b of document.querySelectorAll<HTMLButtonElement>(".btn")) {
+    if (b.closest("dialog")) continue;
+    b.disabled = action !== null || b.title !== "";
+  }
+  if (action) {
+    const ev = $("event");
+    ev.hidden = false;
+    ev.className = "event busy";
+    ev.textContent = `${ACTION_LABEL[action]} running`;
+  }
+}
+
+const fmtWhen = new Intl.DateTimeFormat(undefined, {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
+
+function showEvent(e: ActionEvent) {
+  const ev = $("event");
+  ev.hidden = false;
+  ev.className = e.ok ? "event" : "event err";
+  const what = `${ACTION_LABEL[e.action]}${e.model ? ` ${e.model}` : ""}`;
+  const secs = (e.ms / 1000).toFixed(1);
+  ev.replaceChildren(
+    el("span", "when", fmtWhen.format(new Date(e.t))),
+    document.createTextNode(
+      e.ok
+        ? `${what}: ${e.detail} in ${secs} s`
+        : `${what} failed: ${e.detail}`,
+    ),
+  );
+}
+
+async function runAction(action: ActionName, model: string | null) {
+  if (busy) return;
+  const label = ACTION_LABEL[action];
+  if (
+    !(await confirm(
+      confirmText(action, model),
+      label[0].toUpperCase() + label.slice(1),
+    ))
+  ) {
+    return;
+  }
+  setBusy(action);
+  try {
+    const res = await fetch(`/api/actions/${action}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(model ? { model } : {}),
+    });
+    const body = (await res.json()) as ActionEvent | { error: string };
+    if (!res.ok) {
+      showEvent({
+        t: Date.now(),
+        action,
+        model,
+        ok: false,
+        ms: 0,
+        detail: (body as { error: string }).error ?? `HTTP ${res.status}`,
+      });
+    }
+    // a 200 carries the event; the /ws push shows it in every tab
+  } catch (err) {
+    showEvent({
+      t: Date.now(),
+      action,
+      model,
+      ok: false,
+      ms: 0,
+      detail: err instanceof Error ? err.message : String(err),
+    });
+  } finally {
+    setBusy(null);
+    void fetchSnapshot();
+  }
+}
+
+function fetchSnapshot() {
+  return fetch("/api/snapshot")
+    .then((r) => r.json())
+    .then((snap: Snapshot) => renderModels(snap))
+    .catch(() => {});
 }
 
 // ---------- charts ----------
@@ -561,10 +742,7 @@ function refreshModels(s: Sample) {
   const key = modelsKeyOf(s.models);
   if (key === modelsKey) return;
   modelsKey = key;
-  fetch("/api/snapshot")
-    .then((r) => r.json())
-    .then((snap: Snapshot) => renderModels(snap))
-    .catch(() => {});
+  void fetchSnapshot();
 }
 
 function connect() {
@@ -583,6 +761,10 @@ function connect() {
       renderModels(msg.data);
       modelsKey = modelsKeyOf(msg.data.models);
       if (msg.data.sample) renderTiles(msg.data.sample);
+    } else if (msg.type === "event") {
+      showEvent(msg.data);
+      // another tab may have run it; the residency changed either way
+      void fetchSnapshot();
     } else {
       renderTiles(msg.data);
       appendLive(msg.data);
@@ -598,6 +780,12 @@ function connect() {
 }
 
 // ---------- boot ----------
+
+for (const b of document.querySelectorAll<HTMLButtonElement>(
+  ".btns [data-action]",
+)) {
+  b.onclick = () => void runAction(b.dataset.action as ActionName, null);
+}
 
 $("ranges").addEventListener("click", (ev) => {
   const btn = (ev.target as HTMLElement).closest("button");

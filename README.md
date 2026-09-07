@@ -9,11 +9,14 @@ engine endpoints that trigger a model load. See `plans/` for the roadmap.
 
 ## Status
 
-Milestone 4: the sampler runs at 1 Hz, keeps 7 days of history in SQLite,
+Milestone 5: the sampler runs at 1 Hz, keeps 7 days of history in SQLite,
 reads host memory, the engine process footprint and the SSD cache tier size
 through libproc and Mach (no subprocesses), and serves a dark dashboard:
 tile row, uPlot graphs with a shared cursor and a 1h/6h/24h/7d range
-picker, and the models table. Control buttons come next.
+picker, and the models table with the control buttons: load, unload, set
+default, free RAM (a launchd restart of the service) and clear disk cache.
+Every action asks for confirmation, is logged, and the last two only work
+when the engine runs on the same host.
 
 ```sh
 bun src/main.ts --engine http://127.0.0.1:11234            # serve the dashboard
@@ -28,7 +31,10 @@ is the boundary.
 - `GET /api/snapshot` latest sample and the model list
 - `GET /api/history?range=1h|6h|24h|7d` columnar series, bucketed for the
   longer ranges
-- `WS /ws` a snapshot on connect, then one sample per second
+- `WS /ws` a snapshot on connect, then one sample per second and an event
+  per finished action
+- `POST /api/actions/load|unload|default` with `{"model": "<id>"}`, and
+  `POST /api/actions/free|diskClear` (local engine only)
 
 A sample carries the engine state, windowed decode and prefill tok/s, cache
 hit ratios, the memory split (host free, inactive, wired and compressed;

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { Actions } from "../src/actions.ts";
 import { parseMetrics, parseModels } from "../src/engine/mlxserve.ts";
 import type {
   Capability,
@@ -52,6 +53,9 @@ class FakeEngine implements Engine {
   }
   processNames() {
     return ["fake-engine"];
+  }
+  serviceLabel() {
+    return null;
   }
 }
 
@@ -216,10 +220,12 @@ describe("web", () => {
     await sampler.tick();
     c.advance(1000);
     await sampler.tick();
+    const actions = new Actions({ engine, sampler, local: false, log() {} });
     return {
       engine,
       sampler,
       history,
+      actions,
       version: "vtest",
       local: false,
       now: c.now,
@@ -245,19 +251,24 @@ describe("web", () => {
   test("routes", async () => {
     const d = await deps();
     const get = (p: string) => handle(new Request(`http://x${p}`), d);
-    expect(get("/api/snapshot").status).toBe(200);
-    const h = get("/api/history?range=1h");
+    expect((await get("/api/snapshot")).status).toBe(200);
+    const h = await get("/api/history?range=1h");
     expect(h.status).toBe(200);
     const body = (await h.json()) as any;
     expect(body.range).toBe("1h");
     expect(body.series.t).toHaveLength(2);
-    expect(get("/api/history").status).toBe(200);
-    expect(get("/api/history?range=2h").status).toBe(400);
-    expect(get("/nope").status).toBe(404);
+    expect((await get("/api/history")).status).toBe(200);
+    expect((await get("/api/history?range=2h")).status).toBe(400);
+    expect((await get("/nope")).status).toBe(404);
     expect(
-      handle(new Request("http://x/api/snapshot", { method: "POST" }), d)
-        .status,
+      (
+        await handle(
+          new Request("http://x/api/snapshot", { method: "POST" }),
+          d,
+        )
+      ).status,
     ).toBe(405);
+    expect((await get("/api/actions/free")).status).toBe(405);
     d.history.close();
   });
 

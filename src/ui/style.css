@@ -170,6 +170,100 @@ h2 {
   color: var(--faint);
   font-size: 13px;
 }
+.grow {
+  flex: 1;
+}
+
+/* action buttons: quiet pills, the primary one in the accent */
+.btns {
+  display: flex;
+  gap: 6px;
+}
+.btn {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #26282b;
+  color: var(--fg);
+  white-space: nowrap;
+}
+.btn:hover {
+  background: #33373b;
+}
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0d1a2c;
+}
+.btn.primary:hover {
+  background: #a3c4fa;
+}
+.btn.danger:hover {
+  background: #3a1a20;
+  border-color: #5a2630;
+  color: #ff95a8;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.btn:disabled:hover {
+  background: #26282b;
+  border-color: var(--line);
+  color: var(--fg);
+}
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* the last action's outcome, under the models table */
+.event {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--dim);
+}
+.event .when {
+  font-family: var(--mono);
+  color: var(--faint);
+  margin-right: 8px;
+}
+.event.err {
+  color: #ff95a8;
+}
+.event.busy {
+  color: var(--accent);
+}
+
+dialog {
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px 22px;
+  max-width: 440px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+dialog p {
+  margin: 0 0 16px;
+}
+dialog code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--accent);
+  word-break: break-all;
+}
+dialog .row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
 
 .card {
   background: var(--card);
@@ -402,6 +496,14 @@ td.state.loading {
 }
 td.state.error {
   color: #f28b82;
+}
+td.act {
+  text-align: right;
+  white-space: nowrap;
+  width: 1%;
+}
+td.act .btn {
+  margin-left: 4px;
 }
 
 footer {

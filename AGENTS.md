@@ -82,12 +82,22 @@ src/sampler.ts       the 1 Hz loop: reads metrics each tick, models every 5 s,
 src/history.ts       ring buffer (1 h) plus bun:sqlite: samples table, 7 day
                      retention pruned from the writer, bucketed series() per
                      range in columnar form for uPlot
+src/actions.ts       the control actions: load/unload/default through the
+                     adapter, free (launchctl kickstart -k of the service
+                     label) and diskClear (restart, then delete the children
+                     of the adapter's cache dirs), local-only; validates the
+                     model id against the current list, one action at a time,
+                     logs every outcome, keeps the last 50 events; spawn and
+                     directory wipe are injectable for tests
 src/web.ts           Bun.serve: the page (HTML import passed in from main.ts),
-                     /api/snapshot, /api/history?range=, /ws (snapshot on
-                     connect, then pub/sub of one sample per tick); handle()
-                     is separate from serve() so tests call it with a Request;
-                     tailscaleAddress() picks the default bind
-src/ui/index.html    the dashboard: tile row, five uPlot charts, models table;
+                     /api/snapshot, /api/history?range=, POST /api/actions/
+                     <name>, /ws (snapshot on connect, then pub/sub of one
+                     sample per tick and one event per finished action);
+                     handle() is separate from serve() so tests call it with
+                     a Request; tailscaleAddress() picks the default bind
+src/ui/index.html    the dashboard: tile row, five uPlot charts, models table
+                     with load/unload/default buttons, Free RAM and Clear
+                     disk cache in the section head, a confirm dialog;
                      Bun bundles style.css and app.ts from it (also into the
                      compiled binary, Bun 1.2.17+)
 src/ui/app.ts        browser client: WebSocket, tiles, uPlot charts with a
@@ -121,8 +131,10 @@ over the previous reading, joined with the host probes (memory every tick,
 pid rescanned every 5 s when unknown, disk tier every 30 s) → `buildSample` →
 History (ring + SQLite) and
 listeners → `/api/snapshot`, `/api/history` and the `/ws` push → the page.
-`--once` short-circuits to a single sample on stdout. Actions land in the next
-milestone.
+`--once` short-circuits to a single sample on stdout. Actions go the other
+way: a button → confirm dialog → `POST /api/actions/<name>` → `Actions.run`
+(guards, adapter call or spawn, model refresh, log) → an event on `/ws` that
+every tab shows under the models table.
 
 ## mlx-serve specifics worth knowing
 
@@ -139,7 +151,10 @@ milestone.
 - mlx-serve does not say which model is the default; `isDefault` stays
   undefined for it.
 - Disk tier at `~/.mlx-serve/kv-cache/<fingerprint>/`; server log at
-  `~/.mlx-serve/logs/mlx-serve-<port>.log`.
+  `~/.mlx-serve/logs/mlx-serve-<port>.log`. The service label is
+  `com.ddalcu.mlx-serve` (the adapter's `serviceLabel()`); "free" is a
+  `launchctl kickstart -k gui/<uid>/<label>` because a fresh process has no
+  default model and so nothing to cold-load.
 - The engine's `memory_mb` matches libproc's `ri_phys_footprint` (41.36 GB
   both, measured 2026-09-07), so the remote dev loop shows the same footprint
   number as the Studio; only RSS and the pid need the probe to be local.

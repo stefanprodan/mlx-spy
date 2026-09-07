@@ -87,13 +87,31 @@
         </div>
       </section>
 
-      <div class="shead"><h2>Models</h2><span class="hint" id="disk-note"></span></div>
+      <div class="shead">
+        <h2>Models</h2>
+        <span class="hint" id="disk-note"></span>
+        <span class="grow"></span>
+        <span class="btns">
+          <button type="button" class="btn" id="a-free" data-action="free">Free RAM</button>
+          <button type="button" class="btn" id="a-disk" data-action="diskClear">Clear disk cache</button>
+        </span>
+      </div>
       <section class="card models">
         <table id="models"><tbody></tbody></table>
       </section>
+      <div class="event" id="event" hidden></div>
 
       <footer><span id="version"></span></footer>
     </div>
+    <dialog id="confirm">
+      <form method="dialog">
+        <p id="confirm-text"></p>
+        <div class="row">
+          <button type="submit" value="cancel" class="btn">Cancel</button>
+          <button type="submit" value="ok" class="btn primary" id="confirm-ok">Confirm</button>
+        </div>
+      </form>
+    </dialog>
     <script type="module" src="./app.ts"></script>
   </body>
 </html>

@@ -15,6 +15,7 @@ import { mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import pkg from "../package.json";
+import { Actions } from "./actions.ts";
 import { MlxServe } from "./engine/mlxserve.ts";
 import { History } from "./history.ts";
 import { createHostProbes } from "./host/index.ts";
@@ -53,6 +54,8 @@ const HELP = `\x1b[1mmlx-spy\x1b[0m - monitor and control an LLM inference serve
   GET /api/snapshot            latest sample and model list
   GET /api/history?range=1h    series for 1h, 6h, 24h or 7d
   WS  /ws                      snapshot on connect, then one sample per second
+  POST /api/actions/<name>     load, unload, default (body {"model"}), free,
+                               diskClear (the last two only for a local engine)
 
 \x1b[1mExamples:\x1b[0m
   mlx-spy --engine http://127.0.0.1:11234 --once
@@ -140,8 +143,9 @@ const log = (line: string) =>
 if (dbPath !== ":memory:") mkdirSync(dirname(dbPath), { recursive: true });
 const history = new History(dbPath, retentionDays);
 const sampler = new Sampler(engine, history, { log, probes, local });
+const actions = new Actions({ engine, sampler, local, log });
 const web = serve(
-  { engine, sampler, history, version: VERSION, local },
+  { engine, sampler, history, actions, version: VERSION, local },
   { hostname, port },
   page,
 );

@@ -88,4 +88,7 @@ export interface Engine {
   logFile(): string | null;
   // executable basenames the host probe may match for the engine's pid
   processNames(): string[];
+  // launchd label of the engine service, for the local-only "free" action
+  // (launchctl kickstart -k); null when the engine is not a service
+  serviceLabel(): string | null;
 }

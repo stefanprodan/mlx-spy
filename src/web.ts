@@ -1,13 +1,13 @@
 // Copyright 2026 Stefan Prodan.
 // SPDX-License-Identifier: Apache-2.0
 //
-// HTTP API and WebSocket push over the sampler and history. The page itself
-// is an HTML import bundled by Bun (passed in from main.ts so this module
-// stays importable from tests without the bundler); actions arrive in the
-// next milestone.
+// HTTP API and WebSocket push over the sampler, history and actions. The
+// page itself is an HTML import bundled by Bun (passed in from main.ts so
+// this module stays importable from tests without the bundler).
 
 import { networkInterfaces } from "node:os";
 import type { HTMLBundle } from "bun";
+import { ActionError, type ActionEvent, type Actions } from "./actions.ts";
 import type { Engine } from "./engine/types.ts";
 import { type History, RANGES, type Range } from "./history.ts";
 import type { Sample } from "./sample.ts";
@@ -38,6 +38,7 @@ export type WebDeps = {
   engine: Engine;
   sampler: Sampler;
   history: History;
+  actions: Actions;
   version: string;
   local: boolean;
   // injectable for tests; the history range is relative to it
@@ -56,17 +57,37 @@ export function snapshot(deps: WebDeps) {
     sample: deps.history.latest(),
     models: deps.sampler.currentModels(),
     disk: deps.sampler.currentDisk(),
+    events: deps.actions.events,
+    running: deps.actions.running(),
   };
 }
 
-// What a tab receives on connect, then one "sample" message per tick.
+// What a tab receives on connect, then one "sample" message per tick and an
+// "event" whenever an action finishes (in any tab).
 export type WsMessage =
   | { type: "snapshot"; data: ReturnType<typeof snapshot> }
-  | { type: "sample"; data: Sample };
+  | { type: "sample"; data: Sample }
+  | { type: "event"; data: ActionEvent };
 
 // Route handler, separate from Bun.serve so tests can call it with a Request.
-export function handle(req: Request, deps: WebDeps): Response {
+export async function handle(req: Request, deps: WebDeps): Promise<Response> {
   const url = new URL(req.url);
+  const action = /^\/api\/actions\/([a-zA-Z]+)$/.exec(url.pathname);
+  if (action) {
+    if (req.method !== "POST") {
+      return Response.json({ error: "method not allowed" }, { status: 405 });
+    }
+    // an empty body is fine for free and diskClear
+    const body = await req.json().catch(() => ({}));
+    try {
+      return Response.json(await deps.actions.run(action[1], body));
+    } catch (err) {
+      if (err instanceof ActionError) {
+        return Response.json({ error: err.message }, { status: err.status });
+      }
+      throw err;
+    }
+  }
   if (req.method !== "GET") {
     return Response.json({ error: "method not allowed" }, { status: 405 });
   }
@@ -126,14 +147,19 @@ export function serve(
     },
   });
   // One serialisation per tick regardless of tab count; Bun fans it out.
-  const unsubscribe = deps.sampler.onSample((sample) => {
-    const msg: WsMessage = { type: "sample", data: sample };
+  const publish = (msg: WsMessage) =>
     server.publish(SAMPLES_TOPIC, JSON.stringify(msg));
-  });
+  const unsubscribe = deps.sampler.onSample((sample) =>
+    publish({ type: "sample", data: sample }),
+  );
+  const unsubscribeEvents = deps.actions.onEvent((event) =>
+    publish({ type: "event", data: event }),
+  );
   return {
     server,
     stop() {
       unsubscribe();
+      unsubscribeEvents();
       server.stop(true);
     },
   };

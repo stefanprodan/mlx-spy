@@ -164,4 +164,10 @@ export class MlxServe implements Engine {
   processNames(): string[] {
     return ["mlx-serve"];
   }
+
+  // The LaunchAgent from the homelab notes; a fresh process has no default
+  // model, so a restart is the reliable way to free the RAM.
+  serviceLabel(): string {
+    return "com.ddalcu.mlx-serve";
+  }
 }

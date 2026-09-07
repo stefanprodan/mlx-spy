@@ -122,6 +122,18 @@ export class Sampler {
     return this.disk;
   }
 
+  // After an action the residency picture changed; do not wait for the
+  // periodic fetch. Failures keep the last list, as in tick().
+  async refreshModels(): Promise<ModelInfo[]> {
+    try {
+      this.models = await this.engine.models();
+      this.ticksSinceModels = 0;
+    } catch {
+      // the next tick retries
+    }
+    return this.models;
+  }
+
   start() {
     if (this.timer) return;
     void this.tick();
