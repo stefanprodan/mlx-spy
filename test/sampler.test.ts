@@ -240,7 +240,12 @@ describe("Sampler", () => {
     expect(a?.lastRequest).toBeNull();
     c.advance(1000);
     const b = await s.tick();
-    expect(b?.request?.decodeMs).toBe(1000);
+    // the second was prefilling at the previous tick: that second is prefill
+    expect(b?.request).toEqual({
+      startedAt: 1_001_000,
+      prefillMs: 1000,
+      decodeMs: 0,
+    });
     c.advance(1000);
     const d = await s.tick();
     expect(d?.request).toBeNull();

@@ -150,6 +150,7 @@ describe("History", () => {
       count: 1,
       cancelled: false,
       generated: 3,
+      promptTokens: 9,
       prefillTokens: 4,
       prefillMs: 5,
       decodeMs: 6,

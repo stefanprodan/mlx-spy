@@ -24,6 +24,7 @@ export type LastRequest = {
   count: number; // requests that completed in the same tick
   cancelled: boolean;
   generated: number; // tokens
+  promptTokens: number; // the prompt, cached or not (0 when unknown)
   prefillTokens: number; // prompt tokens computed (not cached)
   prefillMs: number; // the engine's own timings
   decodeMs: number;
@@ -68,8 +69,7 @@ export function trackRequests(
   prev: Reading | null,
   cur: Reading,
 ): RequestState {
-  const g = cur.metrics.gauges;
-  const running = g.requestsRunning > 0 || g.requestsPrefilling > 0;
+  const running = open(cur) > 0;
   if (!prev) {
     return {
       starts: running ? [cur.t] : [],
@@ -85,10 +85,6 @@ export function trackRequests(
   const b = cur.metrics;
   const done =
     b.histograms.decodeTimeSeconds.count - a.histograms.decodeTimeSeconds.count;
-  // completions take the oldest starts; a request that started and ended
-  // between two ticks was never seen open and has no start to take
-  const stillOpen = Math.max(0, open(prev) - done);
-  const started = Math.max(0, open(cur) - stillOpen);
   let starts = state.starts;
   let last = state.last;
   if (done > 0) {
@@ -102,6 +98,7 @@ export function trackRequests(
       count: done,
       cancelled: b.counters.requestsCancelled > a.counters.requestsCancelled,
       generated: b.counters.generationTokens - a.counters.generationTokens,
+      promptTokens: b.counters.promptTokens - a.counters.promptTokens,
       prefillTokens: b.counters.prefillTokens - a.counters.prefillTokens,
       prefillMs: ms("prefillTimeSeconds"),
       decodeMs: ms("decodeTimeSeconds"),
@@ -116,10 +113,15 @@ export function trackRequests(
     };
     starts = starts.slice(done);
   }
-  for (let i = 0; i < started; i++) starts = [...starts, cur.t];
   const doneAt = done > 0 ? cur.t : state.doneAt;
-  const dropped = Math.max(0, open(prev) - done - open(cur));
   const lag = doneAt != null && cur.t - doneAt <= GAUGE_LAG_MS;
+  // more open than known starts is a start (a request that started and
+  // ended between two ticks was never seen open and has none); inside the
+  // window after a completion the count may still include the finished
+  // request, so a rise there waits until the gauge is trusted again
+  const started = lag ? 0 : Math.max(0, open(cur) - starts.length);
+  for (let i = 0; i < started; i++) starts = [...starts, cur.t];
+  const dropped = Math.max(0, open(prev) - done - open(cur));
   if (dropped > 0 && !lag) {
     // gone without a completion: a cancelled request, known only from the
     // live gauges of the previous read and the phase clock
@@ -132,6 +134,7 @@ export function trackRequests(
         0,
         a.gauges.generationTokensLive - a.counters.generationTokens,
       ),
+      promptTokens: 0,
       prefillTokens: 0,
       prefillMs: state.inFlight?.prefillMs ?? 0,
       decodeMs: state.inFlight?.decodeMs ?? 0,
@@ -141,7 +144,9 @@ export function trackRequests(
   }
   // a stale count leaves a start behind: drop the newest
   if (starts.length > open(cur)) starts = starts.slice(0, open(cur));
-  if (!running) return { starts: [], inFlight: null, last, doneAt };
+  if (!running || !starts.length) {
+    return { starts: [], inFlight: null, last, doneAt };
+  }
   // the engine is busy: time since the previous tick went to the phase it
   // was in at that tick
   // phase, unless every open request started this tick (the engine was
@@ -156,7 +161,6 @@ export function trackRequests(
           prefillMs: prevIn.prefillMs + (wasPrefilling ? dt : 0),
           decodeMs: prevIn.decodeMs + (wasPrefilling ? 0 : dt),
         }
-      : { startedAt: starts[0] ?? cur.t, prefillMs: 0, decodeMs: 0 };
-  if (!starts.length) starts = [inFlight.startedAt];
+      : { startedAt: starts[0], prefillMs: 0, decodeMs: 0 };
   return { starts, inFlight, last, doneAt };
 }

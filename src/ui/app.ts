@@ -376,15 +376,14 @@ function renderRequest(s: Sample) {
   const bar = $("req-bar");
   const cur = s.request;
   const last = s.lastRequest;
-  const tps = (tokens: number, ms: number) =>
-    ms > 0 ? `${whole((tokens / ms) * 1000)} tok/s` : "";
   const label = (id: string, text: string) => {
     const e = $(id);
     e.textContent = text;
     e.hidden = text === "";
   };
   if (cur && s.engineUp) {
-    const open = s.requestsRunning + s.requestsPrefilling;
+    // a prefilling request is counted as running too
+    const open = Math.max(s.requestsRunning, s.requestsPrefilling);
     const n = Math.max(1, open);
     const prefilling = s.requestsPrefilling > 0;
     const elapsed = Math.max(1, s.t - cur.startedAt);
@@ -398,18 +397,9 @@ function renderRequest(s: Sample) {
     bar.className = `cur-bar running${prefilling ? " prefilling" : ""}`;
     $("req-pf").style.width = `${(pf / known) * 100}%`;
     $("req-dc").style.width = `${(dc / known) * 100}%`;
-    label(
-      "req-prefill",
-      pf
-        ? `prefill ${short(pf)}${lastPrefill && prefilling ? ` · ${whole(lastPrefill)} tok/s` : ""}`
-        : "",
-    );
-    label(
-      "req-decode",
-      dc
-        ? `decode ${short(dc)}${lastDecode && !prefilling ? ` · ${whole(lastDecode)} tok/s` : ""}`
-        : "",
-    );
+    // rates are the tiles' business; the bar shows time and tokens
+    label("req-prefill", pf ? `prefill ${short(pf)}` : "");
+    label("req-decode", dc ? `decode ${short(dc)}` : "");
     const total = $("req-total");
     total.replaceChildren(
       `${short(elapsed)} · ${prefilling ? "prefilling" : "decoding"}`,
@@ -443,23 +433,18 @@ function renderRequest(s: Sample) {
   bar.className = `cur-bar${last.cancelled ? " cancelled" : ""}`;
   $("req-pf").style.width = `${(last.prefillMs / known) * 100}%`;
   $("req-dc").style.width = `${(last.decodeMs / known) * 100}%`;
-  // a cancelled request's prefill tokens are unknown: no rate for it
-  const pfRate = last.prefillTokens
-    ? tps(last.prefillTokens, last.prefillMs)
-    : "";
-  const dcRate = tps(last.generated, last.decodeMs);
-  label(
-    "req-prefill",
-    last.prefillMs
-      ? `prefill ${short(last.prefillMs)}${pfRate ? ` · ${pfRate}` : ""}`
-      : "",
-  );
-  label(
-    "req-decode",
-    last.decodeMs
-      ? `decode ${short(last.decodeMs)}${dcRate ? ` · ${dcRate}` : ""}`
-      : "",
-  );
+  // the prompt is the context the request ran with; the part the engine
+  // did not compute came from the prefix cache (unknown for a cancelled
+  // request, whose counters never moved)
+  const prompt = last.promptTokens;
+  const cached = prompt - last.prefillTokens;
+  let pfText = last.prefillMs ? `prefill ${short(last.prefillMs)}` : "";
+  if (prompt > 0) {
+    pfText += `${pfText ? " · " : ""}${count(prompt)} tok`;
+    if (cached > 0) pfText += ` · ${whole((cached / prompt) * 100)}% cached`;
+  }
+  label("req-prefill", pfText);
+  label("req-decode", last.decodeMs ? `decode ${short(last.decodeMs)}` : "");
   // the start is seen up to a gauge publish late: never shorter than the
   // engine's own phase times
   const span = Math.max(

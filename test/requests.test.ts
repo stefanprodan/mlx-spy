@@ -15,6 +15,7 @@ function reading(
   gauges: Record<string, number> = {},
   done: {
     generated?: number;
+    promptTokens?: number;
     prefillTokens?: number;
     prefillSecs?: number;
     decodeSecs?: number;
@@ -28,6 +29,8 @@ function reading(
   if (done) {
     const n = done.n ?? 1;
     body.counters.generation_tokens_total += done.generated ?? 0;
+    body.counters.prompt_tokens_total +=
+      done.promptTokens ?? done.prefillTokens ?? 0;
     body.counters.prefill_tokens_total += done.prefillTokens ?? 0;
     if (done.cancelled) body.counters.requests_cancelled_total += 1;
     else body.counters.requests_success_total += n;
@@ -62,6 +65,7 @@ describe("trackRequests", () => {
       count: 1,
       cancelled: false,
       generated: 3,
+      promptTokens: 4,
       prefillTokens: 4,
       prefillMs: 5,
       decodeMs: 6,
@@ -88,6 +92,7 @@ describe("trackRequests", () => {
         {},
         {
           generated: 120,
+          promptTokens: 1000,
           prefillTokens: 900,
           prefillSecs: 2.2,
           decodeSecs: 3.1,
@@ -118,6 +123,7 @@ describe("trackRequests", () => {
       count: 1,
       cancelled: false,
       generated: 120,
+      promptTokens: 1000,
       prefillTokens: 900,
       prefillMs: 2200,
       decodeMs: 3100,
@@ -136,7 +142,7 @@ describe("trackRequests", () => {
       reading(5000, {}, { generated: 8, decodeSecs: 1 }),
     ]);
     expect(s[2].starts).toEqual([2000]);
-    expect(s[2].inFlight?.prefillMs).toBe(1000);
+    expect(s[3].inFlight?.prefillMs).toBe(1000);
     expect(s[4].last?.startedAt).toBe(2000);
     // a flag that flips before the slot is counted still opens one request
     const t = run([
@@ -150,21 +156,47 @@ describe("trackRequests", () => {
   test("gauges lagging the counters leave no phantom start behind", () => {
     const s = run([
       reading(1000, { requests_running: 2 }),
-      // both completed, but the gauge still reads 2 and a new one started
+      // both completed, but the gauge still reads 2
       reading(
         2000,
         { requests_running: 2 },
         { generated: 30, decodeSecs: 2, n: 2 },
       ),
       reading(3000, { requests_running: 1 }),
-      reading(9000, {}, { generated: 5, decodeSecs: 1 }),
+      reading(4000),
     ]);
-    expect(s[1].starts).toEqual([2000, 2000]);
-    expect(s[2].starts).toEqual([2000]);
+    // the stale count is not a new request: the bar shows the last one
+    expect(s[1].starts).toEqual([]);
+    expect(s[1].inFlight).toBeNull();
+    expect(s[2].inFlight).toBeNull();
     // the drop right after the completion is lag, not a cancel
     expect(s[2].last?.count).toBe(2);
     expect(s[2].last?.cancelled).toBe(false);
-    expect(s[3].last?.startedAt).toBe(2000);
+    expect(s[3].last).toBe(s[1].last);
+    expect(s[3].inFlight).toBeNull();
+  });
+
+  test("a start right after a completion is seen once the gauge is trusted", () => {
+    const s = run([
+      reading(1000, { requests_running: 1 }),
+      // one completed and another started, the count never dropped
+      reading(2000, { requests_running: 1 }, { generated: 9, decodeSecs: 1 }),
+      reading(3000, { requests_running: 1 }),
+      reading(6000, { requests_running: 1 }),
+      reading(9000, {}, { generated: 5, decodeSecs: 1 }),
+    ]);
+    expect(s[1].last?.startedAt).toBe(1000);
+    expect(s[1].inFlight).toBeNull();
+    expect(s[2].inFlight).toBeNull();
+    // past the lag window the count is believed, from zero
+    expect(s[3].starts).toEqual([6000]);
+    expect(s[3].inFlight).toEqual({
+      startedAt: 6000,
+      prefillMs: 0,
+      decodeMs: 0,
+    });
+    expect(s[4].last?.startedAt).toBe(6000);
+    expect(s[4].inFlight).toBeNull();
   });
 
   test("a request that vanishes without a completion was cancelled", () => {
@@ -183,6 +215,7 @@ describe("trackRequests", () => {
       count: 1,
       cancelled: true,
       generated: 40,
+      promptTokens: 0,
       prefillTokens: 0,
       prefillMs: 1000,
       decodeMs: 2000,
@@ -230,20 +263,18 @@ describe("trackRequests", () => {
     expect(s[1].last?.generated).toBe(30);
   });
 
-  test("a request finishing and another starting in one tick", () => {
+  test("two in flight, one finishing: the other keeps its start and clock", () => {
     const s = run([
       reading(1000, { requests_running: 1 }),
-      reading(2000, { requests_running: 1 }),
+      reading(2000, { requests_running: 2 }),
       reading(3000, { requests_running: 1 }, { generated: 9, decodeSecs: 1 }),
+      reading(4000, { requests_running: 1 }),
     ]);
     expect(s[2].last?.startedAt).toBe(1000);
-    // the new one starts from zero
-    expect(s[2].inFlight).toEqual({
-      startedAt: 3000,
-      prefillMs: 0,
-      decodeMs: 0,
-    });
-    expect(s[2].starts).toEqual([3000]);
+    expect(s[2].starts).toEqual([2000]);
+    expect(s[2].inFlight?.startedAt).toBe(2000);
+    // the engine never went idle: its phase clock runs since the first start
+    expect(s[3].inFlight?.decodeMs).toBe(3000);
   });
 
   test("no previous reading: a busy engine starts tracking now, without a start", () => {
@@ -253,6 +284,7 @@ describe("trackRequests", () => {
       count: 1,
       cancelled: false,
       generated: 3,
+      promptTokens: 4,
       prefillTokens: 4,
       prefillMs: 5,
       decodeMs: 6,
