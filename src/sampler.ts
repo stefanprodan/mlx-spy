@@ -16,14 +16,14 @@ import {
   buildSample,
   computeRates,
   downSample,
+  EMPTY_LIVE,
+  type LiveState,
   type Reading,
   readEngine,
   type Sample,
 } from "./sample.ts";
 
 export const TICK_MS = 1000;
-// live token gauges are rated over this many seconds (see computeRates)
-const LIVE_WINDOW_MS = 3000;
 // The model list changes only on load/unload/eviction; 5 s is quick enough
 // for the table and keeps the per-tick work to one request.
 const MODELS_EVERY_TICKS = 5;
@@ -44,8 +44,8 @@ export type SamplerOptions = {
 
 export class Sampler {
   private prev: Reading | null = null;
-  // recent readings, oldest first, for the smoothed live rates
-  private recent: Reading[] = [];
+  // where the live token gauges last moved, for the rates between moves
+  private live: LiveState = EMPTY_LIVE;
   private epoch: number;
   private models: ModelInfo[] = [];
   private ticksSinceModels = MODELS_EVERY_TICKS; // fetch on the first tick
@@ -223,18 +223,15 @@ export class Sampler {
         // a dead engine breaks the window: the next reading starts fresh
         // rather than computing rates over the outage
         this.prev = null;
-        this.recent = [];
+        this.live = EMPTY_LIVE;
         this.models = [];
       } else {
         reading.t = t;
         // The restored previous reading (t=0 after a restart) only serves
         // the epoch check; its gauges are zero and its window meaningless.
         const restored = this.prev !== null && this.prev.t === 0;
-        // oldest reading still inside the live window, else the previous one
-        const base =
-          this.recent.find((r) => reading.t - r.t <= LIVE_WINDOW_MS) ??
-          this.prev;
-        const rates = computeRates(this.prev, reading, this.epoch, base);
+        const rates = computeRates(this.prev, reading, this.epoch, this.live);
+        this.live = rates.live;
         if (rates.epoch !== this.epoch) {
           this.log(
             `engine counters reset: epoch ${this.epoch} -> ${rates.epoch}`,
@@ -259,13 +256,6 @@ export class Sampler {
         }
         sample = buildSample(reading, rates, this.models, host);
         this.prev = reading;
-        this.recent.push(reading);
-        while (
-          this.recent.length > 1 &&
-          reading.t - this.recent[0].t > LIVE_WINDOW_MS
-        ) {
-          this.recent.shift();
-        }
         this.history.saveSamplerState({
           epoch: this.epoch,
           counters: reading.metrics.counters,

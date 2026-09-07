@@ -75,7 +75,7 @@ src/engine/mlxserve.ts
                      the HTTP client, load/unload, cache dir and log paths,
                      cacheLimits() from the LaunchAgent plist (pure parsers
                      parseSize/parseLaunchdArgs/limitsFromArgs, tested)
-src/sample.ts        Sample type; computeRates (windowed tok/s, cache ratios,
+src/sample.ts        Sample type; computeRates (tok/s between live gauge moves, cache ratios,
                      epoch detection on counter reset) and buildSample are pure
                      and tested; takeSample does the I/O for --once
 src/sampler.ts       the 1 Hz loop: reads metrics each tick, models every 5 s,
@@ -86,8 +86,9 @@ src/history.ts       ring buffer (1 h) plus bun:sqlite: samples table, 7 day
                      range in columnar form for uPlot
 src/actions.ts       the control actions: load/unload/default through the
                      adapter, free (launchctl kickstart -k of the service
-                     label) and diskClear (restart, then delete the children
-                     of the adapter's cache dirs), local-only; validates the
+                     label), diskClear (restart, then delete the children
+                     of the adapter's cache dirs), local-only, and
+                     historyClear (wipes the sample table); validates the
                      model id against the current list, one action at a time,
                      logs every outcome, keeps the last 50 events; spawn and
                      directory wipe are injectable for tests

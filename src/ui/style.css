@@ -315,6 +315,9 @@ dialog .row {
   background: var(--blue);
   transition: width 0.5s;
 }
+.sub .warn {
+  color: var(--amber);
+}
 .fill.warn {
   background: var(--amber);
 }
@@ -380,6 +383,9 @@ dialog .row {
   font-weight: 400;
   color: var(--faint);
   font-size: 11px;
+}
+.chip .v.idle {
+  color: var(--faint);
 }
 .plot {
   width: 100%;

@@ -59,7 +59,8 @@ const HELP = `\x1b[1mmlx-spy\x1b[0m - monitor and control an LLM inference serve
   GET /api/history?range=1h    series for 1h, 6h, 24h or 7d
   WS  /ws                      snapshot on connect, then one sample per second
   POST /api/actions/<name>     load, unload, default (body {"model"}), free,
-                               diskClear (the last two only for a local engine)
+                               diskClear (the last two only for a local engine),
+                               historyClear (wipes the sample database)
 
 \x1b[1mExamples:\x1b[0m
   mlx-spy --engine http://127.0.0.1:11234 --once
@@ -166,7 +167,7 @@ const log = (line: string) =>
 if (dbPath !== ":memory:") mkdirSync(dirname(dbPath), { recursive: true });
 const history = new History(dbPath, retentionDays);
 const sampler = new Sampler(engine, history, { log, probes, local });
-const actions = new Actions({ engine, sampler, local, log });
+const actions = new Actions({ engine, sampler, history, local, log });
 const web = serve(
   {
     engine,

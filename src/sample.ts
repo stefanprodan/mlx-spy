@@ -36,6 +36,7 @@ export type Sample = {
   gpuPct: number;
   generatedTokens: number; // lifetime counter (this epoch)
   promptTokens: number; // lifetime prompt tokens, cached or not (this epoch)
+  cachedPromptTokens: number; // of those, restored from the prefix cache
   requestsTotal: number; // lifetime successful requests (this epoch)
   enginePid: number | null; // only when the engine runs on this host
   engineStartedAt: number | null; // unix ms, from the process table (local)
@@ -69,7 +70,65 @@ export type Rates = {
   cacheHitPct: number | null;
   cacheTokenPct: number | null;
   ttftMs: number | null;
+  live: LiveState; // carry into the next computeRates call
 };
+
+// A *_live gauge is republished by the engine's sampler thread every 2 s and
+// frozen in between, so rating it over a fixed window aliases: a 3 s window
+// holds one step or two and the line zig-zags. Rate it between moves of the
+// gauge instead, carry that rate while the phase is still running, and read
+// zero when it is idle. The engine's cadence drifts against our 1 s reads,
+// so a single step is seen after 1, 2 or 3 s; the rate spans the last few
+// moves, where the token count is exact and the jitter averages out.
+export type LiveMove = { t: number; value: number };
+export type LiveTrack = {
+  t: number;
+  value: number;
+  rate: number;
+  moves: LiveMove[];
+};
+export type LiveState = {
+  decode: LiveTrack | null;
+  prefill: LiveTrack | null;
+};
+export const EMPTY_LIVE: LiveState = { decode: null, prefill: null };
+const LIVE_MOVES = 3; // intervals the rate spans, about 6 s
+// A running request whose decode gauge has not moved for this long is in
+// another phase (a long prefill): stop carrying the old decode rate.
+const LIVE_STALE_MS = 5000;
+
+type TrackOpts = {
+  staleMs: number;
+  // the phase flag marks the start of the phase, so the first move can be
+  // rated from there instead of waiting for a second one
+  seed: boolean;
+};
+
+function trackLive(
+  prev: LiveTrack | null,
+  t: number,
+  cur: number,
+  running: boolean,
+  opts: TrackOpts,
+): LiveTrack {
+  const at = { t, value: cur };
+  if (!prev) return { ...at, rate: 0, moves: [] };
+  if (cur === prev.value) {
+    if (!running || t - prev.t > opts.staleMs) {
+      return { ...at, rate: 0, moves: [] };
+    }
+    if (opts.seed && prev.moves.length === 0) return { ...prev, moves: [at] };
+    return prev;
+  }
+  // a drop means a new request; its first step has no base to rate from
+  const moves = cur >= prev.value ? [...prev.moves, at] : [at];
+  while (moves.length > LIVE_MOVES + 1) moves.shift();
+  const first = moves[0];
+  const secs = Math.max(t - first.t, 1) / 1000;
+  const rate =
+    moves.length < 2 ? 0 : Math.round(((cur - first.value) / secs) * 10) / 10;
+  return { ...at, rate, moves };
+}
 
 const pct = (num: number, den: number) =>
   den > 0 ? Math.round((num / den) * 1000) / 10 : null;
@@ -81,26 +140,15 @@ function histMean(a: HistogramSummary, b: HistogramSummary): number | null {
   return n > 0 ? Math.round(((b.sum - a.sum) / n) * 1000) : null;
 }
 
-// A *_live gauge holds the token count of the current request and drops back
-// when a new one starts, so a negative delta means "new request, cur tokens
-// so far" rather than a reset. With nothing running the line reads zero.
-function liveRate(prev: number, cur: number, running: boolean, secs: number) {
-  if (!running && cur === prev) return 0;
-  const d = cur >= prev ? cur - prev : cur;
-  return Math.round((d / secs) * 10) / 10;
-}
-
 // Pure: rates between two readings. A counter going backwards means the
 // engine restarted: start a new epoch and publish no rates for that window.
-// `base` is the older reading the live token gauges are rated against: the
-// engine advances them in bursts (MTP emits several tokens per step), so a
-// one second window alternates between zero and a double count; a few
-// seconds smooths that. Counters still use the previous reading.
+// `live` is the gauge tracking state from the previous call; the returned
+// `live` is what the next call needs.
 export function computeRates(
   prev: Reading | null,
   cur: Reading,
   prevEpoch: number,
-  base: Reading | null = prev,
+  live: LiveState = EMPTY_LIVE,
 ): Rates {
   const none = {
     windowMs: null,
@@ -110,24 +158,30 @@ export function computeRates(
     cacheTokenPct: null,
     ttftMs: null,
   };
-  if (!prev) return { epoch: prevEpoch, ...none };
+  const g1 = cur.metrics.gauges;
+  const running = g1.requestsRunning > 0 || g1.requestsPrefilling > 0;
+  const track = (): LiveState => ({
+    decode: trackLive(live.decode, cur.t, g1.generationTokensLive, running, {
+      staleMs: LIVE_STALE_MS,
+      seed: false,
+    }),
+    prefill: trackLive(
+      live.prefill,
+      cur.t,
+      g1.prefillTokensLive,
+      g1.requestsPrefilling > 0,
+      { staleMs: Number.POSITIVE_INFINITY, seed: true },
+    ),
+  });
+  if (!prev) return { epoch: prevEpoch, ...none, live: track() };
   const a = prev.metrics.counters;
   const c = cur.metrics.counters;
   const reset = (Object.keys(c) as (keyof typeof c)[]).some((k) => c[k] < a[k]);
-  if (reset) return { epoch: prevEpoch + 1, ...none };
+  if (reset) return { epoch: prevEpoch + 1, ...none, live: EMPTY_LIVE };
   const windowMs = cur.t - prev.t;
-  if (windowMs <= 0) return { epoch: prevEpoch, ...none };
-  const b = base ?? prev;
-  const liveSecs = Math.max(cur.t - b.t, 1) / 1000;
-  const g0 = b.metrics.gauges;
-  const g1 = cur.metrics.gauges;
-  const running = g1.requestsRunning > 0 || g1.requestsPrefilling > 0;
-  const livePrefill = liveRate(
-    g0.prefillTokensLive,
-    g1.prefillTokensLive,
-    running,
-    liveSecs,
-  );
+  if (windowMs <= 0) return { epoch: prevEpoch, ...none, live };
+  const next = track();
+  const livePrefill = next.prefill?.rate ?? 0;
   // The live gauge is published once per prefill chunk and zeroed when the
   // prefill ends, so a prefill of a single chunk (a mostly cached prompt)
   // never shows on it. When a request completed in this window, rate the
@@ -140,15 +194,22 @@ export function computeRates(
       ? Math.round(((c.prefillTokens - a.prefillTokens) / prefillSecs) * 10) /
         10
       : livePrefill;
+  // Same for decode: a short answer is one gauge step, which has no base
+  // to be rated from, so use the request's own decode time at completion.
+  const dh0 = prev.metrics.histograms.decodeTimeSeconds;
+  const dh1 = cur.metrics.histograms.decodeTimeSeconds;
+  const decodeSecs = dh1.sum - dh0.sum;
+  const liveDecode = next.decode?.rate ?? 0;
+  const finishedDecode =
+    liveDecode === 0 && dh1.count > dh0.count && decodeSecs > 0
+      ? Math.round(
+          ((c.generationTokens - a.generationTokens) / decodeSecs) * 10,
+        ) / 10
+      : liveDecode;
   return {
     epoch: prevEpoch,
     windowMs,
-    decodeTps: liveRate(
-      g0.generationTokensLive,
-      g1.generationTokensLive,
-      running,
-      liveSecs,
-    ),
+    decodeTps: finishedDecode,
     prefillTps: finishedPrefill,
     cacheHitPct: pct(
       c.cacheHits - a.cacheHits,
@@ -162,6 +223,7 @@ export function computeRates(
       prev.metrics.histograms.ttftSeconds,
       cur.metrics.histograms.ttftSeconds,
     ),
+    live: next,
   };
 }
 
@@ -203,6 +265,7 @@ export function buildSample(
     gpuPct: g.gpuPct,
     generatedTokens: cur.metrics.counters.generationTokens,
     promptTokens: cur.metrics.counters.promptTokens,
+    cachedPromptTokens: cur.metrics.counters.cachedPromptTokens,
     requestsTotal: cur.metrics.counters.requestsSuccess,
     enginePid: host.pid,
     engineStartedAt: host.proc?.startedAt || null,
@@ -242,6 +305,7 @@ export function downSample(
     gpuPct: 0,
     generatedTokens: 0,
     promptTokens: 0,
+    cachedPromptTokens: 0,
     requestsTotal: 0,
     enginePid: null,
     engineStartedAt: null,

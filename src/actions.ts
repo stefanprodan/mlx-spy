@@ -4,7 +4,8 @@
 // The control actions: load, unload and set-default go through the engine
 // adapter; free (a launchd restart of the service) and disk clear (delete the
 // SSD cache tier contents) are the program's only spawns and file deletions,
-// and both run only when the engine is on this host. Every action is an
+// and both run only when the engine is on this host; history clear wipes
+// mlx-spy's own sample database and touches no engine. Every action is an
 // explicit user request from the UI, is checked against the engine's
 // capabilities and the current model list, runs one at a time, and is logged
 // with its outcome. The sampler never calls into here.
@@ -12,6 +13,7 @@
 import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import type { Engine } from "./engine/types.ts";
+import type { History } from "./history.ts";
 import type { Sampler } from "./sampler.ts";
 
 export const ACTION_NAMES = [
@@ -20,6 +22,7 @@ export const ACTION_NAMES = [
   "default",
   "free",
   "diskClear",
+  "historyClear",
 ] as const;
 export type ActionName = (typeof ACTION_NAMES)[number];
 
@@ -52,6 +55,7 @@ export type SpawnResult = { code: number; stderr: string };
 export type ActionDeps = {
   engine: Engine;
   sampler: Sampler;
+  history: History;
   local: boolean;
   log: (line: string) => void;
   // launchd domain owner; the service runs in the user's gui domain
@@ -120,7 +124,10 @@ export class Actions {
       throw new ActionError(404, `unknown action: ${name}`);
     }
     const capability = name === "free" ? "restart" : name;
-    if (!this.deps.engine.capabilities().has(capability)) {
+    if (
+      capability !== "historyClear" &&
+      !this.deps.engine.capabilities().has(capability)
+    ) {
       throw new ActionError(403, `${this.deps.engine.id} cannot ${name}`);
     }
     if ((name === "free" || name === "diskClear") && !this.deps.local) {
@@ -168,7 +175,9 @@ export class Actions {
   // The model id comes from the request but must name a model the engine
   // listed; the actions never forward arbitrary strings to the engine.
   private modelFor(name: ActionName, body: unknown): string | null {
-    if (name === "free" || name === "diskClear") return null;
+    if (name === "free" || name === "diskClear" || name === "historyClear") {
+      return null;
+    }
     const id = (body as any)?.model;
     if (typeof id !== "string" || id === "") {
       throw new ActionError(400, `${name} needs a model id`);
@@ -203,6 +212,10 @@ export class Actions {
           removed += await this.clearDir(root);
         }
         return `restarted, removed ${removed} cache dir${removed === 1 ? "" : "s"}`;
+      }
+      case "historyClear": {
+        const n = this.deps.history.clear();
+        return `removed ${n} sample${n === 1 ? "" : "s"}`;
       }
     }
   }

@@ -31,15 +31,14 @@ const css = (name: string) =>
 
 // ---------- formatting ----------
 
-// decimal, as the engine notes and mlxctl report sizes
-const GB = 1e9;
+// Binary GB everywhere memory is shown, the unit About This Mac uses for
+// the machine (96 GB, not 103) and the engine's own --prefix-cache-* flags
+// use for their budgets. Only the host disk is decimal, as Finder labels it.
+const GB = 2 ** 30;
 const gb = (b: number | null | undefined, d = 1) =>
   b == null ? "-" : (b / GB).toFixed(d);
-// GB below a terabyte, TB above, for the host disk
-const size = (b: number) =>
-  b >= 1e12 ? `${(b / 1e12).toFixed(1)} TB` : `${gb(b, 0)} GB`;
-// binary, as About This Mac labels memory (96 GB, not 103)
-const gib = (b: number) => Math.round(b / 2 ** 30).toString();
+const diskSize = (b: number) =>
+  b >= 1e12 ? `${(b / 1e12).toFixed(1)} TB` : `${Math.round(b / 1e9)} GB`;
 const num = (n: number | null | undefined, d = 0) =>
   n == null ? "-" : n.toFixed(d);
 const count = (n: number) =>
@@ -56,6 +55,9 @@ const count = (n: number) =>
 let lastTtft: number | null = null;
 let lastCacheHit: number | null = null;
 let lastCacheTok: number | null = null;
+// the last request's prompt: how many tokens, how many came from the cache
+let lastReq: { prompt: number; cached: number } | null = null;
+let prevTok: { prompt: number; cached: number } | null = null;
 // decode and prefill are 0 between requests; the tiles keep the last
 // request's speeds
 let lastDecode: number | null = null;
@@ -82,6 +84,23 @@ function seedTiles(s: Series) {
   lastTtft ??= lastSet(s.ttftMs);
   lastCacheHit ??= lastSet(s.cacheHitPct);
   lastCacheTok ??= lastSet(s.cacheTokenPct);
+  if (!lastReq) {
+    // the last tick where the prompt counter advanced within one engine run
+    for (let i = s.promptTokens.length - 1; i > 0; i--) {
+      if (
+        s.engineUp[i - 1] === 1 &&
+        s.epoch[i] === s.epoch[i - 1] &&
+        s.promptTokens[i - 1] > 0 &&
+        s.promptTokens[i] > s.promptTokens[i - 1]
+      ) {
+        lastReq = {
+          prompt: s.promptTokens[i] - s.promptTokens[i - 1],
+          cached: s.cachedPromptTokens[i] - s.cachedPromptTokens[i - 1],
+        };
+        break;
+      }
+    }
+  }
   if (lastSample) renderTiles(lastSample);
 }
 
@@ -101,19 +120,36 @@ function renderTiles(s: Sample) {
     ? "engine unreachable"
     : lastDecode == null
       ? "no request in the last hour"
-      : `${decoding ? "" : "last request · "}peak ${num(peakInView("decodeTps"))} tok/s in view`;
+      : inView("decodeTps");
   if ((s.prefillTps ?? 0) > 0) lastPrefill = s.prefillTps;
   $("t-prefill").textContent = num(lastPrefill);
-  if (s.ttftMs != null) lastTtft = s.ttftMs;
-  $("t-prefill-sub").textContent =
-    lastTtft == null
+  $("t-prefill-sub").textContent = !s.engineUp
+    ? "engine unreachable"
+    : lastPrefill == null
       ? "no request in the last hour"
-      : `TTFT ${(lastTtft / 1000).toFixed(2)} s on the last request`;
+      : inView("prefillTps");
+  if (s.ttftMs != null) lastTtft = s.ttftMs;
   $("t-requests").textContent = `${s.requestsRunning}`;
-  $("t-requests-sub").textContent =
-    `${s.requestsWaiting} waiting · ${count(s.requestsTotal)} served`;
+  // a queue means every slot is busy: requests are waiting on each other
+  $("t-requests-sub").replaceChildren(
+    el(
+      "span",
+      s.requestsWaiting > 0 ? "warn" : "",
+      `${s.requestsWaiting} waiting`,
+    ),
+    ` · TTFT ${lastTtft == null ? "-" : `${(lastTtft / 1000).toFixed(2)} s`}`,
+  );
   if (s.cacheHitPct != null) lastCacheHit = s.cacheHitPct;
   if (s.cacheTokenPct != null) lastCacheTok = s.cacheTokenPct;
+  if (s.engineUp && prevTok && s.promptTokens > prevTok.prompt) {
+    lastReq = {
+      prompt: s.promptTokens - prevTok.prompt,
+      cached: s.cachedPromptTokens - prevTok.cached,
+    };
+  }
+  prevTok = s.engineUp
+    ? { prompt: s.promptTokens, cached: s.cachedPromptTokens }
+    : null;
   $("t-cache").textContent = s.engineUp ? gb(s.mem.hotCacheEst) : "-";
   // the budget is per resident model, so the tile's ceiling scales with them
   const loaded = s.models.filter((m) => m.loaded).length;
@@ -141,10 +177,9 @@ function renderTiles(s: Sample) {
   // number worth watching, GPU busy sits at 100% under MLX regardless
   $("t-eff").textContent = num(lastCacheTok);
   setBar("t-eff-bar", lastCacheTok ?? 0, 101, 101);
-  $("t-eff-sub").textContent =
-    lastCacheTok == null
-      ? "no request in the last hour"
-      : "of prompt tokens on the last request";
+  $("t-eff-sub").textContent = lastReq
+    ? `${count(lastReq.cached)} of ${count(lastReq.prompt)} prompt tokens`
+    : "no request in the last hour";
   $("t-mem").textContent = gb(s.mem.procFootprint);
   const total = s.mem.hostTotal;
   const avail = s.mem.hostFree + s.mem.hostInactive;
@@ -154,13 +189,14 @@ function renderTiles(s: Sample) {
   } else {
     $("t-mem-sub").textContent = "engine footprint";
   }
-  $("t-generated").textContent = count(s.generatedTokens);
-  $("t-generated-sub").textContent = (() => {
-    const total = s.promptTokens + s.generatedTokens;
-    return total > 0
-      ? `${Math.round((s.generatedTokens / total) * 100)}% of ${count(total)} total`
-      : "";
-  })();
+  // tokens over the loaded range, not the engine's lifetime
+  const gen = rangeTotal("generationTokens");
+  const allTok = gen + rangeTotal("promptTokens");
+  $("t-generated").textContent = count(gen);
+  $("t-generated-sub").textContent =
+    allTok > 0
+      ? `${Math.round((gen / allTok) * 100)}% of ${count(allTok)} total`
+      : "no request in view";
   renderServer(s);
 }
 
@@ -204,8 +240,8 @@ function renderServer(s: Sample) {
   $("engine-gpu").textContent = s.engineUp ? `${num(s.gpuPct)}%` : "-";
   if (s.mem.hostTotal > 0) {
     $("host-mem").replaceChildren(
-      `${gib(s.mem.hostTotal)} GB`,
-      el("small", "", `${gib(s.mem.hostFree + s.mem.hostInactive)} GB free`),
+      `${gb(s.mem.hostTotal, 0)} GB`,
+      el("small", "", `${gb(s.mem.hostFree + s.mem.hostInactive, 0)} GB free`),
     );
   }
 }
@@ -253,16 +289,47 @@ function renderHost(snap: Snapshot) {
   $("host-gpu").textContent =
     h.gpuCores != null ? `${h.gpuCores} cores` : "not detected";
   $("host-disk").replaceChildren(
-    h.disk ? size(h.disk.total) : "-",
-    el("small", "", h.disk ? `${size(h.disk.free)} free` : "not probed"),
+    h.disk ? diskSize(h.disk.total) : "-",
+    el("small", "", h.disk ? `${diskSize(h.disk.free)} free` : "not probed"),
   );
 }
 
-// highest value of a series in the loaded range, for the decode tile
-function peakInView(k: "decodeTps" | "prefillTps"): number {
+// How much a lifetime counter grew over the loaded range: the sum of its
+// steps between consecutive points, within one engine run (a restart zeroes
+// the counters) and only while the engine answered (a down sample holds 0).
+// A step from 0 is skipped too: rows from before a column existed hold 0.
+function rangeTotal(k: "generationTokens" | "promptTokens"): number {
+  if (!series) return 0;
+  const v = series[k];
+  let sum = 0;
+  for (let i = 1; i < v.length; i++) {
+    if (
+      series.engineUp[i] === 1 &&
+      series.engineUp[i - 1] === 1 &&
+      series.epoch[i] === series.epoch[i - 1] &&
+      v[i - 1] > 0 &&
+      v[i] > v[i - 1]
+    ) {
+      sum += v[i] - v[i - 1];
+    }
+  }
+  return sum;
+}
+
+// "avg 30 · peak 46": the mean and highest of a rate over the loaded range,
+// counting only the seconds the phase was active, so idle time does not
+// drag the average down
+function inView(k: "decodeTps" | "prefillTps"): string {
   let peak = 0;
-  for (const v of series?.[k] ?? []) if (v != null && v > peak) peak = v;
-  return peak;
+  let sum = 0;
+  let n = 0;
+  for (const v of series?.[k] ?? []) {
+    if (v == null || v <= 0) continue;
+    if (v > peak) peak = v;
+    sum += v;
+    n++;
+  }
+  return n ? `avg ${num(sum / n)} · peak ${num(peak)}` : "";
 }
 
 // ---------- models ----------
@@ -366,6 +433,7 @@ const ACTION_LABEL: Record<ActionName, string> = {
   default: "set default",
   free: "restart engine",
   diskClear: "clear disk cache",
+  historyClear: "clear history",
 };
 
 // The dialog copy states what happens, from the engine notes: an unload
@@ -389,6 +457,8 @@ function confirmText(action: ActionName, model: string | null): string {
       return "Restart the engine service? Every model is unloaded and its RAM is freed; the hot cache is gone. The SSD tier is kept and comes back on the next load.";
     case "diskClear":
       return `Restart the engine service and delete the SSD cache tier (${gb(diskTotal)} GB)? Every model is unloaded and every cached prefix is gone.`;
+    case "historyClear":
+      return "Delete the stored history? Every sample of the last 7 days is removed from mlx-spy's database and the graphs start over. The engine is not touched.";
   }
 }
 
@@ -626,12 +696,19 @@ function mkChart(
   charts.push(chart);
 }
 
-// idx null: the latest point
+// idx null: the latest point, or, when nothing is running, the last non-zero
+// value dimmed, so the chip is not a permanent 0 between requests.
 function showValues(c: Chart, idx: number | null) {
   for (let i = 0; i < c.chips.length; i++) {
     const arr = c.raw[i] ?? [];
-    const at = idx == null ? arr.length - 1 : idx;
+    let at = idx == null ? arr.length - 1 : idx;
+    let idle = false;
+    if (idx == null && at >= 0 && !((arr[at] ?? 0) > 0)) {
+      idle = true;
+      while (at >= 0 && !((arr[at] ?? 0) > 0)) at--;
+    }
     c.chips[i].textContent = c.defs[i].fmt(at >= 0 ? (arr[at] ?? null) : null);
+    c.chips[i].classList.toggle("idle", idle);
   }
 }
 
@@ -736,6 +813,8 @@ function appendLive(s: Sample) {
   push("ttftMs", s.ttftMs);
   push("generationTokens", s.generatedTokens);
   push("requestsTotal", s.requestsTotal);
+  push("promptTokens", s.promptTokens);
+  push("cachedPromptTokens", s.cachedPromptTokens);
   const cutoff = s.t - 3_600_000;
   while (series.t.length && series.t[0] < cutoff) {
     for (const k of Object.keys(series) as (keyof Series)[]) series[k].shift();
@@ -778,6 +857,13 @@ function connect() {
       if (msg.data.sample) renderTiles(msg.data.sample);
     } else if (msg.type === "event") {
       showEvent(msg.data);
+      if (msg.data.action === "historyClear" && msg.data.ok) {
+        // every tab forgets what it learned from the wiped series
+        lastDecode = lastPrefill = lastTtft = null;
+        lastCacheHit = lastCacheTok = null;
+        lastReq = prevTok = null;
+        void loadRange(range);
+      }
       // another tab may have run it; the residency changed either way
       void fetchSnapshot();
     } else {

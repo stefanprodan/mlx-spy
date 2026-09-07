@@ -52,6 +52,8 @@ export type Series = {
   ttftMs: (number | null)[];
   generationTokens: number[];
   requestsTotal: number[];
+  promptTokens: number[];
+  cachedPromptTokens: number[];
 };
 
 // What the sampler needs back after a restart to keep the epoch honest:
@@ -97,7 +99,9 @@ export class History {
       disk_bytes INTEGER NOT NULL DEFAULT 0,
       ttft_ms REAL,
       generation_tokens INTEGER NOT NULL DEFAULT 0,
-      requests_total INTEGER NOT NULL DEFAULT 0
+      requests_total INTEGER NOT NULL DEFAULT 0,
+      prompt_tokens INTEGER NOT NULL DEFAULT 0,
+      cached_prompt_tokens INTEGER NOT NULL DEFAULT 0
     )`);
     this.migrate();
     this.db.run(
@@ -108,7 +112,8 @@ export class History {
       $requestsWaiting, $cacheHitPct, $cacheTokenPct, $gpuPct, $procFootprint,
       $weights, $hotCacheEst, $mlxActive, $mlxPool, $hostTotal, $hostFree,
       $hostInactive, $hostWired, $hostCompressed, $procRss, $diskBytes,
-      $ttftMs, $generationTokens, $requestsTotal)`);
+      $ttftMs, $generationTokens, $requestsTotal, $promptTokens,
+      $cachedPromptTokens)`);
     this.prune = this.db.prepare("DELETE FROM samples WHERE t < $before");
   }
 
@@ -130,6 +135,8 @@ export class History {
       "disk_bytes",
       "generation_tokens",
       "requests_total",
+      "prompt_tokens",
+      "cached_prompt_tokens",
     ]) {
       if (!have.has(col)) {
         this.db.run(
@@ -171,6 +178,8 @@ export class History {
       ttftMs: s.ttftMs,
       generationTokens: s.generatedTokens,
       requestsTotal: s.requestsTotal,
+      promptTokens: s.promptTokens,
+      cachedPromptTokens: s.cachedPromptTokens,
     });
     // once a minute is plenty; the delete is a range scan on the primary key
     if (s.t - this.lastPruneAt >= 60_000) {
@@ -222,7 +231,9 @@ export class History {
           avg(host_compressed) AS hostCompressed, avg(proc_rss) AS procRss,
           avg(disk_bytes) AS diskBytes, avg(ttft_ms) AS ttftMs,
           max(generation_tokens) AS generationTokens,
-          max(requests_total) AS requestsTotal
+          max(requests_total) AS requestsTotal,
+          max(prompt_tokens) AS promptTokens,
+          max(cached_prompt_tokens) AS cachedPromptTokens
         FROM samples WHERE t >= $since AND t <= $now
         GROUP BY 1 ORDER BY 1`,
       )
@@ -253,6 +264,8 @@ export class History {
       ttftMs: [],
       generationTokens: [],
       requestsTotal: [],
+      promptTokens: [],
+      cachedPromptTokens: [],
     };
     for (const r of rows) {
       out.t.push(r.t);
@@ -280,6 +293,8 @@ export class History {
       out.ttftMs.push(r.ttftMs === null ? null : Math.round(r.ttftMs));
       out.generationTokens.push(r.generationTokens);
       out.requestsTotal.push(r.requestsTotal);
+      out.promptTokens.push(r.promptTokens);
+      out.cachedPromptTokens.push(r.cachedPromptTokens);
     }
     return out;
   }
@@ -304,6 +319,14 @@ export class History {
     this.db
       .query("INSERT OR REPLACE INTO meta (key, value) VALUES ('sampler', $v)")
       .run({ v: JSON.stringify(state) });
+  }
+
+  // Wipe the samples, keeping the sampler state so the epoch stays honest.
+  clear(): number {
+    const n = this.count();
+    this.db.run("DELETE FROM samples");
+    this.ring.length = 0;
+    return n;
   }
 
   close() {

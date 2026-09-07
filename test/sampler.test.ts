@@ -98,6 +98,10 @@ describe("Sampler", () => {
         b.gauges.generation_tokens_live = 45;
         b.gauges.requests_running = 1;
       },
+      (b) => {
+        b.gauges.generation_tokens_live = 105;
+        b.gauges.requests_running = 1;
+      },
     ]);
     const history = new History(":memory:");
     const c = clock();
@@ -105,8 +109,11 @@ describe("Sampler", () => {
     await s.tick();
     c.advance(1500);
     const b = await s.tick();
-    expect(b?.decodeTps).toBe(30);
+    expect(b?.decodeTps).toBe(0); // first move: nothing to rate it against
     expect(b?.requestsRunning).toBe(1);
+    c.advance(2000);
+    const d = await s.tick();
+    expect(d?.decodeTps).toBe(30);
     history.close();
   });
 
@@ -223,7 +230,13 @@ describe("web", () => {
     await sampler.tick();
     c.advance(1000);
     await sampler.tick();
-    const actions = new Actions({ engine, sampler, local: false, log() {} });
+    const actions = new Actions({
+      engine,
+      sampler,
+      history,
+      local: false,
+      log() {},
+    });
     return {
       engine,
       sampler,

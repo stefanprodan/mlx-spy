@@ -20,7 +20,14 @@
         </div>
       </header>
 
-      <div class="shead"><h2>Stats</h2><span class="pill" id="ws-state">connecting</span></div>
+      <div class="shead">
+        <h2>Stats</h2>
+        <span class="pill" id="ws-state">connecting</span>
+        <span class="grow"></span>
+        <span class="btns">
+          <button type="button" class="btn" id="a-history" data-action="historyClear">Clear history</button>
+        </span>
+      </div>
       <section class="card">
         <div class="tiles">
           <div class="tile">
@@ -69,8 +76,8 @@
           </div>
         </div>
         <div class="sparks two">
-          <div class="spark" id="c-decode"><div class="shd"><span class="lbl">Decode tok/s</span><span class="chips"></span></div><div class="plot"></div></div>
-          <div class="spark" id="c-prefill"><div class="shd"><span class="lbl">Prefill tok/s</span><span class="chips"></span></div><div class="plot"></div></div>
+          <div class="spark" id="c-decode"><div class="shd"><span class="lbl">Decode</span><span class="chips"></span></div><div class="plot"></div></div>
+          <div class="spark" id="c-prefill"><div class="shd"><span class="lbl">Prefill</span><span class="chips"></span></div><div class="plot"></div></div>
         </div>
       </section>
 

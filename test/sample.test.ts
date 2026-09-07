@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { parseMetrics, parseModels } from "../src/engine/mlxserve.ts";
-import { buildSample, computeRates, type Reading } from "../src/sample.ts";
+import {
+  buildSample,
+  computeRates,
+  EMPTY_LIVE,
+  type Reading,
+} from "../src/sample.ts";
 import metricsFixture from "./fixtures/metrics.json";
 import modelsFixture from "./fixtures/models.json";
 
@@ -17,8 +22,13 @@ function reading(
   return { t, metrics: parseMetrics(body) };
 }
 
+// Rates from a to b with the live gauges tracked from a, as the sampler
+// does across ticks.
+const rates = (a: Reading, b: Reading, epoch = 0) =>
+  computeRates(a, b, epoch, computeRates(null, a, epoch).live);
+
 describe("computeRates", () => {
-  test("no previous reading: no rates, same epoch", () => {
+  test("no previous reading: no rates, same epoch, gauges tracked", () => {
     const r = computeRates(null, reading(1000), 0);
     expect(r).toEqual({
       epoch: 0,
@@ -28,6 +38,10 @@ describe("computeRates", () => {
       cacheHitPct: null,
       cacheTokenPct: null,
       ttftMs: null,
+      live: {
+        decode: { t: 1000, value: 26, rate: 0, moves: [] },
+        prefill: { t: 1000, value: 0, rate: 0, moves: [] },
+      },
     });
   });
 
@@ -35,12 +49,12 @@ describe("computeRates", () => {
     const a = reading(1000);
     const b = reading(2000);
     b.metrics.histograms.ttftSeconds = { count: 3, sum: 11.258592084 + 0.5 };
-    expect(computeRates(a, b, 0).ttftMs).toBe(250);
-    expect(computeRates(a, reading(2000), 0).ttftMs).toBeNull();
+    expect(rates(a, b).ttftMs).toBe(250);
+    expect(rates(a, reading(2000)).ttftMs).toBeNull();
   });
 
   test("idle window: zero token rates, no cache ratio", () => {
-    const r = computeRates(reading(1000), reading(2000), 0);
+    const r = rates(reading(1000), reading(2000));
     expect(r.windowMs).toBe(1000);
     expect(r.decodeTps).toBe(0);
     expect(r.prefillTps).toBe(0);
@@ -48,34 +62,48 @@ describe("computeRates", () => {
     expect(r.cacheTokenPct).toBeNull();
   });
 
-  test("live gauges advancing during a request give tok/s", () => {
-    const a = reading(1000, {}, { generation_tokens_live: 100 });
-    const b = reading(
-      3000,
-      {},
-      { generation_tokens_live: 160, requests_running: 1 },
-    );
-    expect(computeRates(a, b, 0).decodeTps).toBe(30);
+  // Rates over a run of readings, tracking the live gauges tick to tick.
+  function run(rs: Reading[]) {
+    let live = computeRates(null, rs[0], 0).live;
+    const out: { decode: number | null; prefill: number | null }[] = [];
+    for (let i = 1; i < rs.length; i++) {
+      const x = computeRates(rs[i - 1], rs[i], 0, live);
+      live = x.live;
+      out.push({ decode: x.decodeTps, prefill: x.prefillTps });
+    }
+    return out;
+  }
+  const decoding = (t: number, live: number) =>
+    reading(t, {}, { generation_tokens_live: live, requests_running: 1 });
+  const prefilling = (t: number, live: number) =>
+    reading(t, {}, { prefill_tokens_live: live, requests_prefilling: 1 });
+
+  test("decode tok/s between moves of the live gauge", () => {
+    // the first move after idle has no base; the second is rated over the
+    // span between them
+    const out = run([reading(1000), decoding(2000, 130), decoding(4000, 190)]);
+    expect(out.map((o) => o.decode)).toEqual([0, 30]);
   });
 
   test("a live gauge dropping means a new request started", () => {
-    const a = reading(1000, {}, { generation_tokens_live: 500 });
-    const b = reading(
-      2000,
-      {},
-      { generation_tokens_live: 12, requests_running: 1 },
-    );
-    expect(computeRates(a, b, 0).decodeTps).toBe(12);
+    const out = run([
+      decoding(1000, 500),
+      decoding(2000, 12),
+      decoding(3000, 40),
+    ]);
+    expect(out.map((o) => o.decode)).toEqual([0, 28]);
   });
 
-  test("prefill rate from prefill_tokens_live while prefilling", () => {
-    const a = reading(1000, {}, { prefill_tokens_live: 0 });
-    const b = reading(
-      2000,
-      {},
-      { prefill_tokens_live: 640, requests_prefilling: 1 },
-    );
-    expect(computeRates(a, b, 0).prefillTps).toBe(640);
+  test("prefill is rated from the start of the phase", () => {
+    // the phase flag flips at prefill start, the gauge lands a chunk later
+    const out = run([
+      reading(1000),
+      prefilling(2000, 0),
+      prefilling(3000, 0),
+      prefilling(6000, 2048),
+      prefilling(10000, 4096),
+    ]);
+    expect(out.map((o) => o.prefill)).toEqual([0, 0, 512, 512]);
   });
 
   test("a one-chunk prefill never shows on the live gauge: rate it at completion", () => {
@@ -87,21 +115,22 @@ describe("computeRates", () => {
       count: a.metrics.histograms.prefillTimeSeconds.count + 1,
       sum: a.metrics.histograms.prefillTimeSeconds.sum + 8.53,
     };
-    expect(computeRates(a, b, 0).prefillTps).toBe(67.4);
+    expect(rates(a, b).prefillTps).toBe(67.4);
     // no request finished: an idle window still reads 0
     expect(
-      computeRates(a, reading(2000, { prefill_tokens_total: 10354 }), 0)
-        .prefillTps,
+      rates(a, reading(2000, { prefill_tokens_total: 10354 })).prefillTps,
     ).toBe(0);
-    // the live gauge, when it does move, wins over the completion figure
-    const c = reading(
-      2000,
-      { prefill_tokens_total: 10929 },
-      { prefill_tokens_live: 2048, requests_prefilling: 1 },
-    );
-    c.metrics.histograms.prefillTimeSeconds =
-      b.metrics.histograms.prefillTimeSeconds;
-    expect(computeRates(a, c, 0).prefillTps).toBe(2048);
+  });
+
+  test("a short answer is rated from its decode time at completion", () => {
+    // 25 tokens in 1.2 s of decode: one gauge step, no live rate
+    const a = reading(1000);
+    const b = reading(2000, { generation_tokens_total: 26 + 25 });
+    b.metrics.histograms.decodeTimeSeconds = {
+      count: a.metrics.histograms.decodeTimeSeconds.count + 1,
+      sum: a.metrics.histograms.decodeTimeSeconds.sum + 1.2,
+    };
+    expect(rates(a, b).decodeTps).toBe(20.8);
   });
 
   test("cache ratios come from counter deltas, not lifetime totals", () => {
@@ -112,7 +141,7 @@ describe("computeRates", () => {
       prompt_tokens_total: 42781 + 10000,
       prefix_cache_tokens_total: 41933 + 7500,
     });
-    const r = computeRates(a, b, 0);
+    const r = rates(a, b);
     // 3 hits of 4 new queries; 7500 of 10000 new prompt tokens
     expect(r.cacheHitPct).toBe(75);
     expect(r.cacheTokenPct).toBe(75);
@@ -124,15 +153,16 @@ describe("computeRates", () => {
       prompt_tokens_total: 12,
       requests_success_total: 0,
     });
-    const r = computeRates(a, b, 3);
+    const r = rates(a, b, 3);
     expect(r.epoch).toBe(4);
     expect(r.windowMs).toBeNull();
     expect(r.decodeTps).toBeNull();
     expect(r.cacheHitPct).toBeNull();
+    expect(r.live).toEqual(EMPTY_LIVE);
   });
 
   test("a non-positive window yields no rates", () => {
-    const r = computeRates(reading(2000), reading(2000), 0);
+    const r = rates(reading(2000), reading(2000));
     expect(r.windowMs).toBeNull();
     expect(r.decodeTps).toBeNull();
   });
@@ -164,39 +194,63 @@ describe("buildSample", () => {
   });
 });
 
-describe("computeRates live window", () => {
-  test("bursty live gauge smooths over the base reading", () => {
-    // the gauge moves every other second: 0, +40, +0, +40
-    const r0 = reading(1000, {}, { generation_tokens_live: 100 });
-    const r1 = reading(
-      2000,
-      {},
-      { generation_tokens_live: 140, requests_running: 1 },
-    );
-    const r2 = reading(
-      3000,
-      {},
-      { generation_tokens_live: 140, requests_running: 1 },
-    );
-    // one second windows alternate between 40 and 0
-    expect(computeRates(r0, r1, 0).decodeTps).toBe(40);
-    expect(computeRates(r1, r2, 0).decodeTps).toBe(0);
-    // rated against a base two seconds back the line reads 20 both times
-    expect(computeRates(r1, r2, 0, r0).decodeTps).toBe(20);
+describe("computeRates live tracking", () => {
+  const at = (t: number, live: number) =>
+    reading(t, {}, { generation_tokens_live: live, requests_running: 1 });
+  function run(rs: Reading[]) {
+    let live = computeRates(null, rs[0], 0).live;
+    const out: (number | null)[] = [];
+    for (let i = 1; i < rs.length; i++) {
+      const x = computeRates(rs[i - 1], rs[i], 0, live);
+      live = x.live;
+      out.push(x.decodeTps);
+    }
+    return out;
+  }
+
+  // The engine republishes the live gauges every 2 s; mlx-spy reads every
+  // second, so the gauge is frozen on every other tick.
+  test("a frozen gauge carries the rate while the request runs", () => {
+    const out = run([
+      at(1000, 100),
+      at(2000, 100), // not republished yet
+      at(3000, 140), // first move: no base
+      at(4000, 140),
+      at(5000, 190), // 50 over 2 s
+      at(6000, 190),
+      at(7000, 230), // 90 over the 4 s spanning the last two moves
+    ]);
+    expect(out).toEqual([0, 0, 0, 25, 25, 22.5]);
   });
 
-  test("counters and epoch still come from the previous reading", () => {
-    const r0 = reading(1000);
-    const r1 = reading(2000, {
-      prefix_cache_queries_total: 3,
-      prefix_cache_hits_total: 2,
-    });
-    const r2 = reading(3000, {
-      prefix_cache_queries_total: 4,
-      prefix_cache_hits_total: 2,
-    });
-    const r = computeRates(r1, r2, 0, r0);
-    expect(r.cacheHitPct).toBe(0); // 0 of 1 new query, not 1 of 3
-    expect(r.windowMs).toBe(1000);
+  test("a step seen late and the next seen early average out", () => {
+    // 44 tokens per 2 s step, observed after 3 s, 1 s, 2 s, 2 s
+    const out = run([
+      at(1000, 0),
+      at(4000, 44),
+      at(5000, 88),
+      at(7000, 132),
+      at(9000, 176),
+    ]);
+    expect(out).toEqual([0, 44, 29.3, 26.4]);
+  });
+
+  test("idle resets the rate; a long prefill goes stale", () => {
+    const idle = (t: number, live: number) =>
+      reading(t, {}, { generation_tokens_live: live });
+    const out = run([
+      at(1000, 100),
+      at(3000, 140),
+      at(5000, 180), // 20 tok/s
+      idle(6000, 180),
+      idle(7000, 180),
+      at(8000, 180), // next request: prefilling, gauge frozen
+      at(10000, 180),
+      at(12000, 180),
+      at(14000, 180), // > 5 s without a move: no carry
+      at(16000, 220),
+      at(18000, 260),
+    ]);
+    expect(out).toEqual([0, 20, 0, 0, 0, 0, 0, 0, 0, 20]);
   });
 });

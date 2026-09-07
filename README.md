@@ -34,9 +34,11 @@ is the boundary.
 - `WS /ws` a snapshot on connect, then one sample per second and an event
   per finished action
 - `POST /api/actions/load|unload|default` with `{"model": "<id>"}`, and
-  `POST /api/actions/free|diskClear` (local engine only)
+  `POST /api/actions/free|diskClear` (local engine only), and
+  `POST /api/actions/historyClear` (wipes mlx-spy's own sample database)
 
-A sample carries the engine state, windowed decode and prefill tok/s, cache
+A sample carries the engine state, live decode and prefill tok/s (rated between
+moves of the engine's 2 s live gauges, carried while the phase runs), cache
 hit ratios, the memory split (host free, inactive, wired and compressed;
 engine footprint and RSS; weights, estimated hot cache, MLX pool), the cache
 tier directories and the model list. The engine pid, RSS, CPU, start time

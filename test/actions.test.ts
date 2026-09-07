@@ -96,6 +96,7 @@ async function setup(local = true) {
   const actions = new Actions({
     engine,
     sampler,
+    history,
     local,
     log: (l) => logs.push(l),
     uid: 501,
@@ -219,6 +220,7 @@ describe("Actions", () => {
     const actions = new Actions({
       engine: s.engine,
       sampler: s.sampler,
+      history: s.history,
       local: true,
       log() {},
       spawn: async () => ({ code: 3, stderr: "no such service" }),
@@ -297,5 +299,18 @@ describe("clearDirContents", () => {
     expect(await clearDirContents(root)).toBe(2);
     expect(await readdir(root)).toEqual([]);
     expect(await clearDirContents(join(root, "missing"))).toBe(0);
+  });
+
+  test("historyClear wipes the samples, keeps the sampler state", async () => {
+    // a remote engine too: nothing here touches it
+    const { actions, history } = await setup(false);
+    expect(history.count()).toBe(1);
+    const ev = await actions.run("historyClear", {});
+    expect(ev.ok).toBe(true);
+    expect(ev.detail).toBe("removed 1 sample");
+    expect(history.count()).toBe(0);
+    expect(history.latest()).toBeNull();
+    expect(history.loadSamplerState().epoch).toBe(0);
+    history.close();
   });
 });
