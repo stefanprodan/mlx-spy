@@ -14,6 +14,8 @@ export type HostMemory = {
 export type ProcessMemory = {
   footprint: number; // phys_footprint, what Activity Monitor calls "Memory"
   rss: number;
+  startedAt: number; // unix ms the process started, 0 when unknown
+  cpuNs: number; // user + system CPU time so far, in nanoseconds
 };
 
 export type DiskDir = {
@@ -35,6 +37,9 @@ export type HostSnapshot = {
   mem: HostMemory | null;
   pid: number | null;
   proc: ProcessMemory | null;
+  // the engine process's CPU over the last tick, percent of one core as
+  // top and Activity Monitor show it; null until two readings exist
+  cpuPct: number | null;
   disk: DiskDir[];
 };
 
@@ -42,5 +47,6 @@ export const EMPTY_HOST: HostSnapshot = {
   mem: null,
   pid: null,
   proc: null,
+  cpuPct: null,
   disk: [],
 };

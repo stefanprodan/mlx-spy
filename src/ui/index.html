@@ -11,7 +11,7 @@
     <div class="page">
       <header class="top">
         <div class="wordmark"><span class="mark"></span>mlx-spy</div>
-        <div class="engine"><span class="dot" id="engine-dot"></span><span id="engine-url"></span></div>
+        <span class="grow"></span>
         <div class="seg" id="ranges">
           <button type="button" data-range="1h" class="active">1h</button>
           <button type="button" data-range="6h">6h</button>
@@ -20,7 +20,7 @@
         </div>
       </header>
 
-      <div class="shead"><h2>Live metrics</h2><span class="pill" id="ws-state">connecting</span></div>
+      <div class="shead"><h2>Stats</h2><span class="pill" id="ws-state">connecting</span></div>
       <section class="card">
         <div class="tiles">
           <div class="tile">
@@ -74,27 +74,44 @@
         </div>
       </section>
 
-      <div class="shead"><h2>Memory</h2></div>
-      <section class="card">
-        <div class="sparks">
-          <div class="spark tall" id="c-memory"><div class="shd"><span class="lbl">Engine process and host</span><span class="chips"></span></div><div class="plot"></div></div>
-        </div>
-      </section>
-
-
       <div class="shead">
         <h2>Models</h2>
         <span class="hint" id="disk-note"></span>
-        <span class="grow"></span>
-        <span class="btns">
-          <button type="button" class="btn" id="a-free" data-action="free">Free RAM</button>
-          <button type="button" class="btn" id="a-disk" data-action="diskClear">Clear disk cache</button>
-        </span>
       </div>
       <section class="card models">
         <table id="models"><tbody></tbody></table>
       </section>
       <div class="event" id="event" hidden></div>
+
+      <div class="shead">
+        <h2>Runtime</h2>
+        <span class="hint" id="host-note"></span>
+        <span class="grow"></span>
+        <span class="btns">
+          <button type="button" class="btn" id="a-free" data-action="free">Restart engine</button>
+          <button type="button" class="btn" id="a-disk" data-action="diskClear">Clear disk cache</button>
+        </span>
+      </div>
+      <section class="card">
+        <div class="facts">
+          <dl>
+            <dt>Engine</dt><dd><span class="dot" id="engine-dot"></span><span id="engine-name"></span></dd>
+            <dt>URL</dt><dd class="mono" id="engine-url"></dd>
+            <dt>Weights</dt><dd id="engine-weights"></dd>
+            <dt>Memory</dt><dd id="engine-mem"></dd>
+            <dt>CPU</dt><dd id="engine-cpu"></dd>
+            <dt>GPU</dt><dd id="engine-gpu"></dd>
+          </dl>
+          <dl>
+            <dt>Host</dt><dd id="host-name"></dd>
+            <dt>OS</dt><dd id="host-os"></dd>
+            <dt>Chip</dt><dd id="host-chip"></dd>
+            <dt>GPU</dt><dd id="host-gpu"></dd>
+            <dt>Memory</dt><dd id="host-mem"></dd>
+            <dt>Disk</dt><dd id="host-disk"></dd>
+          </dl>
+        </div>
+      </section>
 
       <footer><span id="version"></span></footer>
     </div>

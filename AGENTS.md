@@ -98,7 +98,7 @@ src/web.ts           Bun.serve: the page (HTML import passed in from main.ts),
                      handle() is separate from serve() so tests call it with
                      a Request; tailscaleAddress() picks the default bind
 src/ui/index.html    the dashboard: tile row, five uPlot charts, models table
-                     with load/unload/default buttons, Free RAM and Clear
+                     with load/unload/default buttons, Restart engine and Clear
                      disk cache in the section head, a confirm dialog;
                      Bun bundles style.css and app.ts from it (also into the
                      compiled binary, Bun 1.2.17+)
@@ -108,14 +108,18 @@ src/ui/app.ts        browser client: WebSocket, tiles, uPlot charts with a
 src/ui/style.css     follows the engine's own console (its tokens: #131314 page,
                      #1e1f20 cards, #0f1216 inset tiles, 10px uppercase labels,
                      26px bold mono values); single-series sparklines use the
-                     console's green and blue, the stacked memory chart a
-                     validated four-colour set. uPlot's legend is hidden; each
+                     console's green and blue. uPlot's legend is hidden; each
                      box shows its values in the head (latest, or at the
                      shared cursor)
 src/host/index.ts    probe facade: darwin FFI on macOS, NULL_PROBES elsewhere
+src/host/info.ts     hostInfo(): static host facts for the Runtime section (macOS
+                     version from SystemVersion.plist, chip and cores from
+                     sysctl, GPU cores from the IORegistry, home volume via
+                     statfs); read once at startup, disk space per snapshot
 src/host/darwin.ts   bun:ffi: host_statistics64 (host memory), proc_pid_rusage
-                     (engine footprint and RSS), proc_listallpids + proc_pidpath
-                     (pid by executable basename). Offsets verified with
+                     (engine footprint, RSS, CPU time), proc_pidinfo (start
+                     time), proc_listallpids + proc_pidpath (pid by executable
+                     basename), darwinHostInfo() (chip, cores, GPU cores). Offsets verified with
                      offsetof(); load-bearing comments
 src/host/disk.ts     cacheDirSizes(): one entry per child dir of each cache
                      root, allocated bytes like du, async, no spawn

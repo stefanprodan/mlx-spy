@@ -1,7 +1,6 @@
 /* Follows the engine's own console: near-black page, one card per section,
    inset tiles and sparkline boxes darker than the card, uppercase 10px
-   labels, bold mono values. Series colours: the console's green and blue
-   for single lines; a validated four-colour set for the stacked memory. */
+   labels, bold mono values. Series colours: the console's green and blue. */
 :root {
   color-scheme: dark;
   --bg: #131314;
@@ -20,10 +19,6 @@
   --blue: #3b82f6;
   --amber: #f59e0b;
   --red: #ef4444;
-  --m1: #3987e5;
-  --m2: #d95926;
-  --m3: #199e70;
-  --m4: #c98500;
   --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -78,19 +73,6 @@ button {
   height: 18px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #7ee2b8, #10b981 60%, #0b3a2a);
-}
-.engine {
-  flex: 1;
-  color: var(--faint);
-  font-size: 13px;
-  font-family: var(--mono);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .dot {
   width: 7px;
@@ -405,9 +387,6 @@ dialog .row {
 .spark .plot {
   height: 72px;
 }
-.spark.tall .plot {
-  height: 200px;
-}
 
 /* uPlot: no legend of its own, quiet axes */
 .uplot {
@@ -504,6 +483,50 @@ td.act {
 }
 td.act .btn {
   margin-left: 4px;
+}
+
+/* runtime facts: two label/value columns, engine left, host right */
+.facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 32px;
+}
+.facts dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 18px;
+  align-items: baseline;
+  margin: 4px 2px;
+  min-width: 0;
+}
+.facts dt {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #7d8794;
+}
+.facts dd {
+  margin: 0;
+  font-size: 13.5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.facts dd.mono {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--dim);
+}
+.facts dd .dot {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: 1px;
+}
+.facts dd small {
+  color: var(--faint);
+  font-size: 12px;
+  margin-left: 6px;
 }
 
 footer {

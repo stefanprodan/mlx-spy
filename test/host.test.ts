@@ -32,6 +32,12 @@ describe.if(onDarwin)("darwin probes", () => {
     expect(pm).not.toBeNull();
     expect(pm!.footprint).toBeGreaterThan(1024 * 1024);
     expect(pm!.rss).toBeGreaterThan(1024 * 1024);
+    // started within the last day and not in the future
+    expect(pm!.startedAt).toBeGreaterThan(Date.now() - 86_400_000);
+    expect(pm!.startedAt).toBeLessThanOrEqual(Date.now() + 1000);
+    // this test process has burned some CPU, but not more than its lifetime
+    expect(pm!.cpuNs).toBeGreaterThan(0);
+    expect(pm!.cpuNs).toBeLessThan((Date.now() - pm!.startedAt) * 1e6 * 32);
   });
 
   test("process memory of a dead pid is null", () => {

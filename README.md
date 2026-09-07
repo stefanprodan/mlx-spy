@@ -39,8 +39,10 @@ is the boundary.
 A sample carries the engine state, windowed decode and prefill tok/s, cache
 hit ratios, the memory split (host free, inactive, wired and compressed;
 engine footprint and RSS; weights, estimated hot cache, MLX pool), the cache
-tier directories and the model list. The engine pid, RSS and disk tier are
-only probed when the engine runs on the same host. The hot cache and SSD
+tier directories and the model list. The engine pid, RSS, CPU, start time
+and disk tier are only probed when the engine runs on the same host; the
+Runtime section shows them next to facts about the host (OS, chip, cores,
+GPU cores, memory, disk). The hot cache and SSD
 cache tiles draw a bar against the engine's per-model budgets, read from its
 launchd plist for a local engine or given with `--hot-cache-max` and
 `--disk-cache-max`.

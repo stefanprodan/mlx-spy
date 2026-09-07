@@ -37,6 +37,8 @@ export type Sample = {
   generatedTokens: number; // lifetime counter (this epoch)
   requestsTotal: number; // lifetime successful requests (this epoch)
   enginePid: number | null; // only when the engine runs on this host
+  engineStartedAt: number | null; // unix ms, from the process table (local)
+  engineCpuPct: number | null; // percent of one core over the last tick (local)
   mem: {
     hostTotal: number;
     hostFree: number;
@@ -188,6 +190,8 @@ export function buildSample(
     generatedTokens: cur.metrics.counters.generationTokens,
     requestsTotal: cur.metrics.counters.requestsSuccess,
     enginePid: host.pid,
+    engineStartedAt: host.proc?.startedAt || null,
+    engineCpuPct: host.cpuPct,
     mem: {
       ...hostMem(host),
       procFootprint: host.proc?.footprint ?? g.memoryBytes,
@@ -224,6 +228,8 @@ export function downSample(
     generatedTokens: 0,
     requestsTotal: 0,
     enginePid: null,
+    engineStartedAt: null,
+    engineCpuPct: null,
     mem: {
       ...hostMem(host),
       procFootprint: 0,
@@ -261,6 +267,7 @@ export async function takeSample(
     mem: probes.hostMemory(),
     pid,
     proc: pid === null ? null : probes.processMemory(pid),
+    cpuPct: null, // needs two readings; the loop has them, --once does not
     disk: local ? await cacheDirSizes(engine.cacheDirs()) : [],
   };
   const first = await readEngine(engine);

@@ -232,6 +232,7 @@ describe("web", () => {
       version: "vtest",
       local: false,
       limits: null,
+      host: null,
       now: c.now,
     };
   }
@@ -247,6 +248,7 @@ describe("web", () => {
       capabilities: [],
       limits: null,
     });
+    expect(snap.host).toBeNull();
     expect(snap.disk).toEqual([]);
     expect(snap.sample?.windowMs).toBe(1000);
     expect(snap.models).toHaveLength(3);
@@ -285,9 +287,11 @@ describe("web", () => {
 });
 
 describe("Sampler host probes", () => {
+  let cpuTicks = 0;
   function fakeProbes(
     pids: Map<number, string>,
   ): HostProbes & { scans: number } {
+    cpuTicks = 0;
     return {
       scans: 0,
       hostMemory: () => ({
@@ -300,7 +304,15 @@ describe("Sampler host probes", () => {
         compressed: 50,
       }),
       processMemory: (pid) =>
-        pids.has(pid) ? { footprint: pid * 10, rss: pid * 9 } : null,
+        pids.has(pid)
+          ? {
+              footprint: pid * 10,
+              rss: pid * 9,
+              startedAt: 500_000,
+              // a quarter core busy: 250 ms of CPU per second of wall time
+              cpuNs: 250e6 * cpuTicks++,
+            }
+          : null,
       findPid(names) {
         this.scans++;
         for (const [pid, name] of pids) if (names.includes(name)) return pid;
@@ -346,19 +358,26 @@ describe("Sampler host probes", () => {
     expect(a.enginePid).toBe(42);
     expect(a.mem.procFootprint).toBe(420);
     expect(a.mem.procRss).toBe(378);
+    expect(a.engineStartedAt).toBe(500_000);
+    expect(a.engineCpuPct).toBeNull(); // one reading, no rate yet
     expect(probes.scans).toBe(1);
     expect(lines).toEqual(["engine pid none -> 42"]);
+    c.advance(1000);
+    const a2 = (await s.tick())!;
+    expect(a2.engineCpuPct).toBeCloseTo(25, 5);
     // the engine process restarts: old pid gone
     pids.clear();
     c.advance(1000);
     const b = (await s.tick())!;
     expect(b.enginePid).toBeNull();
+    expect(b.engineCpuPct).toBeNull();
     expect(b.mem.procFootprint).toBe(39439 * 1024 * 1024);
     // new pid appears; found on the next scan interval
     pids.set(77, "fake-engine");
     c.advance(1000);
     const d = (await s.tick())!;
     expect(d.enginePid).toBe(77);
+    expect(d.engineCpuPct).toBeNull(); // new pid, new window
     expect(d.mem.procFootprint).toBe(770);
     expect(lines.at(-1)).toBe("engine pid none -> 77");
     history.close();

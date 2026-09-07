@@ -20,6 +20,11 @@ import type { snapshot, WsMessage } from "../web.ts";
 
 type Snapshot = ReturnType<typeof snapshot>;
 
+const ENGINE_NAME: Record<Snapshot["engine"]["id"], string> = {
+  mlxserve: "mlx-serve",
+  omlx: "oMLX",
+};
+
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
 const css = (name: string) =>
   getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -30,6 +35,9 @@ const css = (name: string) =>
 const GB = 1e9;
 const gb = (b: number | null | undefined, d = 1) =>
   b == null ? "-" : (b / GB).toFixed(d);
+// GB below a terabyte, TB above, for the host disk
+const size = (b: number) =>
+  b >= 1e12 ? `${(b / 1e12).toFixed(1)} TB` : `${gb(b, 0)} GB`;
 const num = (n: number | null | undefined, d = 0) =>
   n == null ? "-" : n.toFixed(d);
 const count = (n: number) =>
@@ -122,6 +130,103 @@ function renderTiles(s: Sample) {
   $("t-generated").textContent = count(s.generatedTokens);
   $("t-generated-sub").textContent =
     `${count(s.requestsTotal)} request${s.requestsTotal === 1 ? "" : "s"} this run`;
+  renderServer(s);
+}
+
+// The live half of the Runtime section: the engine's residency and process.
+function renderServer(s: Sample) {
+  const loaded = s.models.filter((m) => m.loaded).length;
+  const weights = $("engine-weights");
+  weights.replaceChildren(
+    s.engineUp ? `${gb(s.mem.weights)} GB` : "-",
+    el(
+      "small",
+      "",
+      !s.engineUp
+        ? "unreachable"
+        : loaded
+          ? `${loaded} model${loaded === 1 ? "" : "s"} resident`
+          : "nothing loaded",
+    ),
+  );
+  // Memory and CPU come from the process table, so they need a local
+  // engine; GPU busy is the engine's own gauge and works anywhere.
+  const pid = s.enginePid;
+  const why = !engineLocal
+    ? "runs on another host"
+    : s.engineUp
+      ? "no mlx-serve process found"
+      : "not running";
+  const up =
+    s.engineStartedAt == null
+      ? ""
+      : ` · up ${duration(s.t - s.engineStartedAt)}`;
+  $("engine-mem").replaceChildren(
+    pid == null ? "-" : `${gb(s.mem.procFootprint)} GB`,
+    el(
+      "small",
+      "",
+      pid == null ? why : `RSS ${gb(s.mem.procRss)} GB · pid ${pid}${up}`,
+    ),
+  );
+  $("engine-cpu").replaceChildren(
+    pid == null || s.engineCpuPct == null ? "-" : `${num(s.engineCpuPct)}%`,
+    el("small", "", pid == null ? why : "of one core, like top"),
+  );
+  $("engine-gpu").textContent = s.engineUp ? `${num(s.gpuPct)}%` : "-";
+}
+
+// "3d 4h", "2h 15m", "40s"
+function duration(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(s / 86_400);
+  const h = Math.floor((s % 86_400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (d) return `${d}d ${h}h`;
+  if (h) return `${h}h ${m}m`;
+  if (m) return `${m}m`;
+  return `${s}s`;
+}
+
+// The static half: facts about the host mlx-spy runs on. For a remote
+// engine they describe this machine, not the engine's, and say so.
+function renderHost(snap: Snapshot) {
+  const h = snap.host;
+  $("host-note").textContent =
+    h && !snap.engine.local
+      ? "host facts are for this machine, not the engine's"
+      : "";
+  if (!h) {
+    for (const id of [
+      "host-name",
+      "host-os",
+      "host-chip",
+      "host-gpu",
+      "host-mem",
+      "host-disk",
+    ]) {
+      $(id).textContent = "-";
+    }
+    return;
+  }
+  $("host-name").textContent = h.hostname;
+  $("host-os").textContent = h.os;
+  const cores =
+    h.perfCores != null && h.effCores != null
+      ? `${h.cpuCores} cores (${h.perfCores}P + ${h.effCores}E)`
+      : `${h.cpuCores} cores`;
+  $("host-chip").replaceChildren(h.chip ?? "unknown", el("small", "", cores));
+  $("host-gpu").textContent =
+    h.gpuCores != null ? `${h.gpuCores} cores` : "not detected";
+  $("host-mem").textContent = `${gb(h.memTotal, 0)} GB unified`;
+  $("host-disk").replaceChildren(
+    h.disk ? `${size(h.disk.free)} free` : "-",
+    el(
+      "small",
+      "",
+      h.disk ? `of ${size(h.disk.total)} on ${h.diskPath}` : "not probed",
+    ),
+  );
 }
 
 // highest value of a series in the loaded range, for the decode tile
@@ -233,7 +338,7 @@ const ACTION_LABEL: Record<ActionName, string> = {
   load: "load",
   unload: "unload",
   default: "set default",
-  free: "free RAM",
+  free: "restart engine",
   diskClear: "clear disk cache",
 };
 
@@ -255,7 +360,7 @@ function confirmText(action: ActionName, model: string | null): string {
     case "unload":
       return `Unload ${m}? Its weights and RAM prefix cache are freed; the SSD tier is kept.`;
     case "free":
-      return "Restart the engine service? Every model is unloaded and the RAM cache is gone. The SSD tier is kept and comes back on the next load.";
+      return "Restart the engine service? Every model is unloaded and its RAM is freed; the hot cache is gone. The SSD tier is kept and comes back on the next load.";
     case "diskClear":
       return `Restart the engine service and delete the SSD cache tier (${gb(diskTotal)} GB)? Every model is unloaded and every cached prefix is gone.`;
   }
@@ -384,8 +489,6 @@ type Chart = {
 
 const charts: Chart[] = [];
 
-const AXIS_FONT = "11px ui-monospace, Menlo, monospace";
-
 const fmtClock = new Intl.DateTimeFormat(undefined, {
   hour: "2-digit",
   minute: "2-digit",
@@ -412,23 +515,9 @@ function cursorTime(u: uPlot, secsSinceEpoch: number): string {
 }
 
 // Sparklines carry no axes at all, like the console's: the head chips hold
-// the numbers. The tall memory chart keeps three y labels and no grid.
-function axes(yValues?: uPlot.Axis["values"]): uPlot.Axis[] {
-  const x: uPlot.Axis = { show: false };
-  if (!yValues) return [x, { show: false }];
-  return [
-    x,
-    {
-      stroke: css("--faint-2"),
-      font: AXIS_FONT,
-      grid: { show: false },
-      ticks: { show: false },
-      gap: 8,
-      size: 40,
-      splits: (_u, _ax, min, max) => [min, (min + max) / 2, max],
-      values: yValues,
-    },
-  ];
+// the numbers.
+function axes(): uPlot.Axis[] {
+  return [{ show: false }, { show: false }];
 }
 
 function line(color: string, extra: Partial<uPlot.Series> = {}): uPlot.Series {
@@ -521,15 +610,10 @@ function showValues(c: Chart, idx: number | null) {
 }
 
 const tps = (v: number | null) => (v == null ? "-" : v.toFixed(v < 10 ? 1 : 0));
-const gbv = (v: number | null) => (v == null ? "-" : `${gb(v)} GB`);
-
-const yGb: uPlot.Axis["values"] = (_u, v) =>
-  v.map((x) => `${(x / GB).toFixed(0)}G`);
 
 function setupCharts() {
   const green = css("--green");
   const blue = css("--blue");
-  const [m1, m2, m3, m4] = ["--m1", "--m2", "--m3", "--m4"].map(css);
   const floor = (min: number) => (_u: uPlot, _min: number, max: number) =>
     [0, Math.max(min, max * 1.1)] as [number, number];
 
@@ -552,46 +636,6 @@ function setupCharts() {
       axes: axes(),
     },
     (s) => ({ data: [secs(s.t), s.prefillTps], raw: [s.prefillTps] }),
-  );
-  // Stacked: weights at the bottom, the hot cache estimate, then the rest
-  // of the process; the host's free plus inactive memory as a dashed line.
-  // uPlot draws series in order, so the tallest sum comes first; bands clip
-  // each fill to the layer below it.
-  mkChart(
-    "c-memory",
-    [
-      { label: "weights", color: m1, fmt: gbv },
-      { label: "hot cache est.", color: m2, fmt: gbv },
-      { label: "other", color: m3, fmt: gbv },
-      // read from the data at the cursor, not plotted: on the same axis it
-      // would flatten the stack to a fifth of the plot
-      { label: "host free", color: m4, fmt: gbv },
-    ],
-    {
-      series: [
-        {},
-        line(m3, { fill: `${m3}44` }),
-        line(m2, { fill: `${m2}44` }),
-        line(m1, { fill: `${m1}44` }),
-      ],
-      bands: [{ series: [1, 2] }, { series: [2, 3] }],
-      scales: { x: { time: true }, y: { range: floor(GB) } },
-      axes: axes(yGb),
-    },
-    (s) => {
-      const weights = s.weights;
-      const hot = s.hotCacheEst;
-      const other = s.procFootprint.map((f, i) =>
-        Math.max(0, f - weights[i] - hot[i]),
-      );
-      const avail = s.hostFree.map((f, i) => f + s.hostInactive[i]);
-      const top2 = weights.map((w, i) => w + hot[i]);
-      const top3 = top2.map((w, i) => w + other[i]);
-      return {
-        data: [secs(s.t), top3, top2, weights],
-        raw: [weights, hot, other, avail],
-      };
-    },
   );
   new ResizeObserver(() => {
     for (const c of charts) {
@@ -698,7 +742,9 @@ function connect() {
   ws.onmessage = (ev) => {
     const msg = JSON.parse(ev.data) as WsMessage;
     if (msg.type === "snapshot") {
+      $("engine-name").textContent = ENGINE_NAME[msg.data.engine.id];
       $("engine-url").textContent = msg.data.engine.url;
+      renderHost(msg.data);
       $("version").textContent = `mlx-spy ${msg.data.version}`;
       renderModels(msg.data);
       modelsKey = modelsKeyOf(msg.data.models);

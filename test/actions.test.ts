@@ -267,6 +267,7 @@ describe("Actions", () => {
       version: "vtest",
       local: true,
       limits: null,
+      host: null,
     };
     const post = (name: string, body?: unknown) =>
       handle(

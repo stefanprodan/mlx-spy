@@ -51,6 +51,8 @@ export class Sampler {
   private ticksSinceModels = MODELS_EVERY_TICKS; // fetch on the first tick
   private pid: number | null = null;
   private ticksSincePid = PID_EVERY_TICKS;
+  private prevCpu: { pid: number | null; t: number; cpuNs: number } | null =
+    null;
   private disk: DiskDir[] = [];
   private ticksSinceDisk = DISK_EVERY_TICKS;
   private diskScan: Promise<void> | null = null;
@@ -180,10 +182,22 @@ export class Sampler {
       this.ticksSincePid = PID_EVERY_TICKS;
       proc = null;
     }
+    // CPU time is cumulative; the rate over the tick is what the row shows.
+    // A new pid restarts the window (a fresh process starts near zero).
+    let cpuPct: number | null = null;
+    const now = this.now();
+    if (proc && this.prevCpu && this.prevCpu.pid === this.pid) {
+      const wallNs = (now - this.prevCpu.t) * 1e6;
+      if (wallNs > 0) {
+        cpuPct = Math.max(0, (proc.cpuNs - this.prevCpu.cpuNs) / wallNs) * 100;
+      }
+    }
+    this.prevCpu = proc ? { pid: this.pid, t: now, cpuNs: proc.cpuNs } : null;
     return {
       mem: this.probes.hostMemory(),
       pid: this.pid,
       proc,
+      cpuPct,
       disk: this.disk,
     };
   }

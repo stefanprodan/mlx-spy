@@ -19,6 +19,7 @@ import { Actions } from "./actions.ts";
 import { MlxServe, parseSize } from "./engine/mlxserve.ts";
 import { History } from "./history.ts";
 import { createHostProbes } from "./host/index.ts";
+import { hostInfo } from "./host/info.ts";
 import { isLocalUrl } from "./host/local.ts";
 import { takeSample } from "./sample.ts";
 import { Sampler } from "./sampler.ts";
@@ -167,7 +168,16 @@ const history = new History(dbPath, retentionDays);
 const sampler = new Sampler(engine, history, { log, probes, local });
 const actions = new Actions({ engine, sampler, local, log });
 const web = serve(
-  { engine, sampler, history, actions, version: VERSION, local, limits },
+  {
+    engine,
+    sampler,
+    history,
+    actions,
+    version: VERSION,
+    local,
+    limits,
+    host: await hostInfo(),
+  },
   { hostname, port },
   page,
 );

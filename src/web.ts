@@ -10,6 +10,7 @@ import type { HTMLBundle } from "bun";
 import { ActionError, type ActionEvent, type Actions } from "./actions.ts";
 import type { CacheLimits, Engine } from "./engine/types.ts";
 import { type History, RANGES, type Range } from "./history.ts";
+import { diskSpace, type HostInfo } from "./host/info.ts";
 import type { Sample } from "./sample.ts";
 import type { Sampler } from "./sampler.ts";
 
@@ -43,6 +44,8 @@ export type WebDeps = {
   local: boolean;
   // per-model cache budgets, null when unknown
   limits: CacheLimits | null;
+  // facts about the host mlx-spy runs on; null in tests
+  host: HostInfo | null;
   // injectable for tests; the history range is relative to it
   now?: () => number;
 };
@@ -57,6 +60,10 @@ export function snapshot(deps: WebDeps) {
       capabilities: [...deps.engine.capabilities()],
       limits: deps.limits,
     },
+    // the disk changes, the rest does not; a snapshot is rare enough for a statfs
+    host: deps.host
+      ? { ...deps.host, disk: diskSpace(deps.host.diskPath) }
+      : null,
     sample: deps.history.latest(),
     models: deps.sampler.currentModels(),
     disk: deps.sampler.currentDisk(),
