@@ -61,6 +61,11 @@ let prevTok: { prompt: number; cached: number } | null = null;
 // request's speeds
 let lastDecode: number | null = null;
 let lastPrefill: number | null = null;
+// the rates seen while the request in flight was prefilling and decoding:
+// they stay on the bar after the phase ends, unlike the tiles' live values
+let reqStart: number | null = null;
+let reqPrefillTps: number | null = null;
+let reqDecodeTps: number | null = null;
 
 // A fresh tab has no "last request" memory, but the history does: take the
 // most recent values from the raw 1h series so a reload does not blank the
@@ -376,6 +381,14 @@ function renderRequest(s: Sample) {
   const bar = $("req-bar");
   const cur = s.request;
   const last = s.lastRequest;
+  const tps = (tokens: number, ms: number) =>
+    ms > 0 ? `${whole((tokens / ms) * 1000)} tok/s` : "";
+  // a phone wraps the foot: only between the parts, never inside one
+  const join = (...parts: string[]) =>
+    parts
+      .filter(Boolean)
+      .map((p) => p.replace(/ /g, "\u00a0"))
+      .join(" · ");
   const label = (id: string, text: string) => {
     const e = $(id);
     e.textContent = text;
@@ -397,9 +410,21 @@ function renderRequest(s: Sample) {
     bar.className = `cur-bar running${prefilling ? " prefilling" : ""}`;
     $("req-pf").style.width = `${(pf / known) * 100}%`;
     $("req-dc").style.width = `${(dc / known) * 100}%`;
-    // rates are the tiles' business; the bar shows time and tokens
-    label("req-prefill", pf ? `prefill ${short(pf)}` : "");
-    label("req-decode", dc ? `decode ${short(dc)}` : "");
+    if (cur.startedAt !== reqStart) {
+      reqStart = cur.startedAt;
+      reqPrefillTps = reqDecodeTps = null;
+    }
+    if (prefilling && (s.prefillTps ?? 0) > 0) reqPrefillTps = s.prefillTps;
+    if (!prefilling && (s.decodeTps ?? 0) > 0) reqDecodeTps = s.decodeTps;
+    const rate = (v: number | null) => (v ? `${whole(v)} tok/s` : "");
+    label(
+      "req-prefill",
+      pf ? join(`prefill ${short(pf)}`, rate(reqPrefillTps)) : "",
+    );
+    label(
+      "req-decode",
+      dc ? join(`decode ${short(dc)}`, rate(reqDecodeTps)) : "",
+    );
     const total = $("req-total");
     total.replaceChildren(
       `${short(elapsed)} · ${prefilling ? "prefilling" : "decoding"}`,
@@ -438,13 +463,39 @@ function renderRequest(s: Sample) {
   // request, whose counters never moved)
   const prompt = last.promptTokens;
   const cached = prompt - last.prefillTokens;
-  let pfText = last.prefillMs ? `prefill ${short(last.prefillMs)}` : "";
-  if (prompt > 0) {
-    pfText += `${pfText ? " · " : ""}${count(prompt)} tok`;
-    if (cached > 0) pfText += ` · ${whole((cached / prompt) * 100)}% cached`;
+  const pfEl = $("req-prefill");
+  pfEl.replaceChildren(
+    join(
+      last.prefillMs ? `prefill ${short(last.prefillMs)}` : "",
+      prompt > 0 ? `${count(prompt)} tok` : "",
+    ),
+  );
+  // the cached share is dropped on a phone, where the line is at its widest
+  if (cached > 0) {
+    pfEl.append(
+      el(
+        "span",
+        "cur-cached",
+        ` · ${whole((cached / prompt) * 100)}%\u00a0cached`,
+      ),
+    );
   }
-  label("req-prefill", pfText);
-  label("req-decode", last.decodeMs ? `decode ${short(last.decodeMs)}` : "");
+  // the rate is over the tokens the engine computed, not the cached ones
+  if (last.prefillTokens > 0) {
+    pfEl.append(
+      ` · ${tps(last.prefillTokens, last.prefillMs).replace(" ", "\u00a0")}`,
+    );
+  }
+  pfEl.hidden = pfEl.textContent === "";
+  label(
+    "req-decode",
+    last.decodeMs
+      ? join(
+          `decode ${short(last.decodeMs)}`,
+          tps(last.generated, last.decodeMs),
+        )
+      : "",
+  );
   // the start is seen up to a gauge publish late: never shorter than the
   // engine's own phase times
   const span = Math.max(

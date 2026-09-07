@@ -821,14 +821,16 @@ footer {
     order: 1;
     flex: 1 0 100%;
   }
-  .cur-head span,
-  .cur-foot span {
+  .cur-head span {
     white-space: nowrap;
   }
   .cur-head,
   .cur-foot {
     flex-wrap: wrap;
     gap: 4px 12px;
+  }
+  .cur-cached {
+    display: none;
   }
   td.name {
     max-width: 0; /* min-content 0: the id ellipsizes instead of widening the table */
