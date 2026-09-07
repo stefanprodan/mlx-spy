@@ -78,9 +78,14 @@ src/engine/mlxserve.ts
 src/sample.ts        Sample type; computeRates (tok/s between live gauge moves, cache ratios,
                      epoch detection on counter reset) and buildSample are pure
                      and tested; takeSample does the I/O for --once
+src/requests.ts      trackRequests: the engine-wide request in flight (start of
+                     the oldest open one, time spent prefilling and decoding)
+                     and the last finished one from the counter deltas at the
+                     tick the decode-time histogram advanced; pure, tested
 src/sampler.ts       the 1 Hz loop: reads metrics each tick, models every 5 s,
-                     carries epoch and last counters across restarts through
-                     the history meta table; tick() is public for tests
+                     carries epoch, last counters and the last request across
+                     restarts through the history meta table; tick() is
+                     public for tests
 src/history.ts       ring buffer (1 h) plus bun:sqlite: samples table, 7 day
                      retention pruned from the writer, bucketed series() per
                      range in columnar form for uPlot; models table (ids the

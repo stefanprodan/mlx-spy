@@ -43,7 +43,10 @@ A sample carries the engine state, live decode and prefill tok/s (rated between
 moves of the engine's 2 s live gauges, carried while the phase runs), cache
 hit ratios, the memory split (host free, inactive, wired and compressed;
 engine footprint and RSS; weights, estimated RAM cache, MLX pool), the cache
-tier directories and the model list. The engine pid, RSS, CPU, start time
+tier directories, the model list, and the request in flight or the last one
+finished (start time, tokens, prefill and decode time; the engine reports
+counts, not requests, so with several in flight the bar shows the engine as
+a whole). The engine pid, RSS, CPU, start time
 and disk tier are only probed when the engine runs on the same host; the
 Runtime section shows them next to facts about the host (OS, chip, cores,
 GPU cores, memory, disk). The RAM cache and SSD

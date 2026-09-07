@@ -13,6 +13,11 @@ import { cacheDirSizes } from "./host/disk.ts";
 import { NULL_PROBES } from "./host/index.ts";
 import type { DiskDir, HostProbes, HostSnapshot } from "./host/types.ts";
 import {
+  EMPTY_REQUESTS,
+  type RequestState,
+  trackRequests,
+} from "./requests.ts";
+import {
   buildSample,
   computeRates,
   downSample,
@@ -49,6 +54,8 @@ export class Sampler {
   // the engine-wide phase (idle, prefilling, generating) and when it began
   private phase = "idle";
   private phaseSince: number | null = null;
+  // open requests and the last finished one, for the request bar
+  private requests: RequestState = EMPTY_REQUESTS;
   private epoch: number;
   private models: ModelInfo[] = [];
   private ticksSinceModels = MODELS_EVERY_TICKS; // fetch on the first tick
@@ -81,6 +88,7 @@ export class Sampler {
     // happened while we were down.
     const state = history.loadSamplerState();
     this.epoch = state.epoch;
+    this.requests = { ...EMPTY_REQUESTS, last: state.lastRequest };
     if (state.counters) {
       this.prev = {
         t: 0,
@@ -237,11 +245,12 @@ export class Sampler {
       const host = this.probeHost();
       let sample: Sample;
       if (!reading) {
-        sample = downSample(t, this.epoch, host);
+        sample = downSample(t, this.epoch, host, this.requests.last);
         // a dead engine breaks the window: the next reading starts fresh
         // rather than computing rates over the outage
         this.prev = null;
         this.live = EMPTY_LIVE;
+        this.requests = { ...EMPTY_REQUESTS, last: this.requests.last };
         this.phase = "idle";
         this.phaseSince = null;
         this.models = [];
@@ -252,12 +261,20 @@ export class Sampler {
         const restored = this.prev !== null && this.prev.t === 0;
         const rates = computeRates(this.prev, reading, this.epoch, this.live);
         this.live = rates.live;
-        if (rates.epoch !== this.epoch) {
+        const reset = rates.epoch !== this.epoch;
+        if (reset) {
           this.log(
             `engine counters reset: epoch ${this.epoch} -> ${rates.epoch}`,
           );
           this.epoch = rates.epoch;
         }
+        // a restored reading has no gauges and a reset no valid deltas:
+        // both start the request tracking afresh
+        this.requests = trackRequests(
+          this.requests,
+          restored || reset ? null : this.prev,
+          reading,
+        );
         if (restored) {
           rates.ttftMs = null;
           rates.windowMs = null;
@@ -291,11 +308,13 @@ export class Sampler {
           this.models,
           host,
           this.phaseSince,
+          this.requests,
         );
         this.prev = reading;
         this.history.saveSamplerState({
           epoch: this.epoch,
           counters: reading.metrics.counters,
+          lastRequest: this.requests.last,
         });
       }
       this.history.push(sample);

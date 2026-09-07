@@ -8,6 +8,7 @@
 
 import { Database } from "bun:sqlite";
 import type { EngineCounters } from "./engine/types.ts";
+import type { LastRequest } from "./requests.ts";
 import type { Sample } from "./sample.ts";
 
 export const RING_SIZE = 3600; // one hour at 1 Hz
@@ -54,11 +55,16 @@ export type Series = {
   requestsTotal: number[];
   promptTokens: number[];
   cachedPromptTokens: number[];
+  requestsCancelled: number[];
 };
 
 // What the sampler needs back after a restart to keep the epoch honest:
 // the last counters it saw, so the first new reading can be compared.
-export type SamplerState = { epoch: number; counters: EngineCounters | null };
+export type SamplerState = {
+  epoch: number;
+  counters: EngineCounters | null;
+  lastRequest: LastRequest | null;
+};
 
 export class History {
   private readonly db: Database;
@@ -101,7 +107,8 @@ export class History {
       generation_tokens INTEGER NOT NULL DEFAULT 0,
       requests_total INTEGER NOT NULL DEFAULT 0,
       prompt_tokens INTEGER NOT NULL DEFAULT 0,
-      cached_prompt_tokens INTEGER NOT NULL DEFAULT 0
+      cached_prompt_tokens INTEGER NOT NULL DEFAULT 0,
+      requests_cancelled INTEGER NOT NULL DEFAULT 0
     )`);
     this.migrate();
     this.db.run(
@@ -123,7 +130,7 @@ export class History {
       $weights, $hotCacheEst, $mlxActive, $mlxPool, $hostTotal, $hostFree,
       $hostInactive, $hostWired, $hostCompressed, $procRss, $diskBytes,
       $ttftMs, $generationTokens, $requestsTotal, $promptTokens,
-      $cachedPromptTokens)`);
+      $cachedPromptTokens, $requestsCancelled)`);
     this.prune = this.db.prepare("DELETE FROM samples WHERE t < $before");
   }
 
@@ -147,6 +154,7 @@ export class History {
       "requests_total",
       "prompt_tokens",
       "cached_prompt_tokens",
+      "requests_cancelled",
     ]) {
       if (!have.has(col)) {
         this.db.run(
@@ -190,6 +198,7 @@ export class History {
       requestsTotal: s.requestsTotal,
       promptTokens: s.promptTokens,
       cachedPromptTokens: s.cachedPromptTokens,
+      requestsCancelled: s.requestsCancelled,
     });
     // once a minute is plenty; the delete is a range scan on the primary key
     if (s.t - this.lastPruneAt >= 60_000) {
@@ -243,7 +252,8 @@ export class History {
           max(generation_tokens) AS generationTokens,
           max(requests_total) AS requestsTotal,
           max(prompt_tokens) AS promptTokens,
-          max(cached_prompt_tokens) AS cachedPromptTokens
+          max(cached_prompt_tokens) AS cachedPromptTokens,
+          max(requests_cancelled) AS requestsCancelled
         FROM samples WHERE t >= $since AND t <= $now
         GROUP BY 1 ORDER BY 1`,
       )
@@ -276,6 +286,7 @@ export class History {
       requestsTotal: [],
       promptTokens: [],
       cachedPromptTokens: [],
+      requestsCancelled: [],
     };
     for (const r of rows) {
       out.t.push(r.t);
@@ -305,6 +316,7 @@ export class History {
       out.requestsTotal.push(r.requestsTotal);
       out.promptTokens.push(r.promptTokens);
       out.cachedPromptTokens.push(r.cachedPromptTokens);
+      out.requestsCancelled.push(r.requestsCancelled);
     }
     return out;
   }
@@ -313,15 +325,17 @@ export class History {
     const row = this.db
       .query("SELECT value FROM meta WHERE key = 'sampler'")
       .get() as { value: string } | null;
-    if (!row) return { epoch: 0, counters: null };
+    const none = { epoch: 0, counters: null, lastRequest: null };
+    if (!row) return none;
     try {
       const v = JSON.parse(row.value);
       return {
         epoch: typeof v.epoch === "number" ? v.epoch : 0,
         counters: v.counters ?? null,
+        lastRequest: v.lastRequest ?? null,
       };
     } catch {
-      return { epoch: 0, counters: null };
+      return none;
     }
   }
 

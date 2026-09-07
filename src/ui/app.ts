@@ -52,7 +52,6 @@ const count = (n: number) =>
 
 // Cache hit and TTFT are per finished request, so most windows carry null;
 // the tile keeps the most recent value seen in this tab.
-let lastTtft: number | null = null;
 let lastCacheHit: number | null = null;
 let lastCacheTok: number | null = null;
 // the last request's prompt: how many tokens, how many came from the cache
@@ -81,7 +80,6 @@ function seedTiles(s: Series) {
   };
   lastDecode ??= lastNonZero(s.decodeTps);
   lastPrefill ??= lastNonZero(s.prefillTps);
-  lastTtft ??= lastSet(s.ttftMs);
   lastCacheHit ??= lastSet(s.cacheHitPct);
   lastCacheTok ??= lastSet(s.cacheTokenPct);
   if (!lastReq) {
@@ -127,16 +125,18 @@ function renderTiles(s: Sample) {
     : lastPrefill == null
       ? "no request in the last hour"
       : inView("prefillTps");
-  if (s.ttftMs != null) lastTtft = s.ttftMs;
-  $("t-requests").textContent = `${s.requestsRunning}`;
-  // a queue means every slot is busy: requests are waiting on each other
+  // requests over the loaded range, the counterpart of the Generated tile
+  const served = rangeTotal("requestsTotal");
+  const cancelled = rangeTotal("requestsCancelled");
+  const ttft = inViewMean("ttftMs");
+  $("t-requests").textContent = count(served);
   $("t-requests-sub").replaceChildren(
-    el(
-      "span",
-      s.requestsWaiting > 0 ? "warn" : "",
-      `${s.requestsWaiting} waiting`,
-    ),
-    ` · TTFT ${lastTtft == null ? "-" : `${(lastTtft / 1000).toFixed(2)} s`}`,
+    ...(cancelled > 0
+      ? [el("span", "warn", `${count(cancelled)} cancelled`), " · "]
+      : []),
+    served + cancelled > 0
+      ? `TTFT avg ${ttft == null ? "-" : `${(ttft / 1000).toFixed(1)} s`}`
+      : "no request in view",
   );
   if (s.cacheHitPct != null) lastCacheHit = s.cacheHitPct;
   if (s.cacheTokenPct != null) lastCacheTok = s.cacheTokenPct;
@@ -198,6 +198,7 @@ function renderTiles(s: Sample) {
       : "no request in view";
   renderServer(s);
   renderActivity(s);
+  renderRequest(s);
 }
 
 // The live half of the Runtime section: the engine's residency and process.
@@ -302,7 +303,13 @@ function renderHost(snap: Snapshot) {
 // steps between consecutive points, within one engine run (a restart zeroes
 // the counters) and only while the engine answered (a down sample holds 0).
 // A step from 0 is skipped too: rows from before a column existed hold 0.
-function rangeTotal(k: "generationTokens" | "promptTokens"): number {
+function rangeTotal(
+  k:
+    | "generationTokens"
+    | "promptTokens"
+    | "requestsTotal"
+    | "requestsCancelled",
+): number {
   if (!series) return 0;
   const v = series[k];
   let sum = 0;
@@ -334,6 +341,133 @@ function inView(k: "decodeTps" | "prefillTps"): string {
     n++;
   }
   return n ? `avg ${whole(sum / n)} · peak ${whole(peak)}` : "";
+}
+
+// the mean of a per-tick mean (TTFT of the requests finished that second)
+// over the loaded range; null when no request finished in view
+function inViewMean(k: "ttftMs"): number | null {
+  let sum = 0;
+  let n = 0;
+  for (const v of series?.[k] ?? []) {
+    if (v == null) continue;
+    sum += v;
+    n++;
+  }
+  return n ? sum / n : null;
+}
+
+// "1m 12s", "45s"
+function short(ms: number): string {
+  const s = Math.round(ms / 1000);
+  return s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
+}
+
+const fmtStamp = new Intl.DateTimeFormat(undefined, {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
+
+// The request bar: what the engine is doing now, or the last thing it did.
+// In flight the numbers are engine-wide (the engine reports counts, not
+// requests); finished, they are the request's own from its counter deltas.
+function renderRequest(s: Sample) {
+  const bar = $("req-bar");
+  const cur = s.request;
+  const last = s.lastRequest;
+  const tps = (tokens: number, ms: number) =>
+    ms > 0 ? `${whole((tokens / ms) * 1000)} tok/s` : "";
+  const label = (id: string, text: string) => {
+    const e = $(id);
+    e.textContent = text;
+    e.hidden = text === "";
+  };
+  if (cur && s.engineUp) {
+    const open = s.requestsRunning + s.requestsPrefilling;
+    const n = Math.max(1, open);
+    const prefilling = s.requestsPrefilling > 0;
+    const elapsed = Math.max(1, s.t - cur.startedAt);
+    const pf = cur.prefillMs;
+    const dc = cur.decodeMs;
+    const known = pf + dc || 1;
+    $("req-state").textContent = n > 1 ? `${n} in flight` : "in flight";
+    $("req-state").className = "cur-state on";
+    $("req-when").textContent = fmtStamp.format(cur.startedAt);
+    $("req-tokens").textContent = `${count(s.inflightTokens)} tok generating`;
+    bar.className = `cur-bar running${prefilling ? " prefilling" : ""}`;
+    $("req-pf").style.width = `${(pf / known) * 100}%`;
+    $("req-dc").style.width = `${(dc / known) * 100}%`;
+    label(
+      "req-prefill",
+      pf
+        ? `prefill ${short(pf)}${lastPrefill && prefilling ? ` · ${whole(lastPrefill)} tok/s` : ""}`
+        : "",
+    );
+    label(
+      "req-decode",
+      dc
+        ? `decode ${short(dc)}${lastDecode && !prefilling ? ` · ${whole(lastDecode)} tok/s` : ""}`
+        : "",
+    );
+    const total = $("req-total");
+    total.replaceChildren(
+      `${short(elapsed)} · ${prefilling ? "prefilling" : "decoding"}`,
+    );
+    if (s.requestsWaiting > 0) {
+      total.append(" · ", el("span", "warn", `${s.requestsWaiting} waiting`));
+    }
+    return;
+  }
+  if (!last) {
+    $("req-state").textContent = "no request yet";
+    $("req-state").className = "cur-state";
+    $("req-when").textContent = "";
+    $("req-tokens").textContent = "";
+    bar.className = "cur-bar";
+    $("req-pf").style.width = "0";
+    $("req-dc").style.width = "0";
+    label("req-prefill", "");
+    label("req-decode", "");
+    $("req-total").textContent = "";
+    return;
+  }
+  const known = last.prefillMs + last.decodeMs || 1;
+  $("req-state").textContent =
+    last.count > 1 ? `last ${last.count} requests` : "last request";
+  $("req-state").className = "cur-state";
+  $("req-when").textContent = fmtStamp.format(
+    last.startedAt ?? last.finishedAt,
+  );
+  $("req-tokens").textContent = `${count(last.generated)} tok generated`;
+  bar.className = `cur-bar${last.cancelled ? " cancelled" : ""}`;
+  $("req-pf").style.width = `${(last.prefillMs / known) * 100}%`;
+  $("req-dc").style.width = `${(last.decodeMs / known) * 100}%`;
+  // a cancelled request's prefill tokens are unknown: no rate for it
+  const pfRate = last.prefillTokens
+    ? tps(last.prefillTokens, last.prefillMs)
+    : "";
+  const dcRate = tps(last.generated, last.decodeMs);
+  label(
+    "req-prefill",
+    last.prefillMs
+      ? `prefill ${short(last.prefillMs)}${pfRate ? ` · ${pfRate}` : ""}`
+      : "",
+  );
+  label(
+    "req-decode",
+    last.decodeMs
+      ? `decode ${short(last.decodeMs)}${dcRate ? ` · ${dcRate}` : ""}`
+      : "",
+  );
+  // the start is seen up to a gauge publish late: never shorter than the
+  // engine's own phase times
+  const span = Math.max(
+    last.startedAt != null ? last.finishedAt - last.startedAt : 0,
+    known,
+  );
+  $("req-total").textContent =
+    `${short(span)} · ${last.cancelled ? "cancelled" : "done"}`;
 }
 
 // ---------- models ----------
@@ -481,38 +615,19 @@ function modelButtons(m: Snapshot["models"][number], snap: Snapshot) {
 
 // The engine-wide activity in the Models head: the phase, what the running
 // requests have done so far and for how long, and the queue.
+// The Models head only says whether the engine is working; the request bar
+// carries the details.
 function renderActivity(s: Sample) {
   const pill = $("models-phase");
-  const parts: string[] = [];
-  let phase = "idle";
-  let cls = "pill";
   if (!s.engineUp) {
-    phase = "unreachable";
-    cls = "pill err";
-  } else if (s.requestsPrefilling > 0) {
-    phase = "prefilling";
-    cls = "pill prefill";
-    if (s.prefillTokensLive > 0) {
-      parts.push(`${count(s.prefillTokensLive)} tokens`);
-    }
-  } else if (s.requestsRunning > 0) {
-    phase = "generating";
-    cls = "pill live";
-    parts.push(`${count(s.inflightTokens)} tokens`);
-  }
-  if (phase !== "idle" && s.engineUp && s.phaseSince != null) {
-    parts.push(duration(s.t - s.phaseSince));
-  }
-  if (s.requestsRunning > 1) parts.push(`${s.requestsRunning} running`);
-  pill.textContent = phase;
-  pill.className = cls;
-  const act = $("models-activity");
-  act.replaceChildren(parts.join(" · "));
-  if (s.requestsWaiting > 0) {
-    act.append(
-      parts.length ? " · " : "",
-      el("span", "warn", `${s.requestsWaiting} waiting`),
-    );
+    pill.textContent = "unreachable";
+    pill.className = "pill err";
+  } else if (s.requestsRunning > 0 || s.requestsPrefilling > 0) {
+    pill.textContent = "busy";
+    pill.className = "pill live";
+  } else {
+    pill.textContent = "idle";
+    pill.className = "pill";
   }
 }
 
@@ -931,6 +1046,7 @@ function appendLive(s: Sample) {
   push("requestsTotal", s.requestsTotal);
   push("promptTokens", s.promptTokens);
   push("cachedPromptTokens", s.cachedPromptTokens);
+  push("requestsCancelled", s.requestsCancelled);
   const cutoff = s.t - 3_600_000;
   while (series.t.length && series.t[0] < cutoff) {
     for (const k of Object.keys(series) as (keyof Series)[]) series[k].shift();
@@ -978,7 +1094,7 @@ function connect() {
       showEvent(msg.data);
       if (msg.data.action === "historyClear" && msg.data.ok) {
         // every tab forgets what it learned from the wiped series
-        lastDecode = lastPrefill = lastTtft = null;
+        lastDecode = lastPrefill = null;
         lastCacheHit = lastCacheTok = null;
         lastReq = prevTok = null;
         void loadRange(range);

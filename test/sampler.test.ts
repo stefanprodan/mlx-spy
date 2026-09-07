@@ -23,7 +23,7 @@ class FakeEngine implements Engine {
   readonly url = "http://fake:11234";
   metricsCalls = 0;
   modelsCalls = 0;
-  constructor(private readonly steps: Step[]) {}
+  constructor(readonly steps: Step[]) {}
   async health() {
     return true;
   }
@@ -153,6 +153,7 @@ describe("Sampler", () => {
     history.saveSamplerState({
       epoch: 2,
       counters: parseMetrics(metricsFixture).counters,
+      lastRequest: null,
     });
     const engine = new FakeEngine([
       (b) => {
@@ -176,6 +177,7 @@ describe("Sampler", () => {
     history.saveSamplerState({
       epoch: 2,
       counters: parseMetrics(metricsFixture).counters,
+      lastRequest: null,
     });
     const engine = new FakeEngine([idle]);
     const s = new Sampler(engine, history, { now: clock().now });
@@ -204,6 +206,57 @@ describe("Sampler", () => {
     c.advance(1000);
     expect((await s.tick())?.windowMs).toBe(1000);
     expect(history.count()).toBe(4);
+    history.close();
+  });
+
+  test("the request in flight and the last one ride on the sample and persist", async () => {
+    const engine = new FakeEngine([
+      idle,
+      (b) => {
+        b.gauges.requests_running = 1;
+        b.gauges.requests_prefilling = 1;
+      },
+      (b) => {
+        b.gauges.requests_running = 1;
+      },
+      (b) => {
+        b.counters.generation_tokens_total += 50;
+        b.counters.requests_success_total += 1;
+        b.histograms.decode_time_seconds.count += 1;
+        b.histograms.decode_time_seconds.sum += 2;
+      },
+    ]);
+    const history = new History(":memory:");
+    const c = clock();
+    const s = new Sampler(engine, history, { now: c.now });
+    await s.tick();
+    c.advance(1000);
+    const a = await s.tick();
+    expect(a?.request).toEqual({
+      startedAt: 1_001_000,
+      prefillMs: 0,
+      decodeMs: 0,
+    });
+    expect(a?.lastRequest).toBeNull();
+    c.advance(1000);
+    const b = await s.tick();
+    expect(b?.request?.decodeMs).toBe(1000);
+    c.advance(1000);
+    const d = await s.tick();
+    expect(d?.request).toBeNull();
+    expect(d?.lastRequest).toMatchObject({
+      startedAt: 1_001_000,
+      finishedAt: 1_003_000,
+      generated: 50,
+      decodeMs: 2000,
+      cancelled: false,
+    });
+    expect(d?.requestsCancelled).toBe(0);
+    // a new sampler on the same history starts with that last request
+    const again = new Sampler(engine, history, { now: c.now });
+    engine.steps.push(idle);
+    const e = await again.tick();
+    expect(e?.lastRequest).toEqual(d?.lastRequest);
     history.close();
   });
 

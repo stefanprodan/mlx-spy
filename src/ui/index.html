@@ -47,7 +47,7 @@
           </div>
           <div class="tile">
             <div class="lbl">Requests</div>
-            <div class="val"><span id="t-requests">0</span><span class="unit">running</span></div>
+            <div class="val"><span id="t-requests">0</span><span class="unit">served</span></div>
             <div class="sub" id="t-requests-sub"></div>
           </div>
           <div class="tile">
@@ -80,6 +80,21 @@
             <div class="sub" id="t-ssd-sub"></div>
           </div>
         </div>
+        <div class="spark request" id="req">
+          <div class="cur-head">
+            <span class="cur-state" id="req-state">no request yet</span>
+            <span class="cur-when" id="req-when"></span>
+            <span class="grow"></span>
+            <span class="cur-num" id="req-tokens"></span>
+          </div>
+          <div class="cur-bar" id="req-bar"><span class="pf" id="req-pf"></span><span class="dc" id="req-dc"></span></div>
+          <div class="cur-foot">
+            <span class="cur-pf" id="req-prefill"></span>
+            <span class="cur-dc" id="req-decode"></span>
+            <span class="grow"></span>
+            <span class="cur-total" id="req-total"></span>
+          </div>
+        </div>
         <div class="sparks two">
           <div class="spark" id="c-decode"><div class="shd"><span class="lbl">Decode</span><span class="chips"></span></div><div class="plot"></div></div>
           <div class="spark" id="c-prefill"><div class="shd"><span class="lbl">Prefill</span><span class="chips"></span></div><div class="plot"></div></div>
@@ -89,7 +104,6 @@
       <div class="shead">
         <h2>Models</h2>
         <span class="pill" id="models-phase">idle</span>
-        <span class="hint" id="models-activity"></span>
       </div>
       <section class="card models">
         <table id="models"><tbody></tbody></table>

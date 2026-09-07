@@ -152,6 +152,86 @@ button {
   outline-offset: 1px;
 }
 
+/* the request in flight, or the last one */
+.request {
+  padding: 12px 14px 10px;
+  margin: 12px 0;
+}
+.cur-head,
+.cur-foot {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--dim);
+}
+.cur-head {
+  margin-bottom: 8px;
+}
+.cur-foot {
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+}
+.cur-state {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.cur-state.on {
+  color: var(--green);
+}
+.cur-when,
+.cur-num {
+  font-family: var(--mono);
+  color: var(--fg);
+}
+.cur-dim {
+  font-family: var(--mono);
+}
+.cur-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #1a1e25;
+}
+.cur-bar .pf {
+  background: var(--blue);
+}
+.cur-bar .dc {
+  background: var(--green);
+}
+.cur-bar.cancelled .dc {
+  background: var(--amber);
+}
+.cur-bar.running .dc,
+.cur-bar.running.prefilling .pf {
+  animation: cur-pulse 1.6s ease-in-out infinite;
+}
+.cur-bar.running.prefilling .dc {
+  animation: none;
+}
+@keyframes cur-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+.cur-pf {
+  color: var(--accent);
+}
+.cur-dc {
+  color: var(--green);
+}
+.cur-total {
+  color: var(--dim);
+}
+.cur-total .warn {
+  color: var(--amber);
+}
 /* section heads, like the console's */
 .shead {
   display: flex;
@@ -481,8 +561,8 @@ dialog .row .btn {
 .u-select {
   background: rgba(138, 180, 248, 0.12);
 }
-.u-cursor-x {
-  border-right: 1px dashed #3a4048 !important;
+.spark .u-hz .u-cursor-x {
+  border-right: 1px dashed #3a4048;
 }
 .stamp {
   position: absolute;

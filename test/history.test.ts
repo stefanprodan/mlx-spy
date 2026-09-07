@@ -16,6 +16,8 @@ function sample(t: number, over: Partial<Sample> = {}): Sample {
     prefillTokensLive: 0,
     inflightTokens: 0,
     phaseSince: null,
+    request: null,
+    lastRequest: null,
     cacheHitPct: null,
     cacheTokenPct: null,
     ttftMs: null,
@@ -24,6 +26,7 @@ function sample(t: number, over: Partial<Sample> = {}): Sample {
     promptTokens: 0,
     cachedPromptTokens: 0,
     requestsTotal: 0,
+    requestsCancelled: 0,
     enginePid: null,
     engineStartedAt: null,
     engineCpuPct: null,
@@ -126,7 +129,11 @@ describe("History", () => {
 
   test("sampler state round-trips and defaults when absent", () => {
     const h = new History(":memory:");
-    expect(h.loadSamplerState()).toEqual({ epoch: 0, counters: null });
+    expect(h.loadSamplerState()).toEqual({
+      epoch: 0,
+      counters: null,
+      lastRequest: null,
+    });
     const counters = {
       promptTokens: 1,
       prefillTokens: 2,
@@ -137,8 +144,19 @@ describe("History", () => {
       cacheQueries: 7,
       cacheHits: 8,
     };
-    h.saveSamplerState({ epoch: 3, counters });
-    expect(h.loadSamplerState()).toEqual({ epoch: 3, counters });
+    const lastRequest = {
+      startedAt: 1,
+      finishedAt: 2,
+      count: 1,
+      cancelled: false,
+      generated: 3,
+      prefillTokens: 4,
+      prefillMs: 5,
+      decodeMs: 6,
+      ttftMs: 7,
+    };
+    h.saveSamplerState({ epoch: 3, counters, lastRequest });
+    expect(h.loadSamplerState()).toEqual({ epoch: 3, counters, lastRequest });
     h.close();
   });
 

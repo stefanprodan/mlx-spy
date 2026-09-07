@@ -20,6 +20,12 @@ import {
   type HostProbes,
   type HostSnapshot,
 } from "./host/types.ts";
+import {
+  EMPTY_REQUESTS,
+  type InFlight,
+  type LastRequest,
+  type RequestState,
+} from "./requests.ts";
 
 export type Sample = {
   t: number; // unix ms
@@ -36,6 +42,9 @@ export type Sample = {
   prefillTokensLive: number;
   inflightTokens: number;
   phaseSince: number | null; // unix ms the current phase began (sampler)
+  // the engine-wide request in flight and the last one that finished
+  request: InFlight | null;
+  lastRequest: LastRequest | null;
   cacheHitPct: number | null; // hits / queries over the window
   cacheTokenPct: number | null; // cached prompt tokens / prompt tokens, windowed
   ttftMs: number | null; // mean TTFT of requests that finished in the window
@@ -44,6 +53,7 @@ export type Sample = {
   promptTokens: number; // lifetime prompt tokens, cached or not (this epoch)
   cachedPromptTokens: number; // of those, restored from the prefix cache
   requestsTotal: number; // lifetime successful requests (this epoch)
+  requestsCancelled: number; // lifetime cancelled requests (this epoch)
   enginePid: number | null; // only when the engine runs on this host
   engineStartedAt: number | null; // unix ms, from the process table (local)
   engineCpuPct: number | null; // percent of one core over the last tick (local)
@@ -291,6 +301,7 @@ export function buildSample(
   models: ModelInfo[],
   host: HostSnapshot = EMPTY_HOST,
   phaseSince: number | null = null,
+  requests: RequestState = EMPTY_REQUESTS,
 ): Sample {
   const g = cur.metrics.gauges;
   const weights = models
@@ -312,6 +323,8 @@ export function buildSample(
       g.generationTokensLive - cur.metrics.counters.generationTokens,
     ),
     phaseSince,
+    request: requests.inFlight,
+    lastRequest: requests.last,
     cacheHitPct: rates.cacheHitPct,
     cacheTokenPct: rates.cacheTokenPct,
     ttftMs: rates.ttftMs,
@@ -320,6 +333,7 @@ export function buildSample(
     promptTokens: cur.metrics.counters.promptTokens,
     cachedPromptTokens: cur.metrics.counters.cachedPromptTokens,
     requestsTotal: cur.metrics.counters.requestsSuccess,
+    requestsCancelled: cur.metrics.counters.requestsCancelled,
     enginePid: host.pid,
     engineStartedAt: host.proc?.startedAt || null,
     engineCpuPct: host.cpuPct,
@@ -342,6 +356,7 @@ export function downSample(
   t: number,
   epoch: number,
   host: HostSnapshot = EMPTY_HOST,
+  lastRequest: LastRequest | null = null,
 ): Sample {
   return {
     t,
@@ -356,6 +371,8 @@ export function downSample(
     prefillTokensLive: 0,
     inflightTokens: 0,
     phaseSince: null,
+    request: null,
+    lastRequest,
     cacheHitPct: null,
     cacheTokenPct: null,
     ttftMs: null,
@@ -364,6 +381,7 @@ export function downSample(
     promptTokens: 0,
     cachedPromptTokens: 0,
     requestsTotal: 0,
+    requestsCancelled: 0,
     enginePid: null,
     engineStartedAt: null,
     engineCpuPct: null,
