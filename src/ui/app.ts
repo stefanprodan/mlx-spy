@@ -18,6 +18,7 @@ import type { Range, Series } from "../history.ts";
 import type { LastRequest } from "../requests.ts";
 import type { Sample } from "../sample.ts";
 import type { snapshot, WsMessage } from "../web.ts";
+import { type ChatPage, mountChat } from "./chat.ts";
 
 type Snapshot = ReturnType<typeof snapshot>;
 
@@ -27,8 +28,14 @@ const ENGINE_NAME: Record<Snapshot["engine"]["id"], string> = {
 };
 
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
-// one bundle serves both paths; the view is the one the path names
-const view = location.pathname === "/requests" ? "requests" : "monitor";
+// one bundle serves three paths; the view is the one the path names
+const view =
+  location.pathname === "/requests"
+    ? "requests"
+    : location.pathname === "/chat" || location.pathname.startsWith("/chat/")
+      ? "chat"
+      : "monitor";
+let chat: ChatPage | null = null;
 const css = (name: string) =>
   getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
@@ -1034,7 +1041,10 @@ function noteRequest(s: Sample) {
 function fetchSnapshot() {
   return fetch("/api/snapshot")
     .then((r) => r.json())
-    .then((snap: Snapshot) => renderModels(snap))
+    .then((snap: Snapshot) => {
+      renderModels(snap);
+      chat?.onModels(snap.models);
+    })
     .catch(() => {});
 }
 
@@ -1367,7 +1377,9 @@ function connect() {
       if (msg.data.sample) renderTiles(msg.data.sample);
       // after a reconnect the series has a hole: fetch it again
       if (view === "requests") void fetchRequests();
-      else if (connected) void loadRange(range);
+      else if (view === "chat") {
+        chat?.onSnapshot(msg.data.models, msg.data.chat, connected);
+      } else if (connected) void loadRange(range);
       connected = true;
     } else if (msg.type === "event") {
       showEvent(msg.data);
@@ -1385,6 +1397,10 @@ function connect() {
       }
       // another tab may have run it; the residency changed either way
       void fetchSnapshot();
+    } else if (msg.type === "chat") {
+      chat?.onChat(msg.data);
+    } else if (view === "chat") {
+      chat?.onSample(msg.data);
     } else {
       // the series first, so the tiles' range totals include this tick
       appendLive(msg.data);
@@ -1399,6 +1415,7 @@ function connect() {
     $("engine-state").textContent = "unknown";
     $("engine-state").className = "pill";
     prevTok = null; // the next sample is not the successor of the last one
+    chat?.onDisconnect();
     setTimeout(connect, 2000);
   };
 }
@@ -1428,6 +1445,13 @@ if (view === "requests") {
   $("view-requests").hidden = false;
   $("requests-head").append($("ws-state"));
   $("requests-live").append($("req"));
+} else if (view === "chat") {
+  // the frame fills the viewport; the connection pill moves to the header
+  $("view-monitor").hidden = true;
+  $("view-chat").hidden = false;
+  document.querySelector(".page")!.classList.add("chat");
+  document.querySelector(".top")!.append(el("span", "grow"), $("ws-state"));
+  chat = mountChat();
 } else {
   setupCharts();
   void loadRange("1h");

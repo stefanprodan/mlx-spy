@@ -14,8 +14,42 @@
         <nav class="menu">
           <a href="/" data-view="monitor">Monitor</a>
           <a href="/requests" data-view="requests">Requests</a>
+          <a href="/chat" data-view="chat">Chat</a>
         </nav>
       </header>
+
+      <div id="view-chat" class="frame" hidden>
+        <aside class="list" id="chat-list">
+          <button type="button" class="newchat" id="chat-new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New chat</button>
+          <div class="chats" id="chats"></div>
+        </aside>
+        <section class="conv">
+          <div class="chead">
+            <button type="button" class="btn icon listbtn" id="chat-listbtn" aria-label="Chats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+            <button type="button" class="title" id="chat-title" title="Rename">New chat</button>
+            <span class="grow"></span>
+            <div class="ctl">
+              <button type="button" class="btn model" id="chat-model" aria-haspopup="listbox"><i class="dot"></i><span class="name"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+              <fieldset class="seg" aria-label="Thinking" id="chat-think"><button type="button" data-think="1"><span class="sl">Think </span>on</button><button type="button" data-think="0"><span class="sl">Think </span>off</button></fieldset>
+              <button type="button" class="btn icon" id="chat-gear" aria-label="Chat settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+            </div>
+            <div class="pop" id="chat-models" role="listbox" hidden></div>
+          </div>
+          <div class="scroll" id="chat-scroll">
+            <div class="thread" id="chat-thread"></div>
+            <div class="empty" id="chat-empty" hidden></div>
+          </div>
+          <button type="button" class="jump" id="chat-jump" hidden>Jump to latest</button>
+          <div class="composer">
+            <div class="note" id="chat-note" hidden></div>
+            <div class="box">
+              <textarea id="chat-input" rows="2" placeholder="Message" aria-label="Message"></textarea>
+              <button type="button" class="send" id="chat-send" aria-label="Send"><svg class="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg><svg class="i-stop" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+              <div class="foot"><span id="chat-hint">Enter to send, Shift+Enter for a new line</span><span class="ctx" id="chat-ctx" hidden><span class="bar"><i></i></span><span class="n"></span></span></div>
+            </div>
+          </div>
+        </section>
+      </div>
 
       <div id="view-requests" hidden>
         <div class="shead" id="requests-head">
@@ -186,6 +220,25 @@
         <div class="row">
           <button type="submit" value="cancel" class="btn">Cancel</button>
           <button type="submit" value="ok" class="btn primary" id="confirm-ok">Confirm</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="chat-settings" class="settings">
+      <form method="dialog">
+        <h3>Chat settings</h3>
+        <label>System prompt<textarea id="cs-system" rows="4" placeholder="Empty: the model's own default"></textarea></label>
+        <div class="fields">
+          <label>Reasoning effort<select id="cs-effort"><option value="">engine default</option><option value="low">low</option><option value="medium">medium</option><option value="high">high</option></select></label>
+          <label>Temperature<input id="cs-temperature" type="number" min="0" max="2" step="0.05" placeholder="engine" /></label>
+          <label>Top p<input id="cs-top-p" type="number" min="0" max="1" step="0.01" placeholder="engine" /></label>
+          <label>Max tokens<input id="cs-max-tokens" type="number" min="1" step="1" placeholder="auto" /></label>
+        </div>
+        <p class="hint">Empty fields use the engine's defaults. Changes apply to the next message.</p>
+        <div class="row">
+          <button type="button" class="btn danger" id="cs-delete" value="delete">Delete chat</button>
+          <span class="grow"></span>
+          <button type="submit" value="cancel" class="btn">Cancel</button>
+          <button type="submit" value="ok" class="btn primary">Save</button>
         </div>
       </form>
     </dialog>
