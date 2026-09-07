@@ -7,7 +7,7 @@
 // hands the Sample to the history and to listeners. tick() is public and the
 // clock injectable so tests drive it without timers or a network.
 
-import type { Engine, ModelInfo } from "./engine/types.ts";
+import type { Engine, EngineCounters, ModelInfo } from "./engine/types.ts";
 import type { History } from "./history.ts";
 import { cacheDirSizes } from "./host/disk.ts";
 import { NULL_PROBES } from "./host/index.ts";
@@ -46,6 +46,39 @@ export type SamplerOptions = {
   // engine runs on this host: probe its pid and size its cache dirs
   local?: boolean;
 };
+
+// A reading that is only a counter baseline (t=0, no gauges or histograms):
+// the epoch check compares the next real reading against it, nothing else.
+const describe = (err: unknown) =>
+  err instanceof Error ? err.message : String(err);
+
+function baseline(counters: EngineCounters): Reading {
+  return {
+    t: 0,
+    metrics: {
+      counters,
+      gauges: {
+        requestsRunning: 0,
+        requestsWaiting: 0,
+        requestsPrefilling: 0,
+        gpuPct: 0,
+        memoryBytes: 0,
+        generationTokensLive: 0,
+        prefillTokensLive: 0,
+        mlxActiveBytes: 0,
+        mlxCacheBytes: 0,
+      },
+      histograms: {
+        ttftSeconds: { count: 0, sum: 0 },
+        e2eLatencySeconds: { count: 0, sum: 0 },
+        prefillTimeSeconds: { count: 0, sum: 0 },
+        decodeTimeSeconds: { count: 0, sum: 0 },
+        promptTokens: { count: 0, sum: 0 },
+        outputTokens: { count: 0, sum: 0 },
+      },
+    },
+  };
+}
 
 export class Sampler {
   private prev: Reading | null = null;
@@ -89,33 +122,7 @@ export class Sampler {
     const state = history.loadSamplerState();
     this.epoch = state.epoch;
     this.requests = { ...EMPTY_REQUESTS, last: state.lastRequest };
-    if (state.counters) {
-      this.prev = {
-        t: 0,
-        metrics: {
-          counters: state.counters,
-          gauges: {
-            requestsRunning: 0,
-            requestsWaiting: 0,
-            requestsPrefilling: 0,
-            gpuPct: 0,
-            memoryBytes: 0,
-            generationTokensLive: 0,
-            prefillTokensLive: 0,
-            mlxActiveBytes: 0,
-            mlxCacheBytes: 0,
-          },
-          histograms: {
-            ttftSeconds: { count: 0, sum: 0 },
-            e2eLatencySeconds: { count: 0, sum: 0 },
-            prefillTimeSeconds: { count: 0, sum: 0 },
-            decodeTimeSeconds: { count: 0, sum: 0 },
-            promptTokens: { count: 0, sum: 0 },
-            outputTokens: { count: 0, sum: 0 },
-          },
-        },
-      };
-    }
+    if (state.counters) this.prev = baseline(state.counters);
   }
 
   onSample(fn: (s: Sample) => void): () => void {
@@ -164,8 +171,12 @@ export class Sampler {
 
   start() {
     if (this.timer) return;
-    void this.tick();
-    this.timer = setInterval(() => void this.tick(), TICK_MS);
+    // a tick that throws (a history write failing, say) is logged, not an
+    // unhandled rejection that ends the process
+    const tick = () =>
+      this.tick().catch((err) => this.log(`tick failed: ${describe(err)}`));
+    void tick();
+    this.timer = setInterval(tick, TICK_MS);
   }
 
   stop() {
@@ -247,8 +258,10 @@ export class Sampler {
       if (!reading) {
         sample = downSample(t, this.epoch, host, this.requests.last);
         // a dead engine breaks the window: the next reading starts fresh
-        // rather than computing rates over the outage
-        this.prev = null;
+        // rather than computing rates over the outage. The counters stay as
+        // a baseline so an engine that restarted meanwhile still bumps the
+        // epoch, as after our own restart.
+        this.prev = this.prev ? baseline(this.prev.metrics.counters) : null;
         this.live = EMPTY_LIVE;
         this.requests = { ...EMPTY_REQUESTS, last: this.requests.last };
         this.phase = "idle";
@@ -267,6 +280,9 @@ export class Sampler {
             `engine counters reset: epoch ${this.epoch} -> ${rates.epoch}`,
           );
           this.epoch = rates.epoch;
+          // a new process: whatever phase it is in began now
+          this.phase = "idle";
+          this.phaseSince = null;
         }
         // a restored reading has no gauges and a reset no valid deltas:
         // both start the request tracking afresh
@@ -318,7 +334,14 @@ export class Sampler {
         });
       }
       this.history.push(sample);
-      for (const fn of this.listeners) fn(sample);
+      for (const fn of this.listeners) {
+        try {
+          fn(sample);
+        } catch (err) {
+          // one bad listener must not take the loop down
+          this.log(`sample listener failed: ${describe(err)}`);
+        }
+      }
       return sample;
     } finally {
       this.inFlight = false;

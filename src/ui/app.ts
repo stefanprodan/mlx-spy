@@ -56,7 +56,7 @@ let lastCacheHit: number | null = null;
 let lastCacheTok: number | null = null;
 // the last request's prompt: how many tokens, how many came from the cache
 let lastReq: { prompt: number; cached: number } | null = null;
-let prevTok: { prompt: number; cached: number } | null = null;
+let prevTok: { epoch: number; prompt: number; cached: number } | null = null;
 // decode and prefill are 0 between requests; the tiles keep the last
 // request's speeds
 let lastDecode: number | null = null;
@@ -93,7 +93,6 @@ function seedTiles(s: Series) {
       if (
         s.engineUp[i - 1] === 1 &&
         s.epoch[i] === s.epoch[i - 1] &&
-        s.promptTokens[i - 1] > 0 &&
         s.promptTokens[i] > s.promptTokens[i - 1]
       ) {
         lastReq = {
@@ -145,14 +144,21 @@ function renderTiles(s: Sample) {
   );
   if (s.cacheHitPct != null) lastCacheHit = s.cacheHitPct;
   if (s.cacheTokenPct != null) lastCacheTok = s.cacheTokenPct;
-  if (s.engineUp && prevTok && s.promptTokens > prevTok.prompt) {
+  // consecutive samples of one engine run only: a reconnect gap or a new
+  // epoch would merge every request in between into one
+  if (
+    s.engineUp &&
+    prevTok &&
+    prevTok.epoch === s.epoch &&
+    s.promptTokens > prevTok.prompt
+  ) {
     lastReq = {
       prompt: s.promptTokens - prevTok.prompt,
       cached: s.cachedPromptTokens - prevTok.cached,
     };
   }
   prevTok = s.engineUp
-    ? { prompt: s.promptTokens, cached: s.cachedPromptTokens }
+    ? { epoch: s.epoch, prompt: s.promptTokens, cached: s.cachedPromptTokens }
     : null;
   $("t-cache").textContent = s.engineUp ? gb(s.mem.hotCacheEst, 0) : "-";
   // the budget is per resident model, so the tile's ceiling scales with them
@@ -307,7 +313,7 @@ function renderHost(snap: Snapshot) {
 // How much a lifetime counter grew over the loaded range: the sum of its
 // steps between consecutive points, within one engine run (a restart zeroes
 // the counters) and only while the engine answered (a down sample holds 0).
-// A step from 0 is skipped too: rows from before a column existed hold 0.
+// A step from 0 counts: it is the first request after an engine restart.
 function rangeTotal(
   k:
     | "generationTokens"
@@ -323,7 +329,6 @@ function rangeTotal(
       series.engineUp[i] === 1 &&
       series.engineUp[i - 1] === 1 &&
       series.epoch[i] === series.epoch[i - 1] &&
-      v[i - 1] > 0 &&
       v[i] > v[i - 1]
     ) {
       sum += v[i] - v[i - 1];
@@ -414,7 +419,10 @@ function renderRequest(s: Sample) {
       reqStart = cur.startedAt;
       reqPrefillTps = reqDecodeTps = null;
     }
-    if (prefilling && (s.prefillTps ?? 0) > 0) reqPrefillTps = s.prefillTps;
+    // a short prefill may publish its only rate on the tick the phase ends
+    if ((s.prefillTps ?? 0) > 0 && (prefilling || reqPrefillTps === null)) {
+      reqPrefillTps = s.prefillTps;
+    }
     if (!prefilling && (s.decodeTps ?? 0) > 0) reqDecodeTps = s.decodeTps;
     const rate = (v: number | null) => (v ? `${whole(v)} tok/s` : "");
     label(
@@ -680,41 +688,62 @@ const ACTION_LABEL: Record<ActionName, string> = {
 // The dialog copy states what happens, from the engine notes: an unload
 // drops the model's RAM prefix cache, a restart drops everything but the
 // SSD tier, loading past the residency cap evicts the least recently used.
-function confirmText(action: ActionName, model: string | null): string {
+// The message as nodes: the model id comes from the engine and is never
+// interpreted as HTML.
+function confirmText(
+  action: ActionName,
+  model: string | null,
+): (string | Node)[] {
   const loaded = loadedCount;
   const evict =
     loaded >= 2
       ? " Two models are resident, so the least recently used one is evicted."
       : "";
-  const m = `<code>${model ?? ""}</code>`;
+  const m = el("code", "", model ?? "");
   switch (action) {
     case "load":
-      return `Load ${m}? Reading the weights takes a few seconds; it becomes the default model.${evict}`;
+      return [
+        "Load ",
+        m,
+        `? Reading the weights takes a few seconds; it becomes the default model.${evict}`,
+      ];
     case "default":
-      return `Make ${m} the default model? It is loaded if needed and chat requests without a model go to it.${evict}`;
+      return [
+        "Make ",
+        m,
+        ` the default model? It is loaded if needed and chat requests without a model go to it.${evict}`,
+      ];
     case "unload":
-      return `Unload ${m}? Its weights and RAM prefix cache are freed; the SSD tier is kept. A model still resident becomes the default.`;
+      return [
+        "Unload ",
+        m,
+        "? Its weights and RAM prefix cache are freed; the SSD tier is kept. A model still resident becomes the default.",
+      ];
     case "free":
-      return `Confirm ${engineName} restart`;
+      return [`Confirm ${engineName} restart`];
     case "diskClear":
-      return `Restart the engine service and delete the SSD cache tier (${gb(diskTotal)} GB)? Every model is unloaded and every cached prefix is gone.`;
+      return [
+        `Restart the engine service and delete the SSD cache tier (${gb(diskTotal)} GB)? Every model is unloaded and every cached prefix is gone.`,
+      ];
     case "historyClear":
-      return "Delete the stored history? Every sample of the last 7 days is removed from mlx-spy's database and the graphs start over.";
+      return [
+        "Delete the stored history? Every sample of the last 7 days is removed from mlx-spy's database and the graphs start over.",
+      ];
     case "favorite":
-      return ""; // a toggle, no dialog
+      return []; // a toggle, no dialog
   }
 }
 
 // `diskSize` shows the "also delete the SSD tier" checkbox, unchecked; the
 // answer carries its state.
 function confirm(
-  html: string,
+  text: (string | Node)[],
   okLabel: string,
   diskSize?: string,
 ): Promise<{ ok: boolean; checked: boolean }> {
   const dlg = $("confirm") as HTMLDialogElement;
   const check = $("confirm-check") as HTMLInputElement;
-  $("confirm-text").innerHTML = html;
+  $("confirm-text").replaceChildren(...text);
   $("confirm-ok").textContent = okLabel;
   $("confirm-opt").hidden = !diskSize;
   $("confirm-opt-size").textContent = diskSize ?? "";
@@ -1033,13 +1062,34 @@ function redraw() {
   }
 }
 
+function markRange(r: Range) {
+  for (const b of $("ranges").querySelectorAll<HTMLElement>("[data-range]")) {
+    b.classList.toggle("active", b.dataset.range === r);
+  }
+}
+
 async function loadRange(r: Range) {
+  const before = range;
   range = r;
-  const res = await fetch(`/api/history?range=${r}`);
-  const body = (await res.json()) as { series: Series };
+  let body: { series: Series };
+  try {
+    const res = await fetch(`/api/history?range=${r}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    body = (await res.json()) as { series: Series };
+  } catch (err) {
+    // the old series stays, and so does its button
+    if (range === r && series) {
+      range = before;
+      markRange(before);
+    }
+    console.warn(`history ${r}: ${err instanceof Error ? err.message : err}`);
+    return;
+  }
   if (range !== r) return; // a later click won
   series = body.series;
+  markRange(r);
   if (r === "1h") seedTiles(series);
+  else if (lastSample) renderTiles(lastSample); // range totals changed
   redraw();
   if (refetchTimer) clearInterval(refetchTimer);
   refetchTimer =
@@ -1107,6 +1157,7 @@ function refreshModels(s: Sample) {
   void fetchSnapshot();
 }
 
+let connected = false;
 function connect() {
   const proto = location.protocol === "https:" ? "wss" : "ws";
   const ws = new WebSocket(`${proto}://${location.host}/ws`);
@@ -1126,6 +1177,9 @@ function connect() {
       renderModels(msg.data);
       modelsKey = modelsKeyOf(msg.data.models);
       if (msg.data.sample) renderTiles(msg.data.sample);
+      // after a reconnect the series has a hole: fetch it again
+      if (connected) void loadRange(range);
+      connected = true;
     } else if (msg.type === "event") {
       showEvent(msg.data);
       if (msg.data.action === "historyClear" && msg.data.ok) {
@@ -1138,8 +1192,9 @@ function connect() {
       // another tab may have run it; the residency changed either way
       void fetchSnapshot();
     } else {
-      renderTiles(msg.data);
+      // the series first, so the tiles' range totals include this tick
       appendLive(msg.data);
+      renderTiles(msg.data);
       refreshModels(msg.data);
     }
   };
@@ -1148,6 +1203,7 @@ function connect() {
     state.className = "pill err";
     $("engine-state").textContent = "unknown";
     $("engine-state").className = "pill";
+    prevTok = null; // the next sample is not the successor of the last one
     setTimeout(connect, 2000);
   };
 }
@@ -1163,9 +1219,6 @@ for (const b of document.querySelectorAll<HTMLButtonElement>(
 $("ranges").addEventListener("click", (ev) => {
   const btn = (ev.target as HTMLElement).closest("button");
   if (!btn?.dataset.range) return;
-  for (const b of $("ranges").querySelectorAll("[data-range]")) {
-    b.classList.toggle("active", b === btn);
-  }
   void loadRange(btn.dataset.range as Range);
 });
 

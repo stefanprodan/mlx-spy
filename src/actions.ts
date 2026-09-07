@@ -147,32 +147,39 @@ export class Actions {
     const started = this.now();
     let ok = true;
     let detail = "";
+    // a refusal keeps its own status; an adapter, spawn or file failure is 502
+    let status = 502;
     try {
-      detail = await this.perform(name, model);
-    } catch (err) {
-      ok = false;
-      detail = err instanceof Error ? err.message : String(err);
+      try {
+        detail = await this.perform(name, model);
+      } catch (err) {
+        ok = false;
+        detail = err instanceof Error ? err.message : String(err);
+        if (err instanceof ActionError) status = err.status;
+      }
+      // the table must reflect the new residency without waiting 5 s; the
+      // action stays busy until every tab has the event so a second one
+      // cannot start on a stale picture
+      await this.deps.sampler.refreshModels();
+      const event: ActionEvent = {
+        t: this.now(),
+        action: name,
+        model,
+        ok,
+        ms: this.now() - started,
+        detail,
+      };
+      this.events.push(event);
+      if (this.events.length > EVENTS_KEPT) this.events.shift();
+      this.deps.log(
+        `action ${name}${model ? ` ${model}` : ""}: ${ok ? "ok" : "failed"} in ${event.ms} ms${detail ? ` (${detail})` : ""}`,
+      );
+      for (const fn of this.listeners) fn(event);
+      if (!ok) throw new ActionError(status, detail);
+      return event;
     } finally {
       this.busy = null;
     }
-    // the table must reflect the new residency without waiting 5 s
-    await this.deps.sampler.refreshModels();
-    const event: ActionEvent = {
-      t: this.now(),
-      action: name,
-      model,
-      ok,
-      ms: this.now() - started,
-      detail,
-    };
-    this.events.push(event);
-    if (this.events.length > EVENTS_KEPT) this.events.shift();
-    this.deps.log(
-      `action ${name}${model ? ` ${model}` : ""}: ${ok ? "ok" : "failed"} in ${event.ms} ms${detail ? ` (${detail})` : ""}`,
-    );
-    for (const fn of this.listeners) fn(event);
-    if (!ok) throw new ActionError(502, detail);
-    return event;
   }
 
   // The model id comes from the request but must name a model the engine

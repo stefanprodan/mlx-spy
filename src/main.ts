@@ -87,7 +87,9 @@ function value(i: number): [string, number] {
   const eq = arg.indexOf("=");
   if (eq !== -1) return [arg.slice(eq + 1), i];
   const v = args[i + 1];
-  if (v === undefined) fail(`${arg} needs a value`);
+  // the next flag is not this one's value: `--db --once` is a mistake, and
+  // a value that really starts with a dash is written --flag=value
+  if (v === undefined || v.startsWith("-")) fail(`${arg} needs a value`);
   return [v, i + 1];
 }
 
@@ -156,10 +158,15 @@ if (once) {
 let hostname = tailscaleAddress() ?? "127.0.0.1";
 let port = DEFAULT_PORT;
 if (listen) {
-  const m = /^(.*?)(?::(\d+))?$/.exec(listen);
+  // host, :port, host:port or [v6]:port
+  const m = /^(?:\[([^\]]+)\]|([^:]*))(?::(\d+))?$/.exec(listen);
   if (!m) fail(`invalid --listen: ${listen}`);
-  if (m[1]) hostname = m[1];
-  if (m[2]) port = Number(m[2]);
+  const host = m[1] ?? m[2];
+  if (host) hostname = host;
+  if (m[3] !== undefined) {
+    port = Number(m[3]);
+    if (port < 1 || port > 65535) fail(`invalid --listen port: ${m[3]}`);
+  }
 }
 
 const log = (line: string) =>

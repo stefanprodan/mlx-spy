@@ -238,6 +238,25 @@ describe("History migration", () => {
       expect(s.hostFree).toEqual([0]);
       h.push(sample(2000));
       expect(h.series("1h", 2000).diskBytes).toEqual([0, 300]);
+      // the migrated file appends ttft_ms after the counters, the reverse of
+      // CREATE TABLE: every value must still land in its own column
+      const s1 = {
+        ...sample(3000),
+        ttftMs: 1234,
+        generatedTokens: 11,
+        promptTokens: 12,
+        cachedPromptTokens: 13,
+        requestsTotal: 14,
+        requestsCancelled: 15,
+      };
+      h.push(s1);
+      const s2 = h.series("1h", 3000);
+      expect(s2.ttftMs[2]).toBe(s1.ttftMs);
+      expect(s2.generationTokens[2]).toBe(s1.generatedTokens);
+      expect(s2.requestsTotal[2]).toBe(s1.requestsTotal);
+      expect(s2.promptTokens[2]).toBe(s1.promptTokens);
+      expect(s2.cachedPromptTokens[2]).toBe(s1.cachedPromptTokens);
+      expect(s2.requestsCancelled[2]).toBe(s1.requestsCancelled);
       h.close();
     } finally {
       require("node:fs").rmSync(path, { force: true });

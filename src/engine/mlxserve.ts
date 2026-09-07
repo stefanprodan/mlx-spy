@@ -131,12 +131,24 @@ export class MlxServe implements Engine {
     }
   }
 
+  // A 200 with the wrong shape (a proxy page, a half-written body) is an
+  // error, not an empty list or zeroed counters: the latter would drop the
+  // favorite and fake a counter reset.
   async models(): Promise<ModelInfo[]> {
-    return parseModels(await this.get("/v1/models"));
+    const body = await this.get("/v1/models");
+    if (!Array.isArray(body?.data)) throw new Error("/v1/models: no data");
+    return parseModels(body);
   }
 
   async metrics(): Promise<EngineMetrics> {
-    return parseMetrics(await this.get("/metrics.json"));
+    const body = await this.get("/metrics.json");
+    if (
+      typeof body?.counters !== "object" ||
+      typeof body?.gauges !== "object"
+    ) {
+      throw new Error("/metrics.json: no counters");
+    }
+    return parseMetrics(body);
   }
 
   // Model ids are "<org>/<name>" in serve mode; callers pass the full id.

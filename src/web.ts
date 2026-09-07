@@ -79,46 +79,79 @@ export type WsMessage =
   | { type: "sample"; data: Sample }
   | { type: "event"; data: ActionEvent };
 
+// There is no auth, so a page on any other site that a tailnet user has
+// open could post an action or read the push from the browser. A browser
+// sends Origin on POSTs and WebSocket upgrades: when present it must be the
+// dashboard's own; curl and scripts send none and are the tailnet's own.
+export function sameOrigin(req: Request): boolean {
+  const origin = req.headers.get("origin");
+  if (origin === null) return true;
+  try {
+    return new URL(origin).host === req.headers.get("host");
+  } catch {
+    return false;
+  }
+}
+
+// live data, never cached by the browser or a proxy
+const json = (body: unknown, status = 200) =>
+  Response.json(body, {
+    status,
+    headers: { "cache-control": "no-store" },
+  });
+
 // Route handler, separate from Bun.serve so tests can call it with a Request.
 export async function handle(req: Request, deps: WebDeps): Promise<Response> {
   const url = new URL(req.url);
   const action = /^\/api\/actions\/([a-zA-Z]+)$/.exec(url.pathname);
   if (action) {
     if (req.method !== "POST") {
-      return Response.json({ error: "method not allowed" }, { status: 405 });
+      return json({ error: "method not allowed" }, 405);
     }
-    // an empty body is fine for free and diskClear
-    const body = await req.json().catch(() => ({}));
+    if (!sameOrigin(req)) return json({ error: "cross-origin request" }, 403);
+    // an empty body is fine for free and diskClear; a body must be JSON
+    const text = await req.text();
+    let body: unknown = {};
+    if (text.trim() !== "") {
+      try {
+        body = JSON.parse(text);
+      } catch {
+        return json({ error: "body is not JSON" }, 400);
+      }
+      if (typeof body !== "object" || body === null) {
+        return json({ error: "body must be a JSON object" }, 400);
+      }
+    }
     try {
-      return Response.json(await deps.actions.run(action[1], body));
+      return json(await deps.actions.run(action[1], body));
     } catch (err) {
       if (err instanceof ActionError) {
-        return Response.json({ error: err.message }, { status: err.status });
+        return json({ error: err.message }, err.status);
       }
       throw err;
     }
   }
   if (req.method !== "GET") {
-    return Response.json({ error: "method not allowed" }, { status: 405 });
+    return json({ error: "method not allowed" }, 405);
   }
   switch (url.pathname) {
     case "/api/snapshot":
-      return Response.json(snapshot(deps));
+      return json(snapshot(deps));
     case "/api/history": {
       const range = url.searchParams.get("range") ?? "1h";
       if (!isRange(range)) {
-        return Response.json(
+        return json(
           { error: `range must be one of ${Object.keys(RANGES).join(", ")}` },
-          { status: 400 },
+          400,
         );
       }
-      return Response.json({
+      return json({
         range,
         series: deps.history.series(range, (deps.now ?? Date.now)()),
       });
     }
     default:
-      return Response.json({ error: "not found" }, { status: 404 });
+      return json({ error: "not found" }, 404);
   }
 }
 
@@ -136,6 +169,9 @@ export function serve(
     routes: { "/": page },
     fetch(req, srv) {
       if (new URL(req.url).pathname === "/ws") {
+        if (!sameOrigin(req)) {
+          return new Response("cross-origin request", { status: 403 });
+        }
         return srv.upgrade(req)
           ? undefined
           : new Response("websocket upgrade failed", { status: 400 });

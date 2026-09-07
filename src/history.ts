@@ -124,7 +124,16 @@ export class History {
       last_seen INTEGER NOT NULL
     )`);
     this.migrateModels();
-    this.insert = this.db.prepare(`INSERT OR REPLACE INTO samples VALUES (
+    // columns named: a migrated file appends them in a different order than
+    // CREATE TABLE lists them
+    this.insert = this.db.prepare(`INSERT OR REPLACE INTO samples (
+      t, engine_up, epoch, decode_tps, prefill_tps, requests_running,
+      requests_waiting, cache_hit_pct, cache_token_pct, gpu_pct, proc_footprint,
+      weights, hot_cache_est, mlx_active, mlx_pool, host_total, host_free,
+      host_inactive, host_wired, host_compressed, proc_rss, disk_bytes,
+      ttft_ms, generation_tokens, requests_total, prompt_tokens,
+      cached_prompt_tokens, requests_cancelled
+    ) VALUES (
       $t, $engineUp, $epoch, $decodeTps, $prefillTps, $requestsRunning,
       $requestsWaiting, $cacheHitPct, $cacheTokenPct, $gpuPct, $procFootprint,
       $weights, $hotCacheEst, $mlxActive, $mlxPool, $hostTotal, $hostFree,

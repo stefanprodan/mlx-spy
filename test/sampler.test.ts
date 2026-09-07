@@ -277,6 +277,58 @@ describe("Sampler", () => {
     expect(seen).toHaveLength(1);
     history.close();
   });
+
+  test("an engine restart during an outage still bumps the epoch", async () => {
+    const engine = new FakeEngine([
+      idle,
+      "down",
+      (b) => {
+        b.counters.prompt_tokens_total = 5;
+        b.counters.requests_success_total = 0;
+        b.gauges.requests_running = 1;
+      },
+      idle,
+    ]);
+    const history = new History(":memory:");
+    const lines: string[] = [];
+    const c = clock();
+    const s = new Sampler(engine, history, {
+      now: c.now,
+      log: (l) => lines.push(l),
+    });
+    await s.tick();
+    c.advance(1000);
+    await s.tick();
+    c.advance(1000);
+    const back = await s.tick();
+    expect(back?.epoch).toBe(1);
+    expect(back?.windowMs).toBeNull();
+    // the new process's phase clock starts at this reading
+    expect(back?.phaseSince).toBe(c.now());
+    expect(lines).toEqual(["engine counters reset: epoch 0 -> 1"]);
+    c.advance(1000);
+    expect((await s.tick())?.epoch).toBe(1);
+    history.close();
+  });
+
+  test("a throwing listener is logged and the others still run", async () => {
+    const engine = new FakeEngine([idle]);
+    const history = new History(":memory:");
+    const lines: string[] = [];
+    const s = new Sampler(engine, history, {
+      now: clock().now,
+      log: (l) => lines.push(l),
+    });
+    const seen: number[] = [];
+    s.onSample(() => {
+      throw new Error("boom");
+    });
+    s.onSample((x) => seen.push(x.t));
+    expect((await s.tick())?.engineUp).toBe(true);
+    expect(seen).toHaveLength(1);
+    expect(lines).toEqual(["sample listener failed: boom"]);
+    history.close();
+  });
 });
 
 describe("web", () => {
@@ -347,6 +399,40 @@ describe("web", () => {
       ).status,
     ).toBe(405);
     expect((await get("/api/actions/free")).status).toBe(405);
+    expect((await get("/api/snapshot")).headers.get("cache-control")).toBe(
+      "no-store",
+    );
+    d.history.close();
+  });
+
+  test("actions refuse another origin and a body that is not JSON", async () => {
+    const d = await deps();
+    const post = (init: RequestInit) =>
+      handle(
+        new Request("http://x/api/actions/favorite", {
+          method: "POST",
+          ...init,
+        }),
+        d,
+      );
+    // a page on another site: refused before the action is looked at
+    expect(
+      (await post({ headers: { origin: "http://evil", host: "x" } })).status,
+    ).toBe(403);
+    // the dashboard's own origin, and no origin at all (curl), get through
+    expect(
+      (
+        await post({
+          headers: { origin: "http://x", host: "x" },
+          body: "{",
+        })
+      ).status,
+    ).toBe(400);
+    expect((await post({ body: "[1]" })).status).toBe(400);
+    // an empty body is an empty object: favorite then wants a model id
+    const r = await post({});
+    expect(r.status).toBe(400);
+    expect(((await r.json()) as any).error).toMatch(/needs a model id/);
     d.history.close();
   });
 

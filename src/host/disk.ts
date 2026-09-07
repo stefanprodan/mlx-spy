@@ -15,8 +15,12 @@ async function treeBytes(dir: string): Promise<number> {
   let entries: import("node:fs").Dirent[];
   try {
     entries = await readdir(dir, { withFileTypes: true });
-  } catch {
-    return 0; // vanished mid-scan, or unreadable
+  } catch (err) {
+    // vanished mid-scan (the engine evicting) is a zero; anything else
+    // (permissions, descriptors, I/O) must not read as an emptied tier, so
+    // it fails the scan and the sampler keeps the previous sizes
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return 0;
+    throw err;
   }
   for (const e of entries) {
     const p = join(dir, e.name);

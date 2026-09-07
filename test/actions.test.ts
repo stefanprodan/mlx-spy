@@ -242,7 +242,7 @@ describe("Actions", () => {
   test("free without a service label is refused", async () => {
     const s = await setup();
     s.engine.label = null;
-    await rejects(s.actions.run("free", {}), 502, /not a launchd service/);
+    await rejects(s.actions.run("free", {}), 403, /not a launchd service/);
     expect(s.spawned).toEqual([]);
     s.history.close();
   });
@@ -296,6 +296,30 @@ describe("Actions", () => {
       /load is still running/,
     );
     release();
+    await first;
+    expect(s.actions.running()).toBeNull();
+    s.history.close();
+  });
+
+  test("busy holds through the model refresh after the action", async () => {
+    const s = await setup();
+    let release!: (list: ModelInfo[]) => void;
+    const list = await s.engine.models();
+    s.engine.models = () =>
+      new Promise((r) => {
+        release = r;
+      });
+    const first = s.actions.run("load", { model: APODEX });
+    await Bun.sleep(0);
+    // the adapter call is done, the refresh of the list is not
+    expect(s.engine.calls).toEqual([`load ${APODEX} true`]);
+    expect(s.actions.running()).toBe("load");
+    await rejects(
+      s.actions.run("unload", { model: QWEN }),
+      409,
+      /load is still running/,
+    );
+    release(list);
     await first;
     expect(s.actions.running()).toBeNull();
     s.history.close();

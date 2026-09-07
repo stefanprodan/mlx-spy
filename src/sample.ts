@@ -382,13 +382,15 @@ export function downSample(
     cachedPromptTokens: 0,
     requestsTotal: 0,
     requestsCancelled: 0,
-    enginePid: null,
-    engineStartedAt: null,
-    engineCpuPct: null,
+    // the process may well be alive (a hung endpoint, a load in progress):
+    // what the probes saw of it is real
+    enginePid: host.pid,
+    engineStartedAt: host.proc?.startedAt || null,
+    engineCpuPct: host.cpuPct,
     mem: {
       ...hostMem(host),
-      procFootprint: 0,
-      procRss: 0,
+      procFootprint: host.proc?.footprint ?? 0,
+      procRss: host.proc?.rss ?? 0,
       weights: 0,
       hotCacheEst: 0,
       mlxActive: 0,
