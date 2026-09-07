@@ -42,11 +42,11 @@ listing a model). There is no auth: the tailnet is the boundary.
 A sample carries the engine state, live decode and prefill tok/s (rated between
 moves of the engine's 2 s live gauges, carried while the phase runs), cache
 hit ratios, the memory split (host free, inactive, wired and compressed;
-engine footprint and RSS; weights, estimated hot cache, MLX pool), the cache
+engine footprint and RSS; weights, estimated RAM cache, MLX pool), the cache
 tier directories and the model list. The engine pid, RSS, CPU, start time
 and disk tier are only probed when the engine runs on the same host; the
 Runtime section shows them next to facts about the host (OS, chip, cores,
-GPU cores, memory, disk). The hot cache and SSD
+GPU cores, memory, disk). The RAM cache and SSD
 cache tiles draw a bar against the engine's per-model budgets, read from its
 launchd plist for a local engine or given with `--hot-cache-max` and
 `--disk-cache-max`.

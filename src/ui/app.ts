@@ -114,14 +114,14 @@ function renderTiles(s: Sample) {
   lastSample = s;
   const decoding = (s.decodeTps ?? 0) > 0;
   if (decoding) lastDecode = s.decodeTps;
-  $("t-decode").textContent = num(lastDecode, 1);
+  $("t-decode").textContent = whole(lastDecode);
   $("t-decode-sub").textContent = !s.engineUp
     ? "engine unreachable"
     : lastDecode == null
       ? "no request in the last hour"
       : inView("decodeTps");
   if ((s.prefillTps ?? 0) > 0) lastPrefill = s.prefillTps;
-  $("t-prefill").textContent = num(lastPrefill);
+  $("t-prefill").textContent = whole(lastPrefill);
   $("t-prefill-sub").textContent = !s.engineUp
     ? "engine unreachable"
     : lastPrefill == null
@@ -239,7 +239,7 @@ function renderServer(s: Sample) {
   );
   $("engine-cpu").replaceChildren(
     pid == null || s.engineCpuPct == null ? "-" : `${num(s.engineCpuPct)}%`,
-    el("small", "", pid == null ? why : "of one core, like top"),
+    el("small", "", pid == null ? why : "of one core"),
   );
   $("engine-gpu").textContent = s.engineUp ? `${num(s.gpuPct)}%` : "-";
   if (s.mem.hostTotal > 0) {
@@ -333,7 +333,7 @@ function inView(k: "decodeTps" | "prefillTps"): string {
     sum += v;
     n++;
   }
-  return n ? `avg ${num(sum / n)} · peak ${num(peak)}` : "";
+  return n ? `avg ${whole(sum / n)} · peak ${whole(peak)}` : "";
 }
 
 // ---------- models ----------
@@ -722,12 +722,16 @@ function axes(): uPlot.Axis[] {
   return [{ show: false }, { show: false }];
 }
 
+// Bars, one per sample, no gap: at 1h that is a bar per second, a solid
+// block per request instead of a jagged line.
 function line(color: string, extra: Partial<uPlot.Series> = {}): uPlot.Series {
   return {
     stroke: color,
-    width: 1.5,
+    fill: `${color}b0`,
+    width: 0,
     points: { show: false },
     spanGaps: false,
+    paths: uPlot.paths.bars!({ size: [1, Number.POSITIVE_INFINITY], gap: 0 }),
     ...extra,
   };
 }
@@ -818,7 +822,10 @@ function showValues(c: Chart, idx: number | null) {
   }
 }
 
-const tps = (v: number | null) => (v == null ? "-" : v.toFixed(v < 10 ? 1 : 0));
+// whole tok/s; anything under one that is not zero reads as 1
+const whole = (v: number | null | undefined) =>
+  v == null ? "-" : v > 0 ? `${Math.max(1, Math.round(v))}` : "0";
+const tps = whole;
 
 function setupCharts() {
   const green = css("--green");
@@ -830,7 +837,7 @@ function setupCharts() {
     "c-decode",
     [{ label: "tok/s", color: green, fmt: tps }],
     {
-      series: [{}, line(green, { fill: `${green}22` })],
+      series: [{}, line(green)],
       scales: { x: { time: true }, y: { range: floor(10) } },
       axes: axes(),
     },
@@ -840,7 +847,7 @@ function setupCharts() {
     "c-prefill",
     [{ label: "tok/s", color: blue, fmt: tps }],
     {
-      series: [{}, line(blue, { fill: `${blue}22` })],
+      series: [{}, line(blue)],
       scales: { x: { time: true }, y: { range: floor(10) } },
       axes: axes(),
     },

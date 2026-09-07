@@ -261,6 +261,9 @@ dialog .opt {
   color: var(--fg);
   cursor: pointer;
 }
+dialog .opt[hidden] {
+  display: none;
+}
 dialog .opt input {
   width: 16px;
   height: 16px;

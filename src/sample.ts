@@ -92,22 +92,34 @@ export type LiveTrack = {
   value: number;
   rate: number;
   moves: LiveMove[];
+  hold: number; // ticks left to ignore moves after a request completed
 };
 export type LiveState = {
   decode: LiveTrack | null;
   prefill: LiveTrack | null;
 };
 export const EMPTY_LIVE: LiveState = { decode: null, prefill: null };
-const LIVE_MOVES = 3; // intervals the rate spans, about 6 s
+const LIVE_MOVES = 6; // intervals the rate spans, about 12 s
 // A running request whose decode gauge has not moved for this long is in
 // another phase (a long prefill): stop carrying the old decode rate.
 const LIVE_STALE_MS = 5000;
+// The decode gauge is completed tokens plus in-flight tokens, read as two
+// values: at a completion the engine can count the finished request's
+// tokens on both sides for one publish, a jump of thousands that drops
+// back on the next. Ignore the gauge for this many ticks after a request
+// completed and carry the last rate instead.
+const SETTLE_TICKS = 2;
 
 type TrackOpts = {
   staleMs: number;
   // the phase flag marks the start of the phase, so the first move can be
   // rated from there instead of waiting for a second one
   seed: boolean;
+  // a request completed this tick (see SETTLE_TICKS)
+  settle: boolean;
+  // a drop is a new request (prefill: rate from scratch) or the double
+  // count settling (decode: keep the rate)
+  carryOnDrop: boolean;
 };
 
 function trackLive(
@@ -118,22 +130,38 @@ function trackLive(
   opts: TrackOpts,
 ): LiveTrack {
   const at = { t, value: cur };
-  if (!prev) return { ...at, rate: 0, moves: [] };
+  if (!prev) return { ...at, rate: 0, moves: [], hold: 0 };
+  const hold = opts.settle ? SETTLE_TICKS : Math.max(0, prev.hold - 1);
   if (cur === prev.value) {
     if (!running || t - prev.t > opts.staleMs) {
-      return { ...at, rate: 0, moves: [] };
+      return { ...at, rate: 0, moves: [], hold };
     }
-    if (opts.seed && prev.moves.length === 0) return { ...prev, moves: [at] };
-    return prev;
+    if (opts.seed && prev.moves.length === 0) {
+      return { ...prev, moves: [at], hold };
+    }
+    return { ...prev, hold };
   }
-  // a drop means a new request; its first step has no base to rate from
-  const moves = cur >= prev.value ? [...prev.moves, at] : [at];
+  if (hold > 0) {
+    // the value moved while settling: record it, rate nothing from it
+    return { ...at, rate: prev.rate, moves: [], hold };
+  }
+  if (cur < prev.value) {
+    return {
+      ...at,
+      rate: opts.carryOnDrop ? prev.rate : 0,
+      moves: [at],
+      hold,
+    };
+  }
+  const moves = [...prev.moves, at];
   while (moves.length > LIVE_MOVES + 1) moves.shift();
   const first = moves[0];
   const secs = Math.max(t - first.t, 1) / 1000;
   const rate =
-    moves.length < 2 ? 0 : Math.round(((cur - first.value) / secs) * 10) / 10;
-  return { ...at, rate, moves };
+    moves.length < 2
+      ? prev.rate
+      : Math.round(((cur - first.value) / secs) * 10) / 10;
+  return { ...at, rate, moves, hold };
 }
 
 const pct = (num: number, den: number) =>
@@ -166,17 +194,28 @@ export function computeRates(
   };
   const g1 = cur.metrics.gauges;
   const running = g1.requestsRunning > 0 || g1.requestsPrefilling > 0;
+  const completed =
+    prev != null &&
+    cur.metrics.histograms.decodeTimeSeconds.count >
+      prev.metrics.histograms.decodeTimeSeconds.count;
   const track = (): LiveState => ({
     decode: trackLive(live.decode, cur.t, g1.generationTokensLive, running, {
       staleMs: LIVE_STALE_MS,
       seed: false,
+      settle: completed,
+      carryOnDrop: true,
     }),
     prefill: trackLive(
       live.prefill,
       cur.t,
       g1.prefillTokensLive,
       g1.requestsPrefilling > 0,
-      { staleMs: Number.POSITIVE_INFINITY, seed: true },
+      {
+        staleMs: Number.POSITIVE_INFINITY,
+        seed: true,
+        settle: false,
+        carryOnDrop: false,
+      },
     ),
   });
   if (!prev) return { epoch: prevEpoch, ...none, live: track() };

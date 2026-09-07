@@ -39,8 +39,8 @@ describe("computeRates", () => {
       cacheTokenPct: null,
       ttftMs: null,
       live: {
-        decode: { t: 1000, value: 26, rate: 0, moves: [] },
-        prefill: { t: 1000, value: 0, rate: 0, moves: [] },
+        decode: { t: 1000, value: 26, rate: 0, moves: [], hold: 0 },
+        prefill: { t: 1000, value: 0, rate: 0, moves: [], hold: 0 },
       },
     });
   });
@@ -233,6 +233,31 @@ describe("computeRates live tracking", () => {
       at(9000, 176),
     ]);
     expect(out).toEqual([0, 44, 29.3, 26.4]);
+  });
+
+  test("a completion's double-counted jump is ignored, the rate carried", () => {
+    // 22 tok/s with two requests running; one finishes with 12284 tokens
+    // and the gauge counts them twice for a publish, then drops back
+    const done = (t: number, live: number, total: number) => {
+      const r = reading(
+        t,
+        { generation_tokens_total: total },
+        { generation_tokens_live: live, requests_running: 1 },
+      );
+      r.metrics.histograms.decodeTimeSeconds = { count: 2, sum: 100 };
+      return r;
+    };
+    const base = reading(1000).metrics.counters.generationTokens;
+    const out = run([
+      at(1000, 40304),
+      at(3000, 40348),
+      at(5000, 40392),
+      done(7000, 52720, base + 12284), // jump: total moved, in-flight not yet
+      done(8000, 40436, base + 12284), // settled: back to the true value
+      done(10000, 40480, base + 12284),
+      done(12000, 40524, base + 12284),
+    ]);
+    expect(out).toEqual([0, 22, 22, 22, 22, 22]);
   });
 
   test("idle resets the rate; a long prefill goes stale", () => {
