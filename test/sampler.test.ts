@@ -57,6 +57,9 @@ class FakeEngine implements Engine {
   serviceLabel() {
     return null;
   }
+  async cacheLimits() {
+    return null;
+  }
 }
 
 function clock(start = 1_000_000) {
@@ -228,6 +231,7 @@ describe("web", () => {
       actions,
       version: "vtest",
       local: false,
+      limits: null,
       now: c.now,
     };
   }
@@ -241,6 +245,7 @@ describe("web", () => {
       url: "http://fake:11234",
       local: false,
       capabilities: [],
+      limits: null,
     });
     expect(snap.disk).toEqual([]);
     expect(snap.sample?.windowMs).toBe(1000);

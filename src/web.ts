@@ -8,7 +8,7 @@
 import { networkInterfaces } from "node:os";
 import type { HTMLBundle } from "bun";
 import { ActionError, type ActionEvent, type Actions } from "./actions.ts";
-import type { Engine } from "./engine/types.ts";
+import type { CacheLimits, Engine } from "./engine/types.ts";
 import { type History, RANGES, type Range } from "./history.ts";
 import type { Sample } from "./sample.ts";
 import type { Sampler } from "./sampler.ts";
@@ -41,6 +41,8 @@ export type WebDeps = {
   actions: Actions;
   version: string;
   local: boolean;
+  // per-model cache budgets, null when unknown
+  limits: CacheLimits | null;
   // injectable for tests; the history range is relative to it
   now?: () => number;
 };
@@ -53,6 +55,7 @@ export function snapshot(deps: WebDeps) {
       url: deps.engine.url,
       local: deps.local,
       capabilities: [...deps.engine.capabilities()],
+      limits: deps.limits,
     },
     sample: deps.history.latest(),
     models: deps.sampler.currentModels(),

@@ -16,7 +16,7 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import pkg from "../package.json";
 import { Actions } from "./actions.ts";
-import { MlxServe } from "./engine/mlxserve.ts";
+import { MlxServe, parseSize } from "./engine/mlxserve.ts";
 import { History } from "./history.ts";
 import { createHostProbes } from "./host/index.ts";
 import { isLocalUrl } from "./host/local.ts";
@@ -45,6 +45,9 @@ const HELP = `\x1b[1mmlx-spy\x1b[0m - monitor and control an LLM inference serve
   --db <path>          SQLite history file (default: ~/.mlx-spy/history.sqlite;
                        ":memory:" keeps nothing)
   --retention <days>   history retention (default: ${DEFAULT_RETENTION_DAYS})
+  --hot-cache-max <n>  hot cache budget per model, e.g. 16GB (default: read
+                       from the engine's launchd plist when local)
+  --disk-cache-max <n> SSD cache tier budget per model, e.g. 50GB (same)
   --once               print one JSON sample and exit
   -v, --version        show version
   -h, --help           show this help
@@ -71,6 +74,8 @@ let listen: string | null = null;
 let dbPath = DEFAULT_DB;
 let retentionDays = DEFAULT_RETENTION_DAYS;
 let once = false;
+let hotMax: number | null = null;
+let diskMax: number | null = null;
 const args = Bun.argv.slice(2);
 
 // --flag value and --flag=value both work
@@ -107,6 +112,13 @@ for (let i = 0; i < args.length; i++) {
     if (!Number.isFinite(retentionDays) || retentionDays <= 0) {
       fail(`--retention must be a positive number of days: ${v}`);
     }
+  } else if (name === "--hot-cache-max" || name === "--disk-cache-max") {
+    const [v, j] = value(i);
+    i = j;
+    const bytes = parseSize(v);
+    if (bytes === null) fail(`${name} expects <n>{KB,MB,GB} or off: ${v}`);
+    if (name === "--hot-cache-max") hotMax = bytes;
+    else diskMax = bytes;
   } else {
     fail(`unknown argument: ${arg}`);
   }
@@ -121,6 +133,16 @@ try {
 const engine = new MlxServe(engineUrl);
 const probes = await createHostProbes();
 const local = isLocalUrl(engineUrl);
+// per-model budgets: the launch flags when the engine is local, else only
+// what the user tells us; a flag overrides the plist either way
+const plistLimits = local ? await engine.cacheLimits() : null;
+const limits =
+  hotMax !== null || diskMax !== null || plistLimits
+    ? {
+        hotBytes: hotMax ?? plistLimits?.hotBytes ?? 0,
+        diskBytes: diskMax ?? plistLimits?.diskBytes ?? 0,
+      }
+    : null;
 
 if (once) {
   const sample = await takeSample(engine, ONCE_WINDOW_MS, probes);
@@ -145,7 +167,7 @@ const history = new History(dbPath, retentionDays);
 const sampler = new Sampler(engine, history, { log, probes, local });
 const actions = new Actions({ engine, sampler, local, log });
 const web = serve(
-  { engine, sampler, history, actions, version: VERSION, local },
+  { engine, sampler, history, actions, version: VERSION, local, limits },
   { hostname, port },
   page,
 );

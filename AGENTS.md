@@ -66,13 +66,15 @@ type-check) and **`make test`** when you touch the adapter or sampler.
 
 ```
 src/main.ts          entry: CLI parsing (--engine, --listen, --db, --retention,
-                     --once, -h, -v); wires sampler, history and server;
+                     --hot-cache-max, --disk-cache-max, --once, -h, -v); wires sampler, history and server;
                      VERSION derived from package.json
 src/engine/types.ts  the Engine interface and the normalised metric types;
                      adapters translate their server's names into these
 src/engine/mlxserve.ts
                      mlx-serve adapter: parseMetrics/parseModels (pure, tested),
-                     the HTTP client, load/unload, cache dir and log paths
+                     the HTTP client, load/unload, cache dir and log paths,
+                     cacheLimits() from the LaunchAgent plist (pure parsers
+                     parseSize/parseLaunchdArgs/limitsFromArgs, tested)
 src/sample.ts        Sample type; computeRates (windowed tok/s, cache ratios,
                      epoch detection on counter reset) and buildSample are pure
                      and tested; takeSample does the I/O for --once
@@ -155,6 +157,12 @@ every tab shows under the models table.
   `com.ddalcu.mlx-serve` (the adapter's `serviceLabel()`); "free" is a
   `launchctl kickstart -k gui/<uid>/<label>` because a fresh process has no
   default model and so nothing to cold-load.
+- `--prefix-cache-mem` and `--prefix-cache-disk` are per resident model
+  (each load builds its own HotPrefixCache and DiskTier with the flag as
+  budget, `scheduler.zig`, verified 2026-09-07 at 0897f01) and the hot one
+  is clamped against headroom at load. No endpoint reports them, so the
+  adapter reads the plist's ProgramArguments; the tiles multiply the budget
+  by the resident model count (hot) and the tier dir count (SSD).
 - The engine's `memory_mb` matches libproc's `ri_phys_footprint` (41.36 GB
   both, measured 2026-09-07), so the remote dev loop shows the same footprint
   number as the Studio; only RSS and the pid need the probe to be local.

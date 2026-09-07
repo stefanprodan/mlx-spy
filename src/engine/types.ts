@@ -73,6 +73,13 @@ export type EngineMetrics = {
   histograms: EngineHistograms;
 };
 
+// The engine's cache budgets, per resident model (mlx-serve applies both to
+// each model it loads). 0 means that tier is off. Null when unknown.
+export type CacheLimits = {
+  hotBytes: number;
+  diskBytes: number;
+};
+
 export interface Engine {
   readonly id: EngineId;
   readonly url: string;
@@ -91,4 +98,7 @@ export interface Engine {
   // launchd label of the engine service, for the local-only "free" action
   // (launchctl kickstart -k); null when the engine is not a service
   serviceLabel(): string | null;
+  // the budgets from the engine's launch configuration, read from disk;
+  // null when the engine is remote or not a service
+  cacheLimits(): Promise<CacheLimits | null>;
 }

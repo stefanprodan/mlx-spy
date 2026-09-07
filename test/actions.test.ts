@@ -80,6 +80,9 @@ class ControlEngine implements Engine {
   serviceLabel() {
     return this.label;
   }
+  async cacheLimits() {
+    return null;
+  }
 }
 
 async function setup(local = true) {
@@ -263,6 +266,7 @@ describe("Actions", () => {
       actions: s.actions,
       version: "vtest",
       local: true,
+      limits: null,
     };
     const post = (name: string, body?: unknown) =>
       handle(

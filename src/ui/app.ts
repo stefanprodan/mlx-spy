@@ -46,6 +46,10 @@ const count = (n: number) =>
 let lastTtft: number | null = null;
 let lastCacheHit: number | null = null;
 let lastCacheTok: number | null = null;
+// decode and prefill are 0 between requests; the tiles keep the last
+// request's speeds
+let lastDecode: number | null = null;
+let lastPrefill: number | null = null;
 
 function setBar(id: string, pct: number, warn = 75, crit = 90) {
   const el = $(id);
@@ -55,11 +59,16 @@ function setBar(id: string, pct: number, warn = 75, crit = 90) {
 
 function renderTiles(s: Sample) {
   $("engine-dot").className = `dot ${s.engineUp ? "up" : "down"}`;
-  $("t-decode").textContent = num(s.decodeTps, 1);
-  $("t-decode-sub").textContent = s.engineUp
-    ? `peak ${num(peakInView("decodeTps"))} tok/s in view`
-    : "engine unreachable";
-  $("t-prefill").textContent = num(s.prefillTps);
+  const decoding = (s.decodeTps ?? 0) > 0;
+  if (decoding) lastDecode = s.decodeTps;
+  $("t-decode").textContent = num(lastDecode, 1);
+  $("t-decode-sub").textContent = !s.engineUp
+    ? "engine unreachable"
+    : lastDecode == null
+      ? "no request yet"
+      : `${decoding ? "" : "last request · "}peak ${num(peakInView("decodeTps"))} tok/s in view`;
+  if ((s.prefillTps ?? 0) > 0) lastPrefill = s.prefillTps;
+  $("t-prefill").textContent = num(lastPrefill);
   if (s.ttftMs != null) lastTtft = s.ttftMs;
   $("t-prefill-sub").textContent =
     lastTtft == null
@@ -71,21 +80,36 @@ function renderTiles(s: Sample) {
   if (s.cacheHitPct != null) lastCacheHit = s.cacheHitPct;
   if (s.cacheTokenPct != null) lastCacheTok = s.cacheTokenPct;
   $("t-cache").textContent = s.engineUp ? gb(s.mem.hotCacheEst) : "-";
+  // the budget is per resident model, so the tile's ceiling scales with them
+  const loaded = s.models.filter((m) => m.loaded).length;
+  const hotMax = limits && limits.hotBytes > 0 ? limits.hotBytes * loaded : 0;
+  setBar("t-cache-bar", hotMax ? (s.mem.hotCacheEst / hotMax) * 100 : 0);
+  $("t-cache-track").hidden = !hotMax || !s.engineUp;
   $("t-cache-sub").textContent =
     lastCacheHit == null
       ? "no lookup yet"
-      : `${num(lastCacheHit)}% hit rate · ${num(lastCacheTok)}% tokens reused`;
-  const resident = s.models.filter((m) => m.loaded);
-  $("t-resident").textContent = `${resident.length}`;
-  $("t-resident-sub").textContent = resident.length
-    ? resident
-        .map((m) => `${m.id.split("/").pop()} ${gb(m.bytesResident)} GB`)
-        .join(" · ")
-    : s.engineUp
-      ? "nothing loaded"
-      : "";
-  $("t-gpu").textContent = num(s.gpuPct);
-  setBar("t-gpu-bar", s.gpuPct, 101, 101);
+      : `${num(lastCacheHit)}% of lookups hit`;
+  const ssd = s.disk.reduce((n, d) => n + d.bytes, 0);
+  const dirs = s.disk.length;
+  const ssdMax = limits && limits.diskBytes > 0 ? limits.diskBytes * dirs : 0;
+  $("t-ssd").textContent = engineLocal ? gb(ssd) : "-";
+  setBar("t-ssd-bar", ssdMax ? (ssd / ssdMax) * 100 : 0);
+  $("t-ssd-track").hidden = !engineLocal || !ssdMax;
+  $("t-ssd-sub").textContent = !engineLocal
+    ? "not probed for a remote engine"
+    : !dirs
+      ? "tier is empty"
+      : ssdMax
+        ? `of ${gb(ssdMax, 0)} GB for ${dirs} model dir${dirs === 1 ? "" : "s"}`
+        : `${dirs} model dir${dirs === 1 ? "" : "s"} on disk`;
+  // prompt tokens served from the cache instead of being prefilled; the
+  // number worth watching, GPU busy sits at 100% under MLX regardless
+  $("t-eff").textContent = num(lastCacheTok);
+  setBar("t-eff-bar", lastCacheTok ?? 0, 101, 101);
+  $("t-eff-sub").textContent =
+    lastCacheTok == null
+      ? "no request yet"
+      : "of prompt tokens on the last request";
   $("t-mem").textContent = gb(s.mem.procFootprint);
   const total = s.mem.hostTotal;
   const avail = s.mem.hostFree + s.mem.hostInactive;
@@ -154,6 +178,8 @@ function renderModels(snap: Snapshot) {
     ? `SSD cache tier ${gb(total)} GB in ${disk.length} dir${disk.length === 1 ? "" : "s"}`
     : "remote engine: pid, RSS and SSD tier not probed";
   diskTotal = total;
+  engineLocal = snap.engine.local;
+  limits = snap.engine.limits;
   loadedCount = snap.models.filter((m) => m.loaded).length;
   const can = (c: Capability) => snap.engine.capabilities.includes(c);
   setEnabled(
@@ -173,6 +199,8 @@ function renderModels(snap: Snapshot) {
 // ---------- actions ----------
 
 let diskTotal = 0;
+let engineLocal = false;
+let limits: Snapshot["engine"]["limits"] = null;
 let loadedCount = 0;
 let busy: ActionName | null = null;
 
@@ -493,26 +521,7 @@ function showValues(c: Chart, idx: number | null) {
 }
 
 const tps = (v: number | null) => (v == null ? "-" : v.toFixed(v < 10 ? 1 : 0));
-const pct = (v: number | null) => (v == null ? "-" : `${v.toFixed(0)}%`);
 const gbv = (v: number | null) => (v == null ? "-" : `${gb(v)} GB`);
-const int = (v: number | null) => (v == null ? "-" : `${Math.round(v)}`);
-
-// nulls take the last value seen; leading nulls stay null
-function carry(a: (number | null)[]): (number | null)[] {
-  let last: number | null = null;
-  return a.map((v) => {
-    if (v != null) last = v;
-    return last;
-  });
-}
-// the un-carried cache series, so points draw only where a request ended
-let cacheEvents: (number | null)[][] = [];
-const eventPoints =
-  (k: number): uPlot.Series.Points.Filter =>
-  (_u, _sidx, show) =>
-    show
-      ? (cacheEvents[k]?.flatMap((v, i) => (v == null ? [] : [i])) ?? [])
-      : null;
 
 const yGb: uPlot.Axis["values"] = (_u, v) =>
   v.map((x) => `${(x / GB).toFixed(0)}G`);
@@ -520,8 +529,6 @@ const yGb: uPlot.Axis["values"] = (_u, v) =>
 function setupCharts() {
   const green = css("--green");
   const blue = css("--blue");
-  const accent = css("--accent");
-  const amber = css("--amber");
   const [m1, m2, m3, m4] = ["--m1", "--m2", "--m3", "--m4"].map(css);
   const floor = (min: number) => (_u: uPlot, _min: number, max: number) =>
     [0, Math.max(min, max * 1.1)] as [number, number];
@@ -585,71 +592,6 @@ function setupCharts() {
         raw: [weights, hot, other, avail],
       };
     },
-  );
-  mkChart(
-    "c-cache",
-    [
-      { label: "hit", color: green, fmt: pct },
-      { label: "reused", color: accent, fmt: pct },
-    ],
-    {
-      // Values exist only where a request finished; between requests the
-      // cache state is unchanged, so each value is carried forward as a step
-      // and a dot marks the request itself.
-      series: [
-        {},
-        line(green, {
-          paths: uPlot.paths.stepped!({ align: 1 }),
-          points: { show: true, size: 5, filter: eventPoints(0) },
-        }),
-        line(accent, {
-          paths: uPlot.paths.stepped!({ align: 1 }),
-          points: { show: true, size: 5, filter: eventPoints(1) },
-        }),
-      ],
-      scales: { x: { time: true }, y: { range: [0, 105] } },
-      axes: axes(),
-    },
-    (s) => {
-      cacheEvents = [s.cacheHitPct, s.cacheTokenPct];
-      return {
-        data: [secs(s.t), carry(s.cacheHitPct), carry(s.cacheTokenPct)],
-        raw: [carry(s.cacheHitPct), carry(s.cacheTokenPct)],
-      };
-    },
-  );
-  mkChart(
-    "c-gpu",
-    [{ label: "busy", color: accent, fmt: pct }],
-    {
-      series: [{}, line(accent, { fill: `${accent}22` })],
-      scales: { x: { time: true }, y: { range: [0, 100] } },
-      axes: axes(),
-    },
-    (s) => ({ data: [secs(s.t), s.gpuPct], raw: [s.gpuPct] }),
-  );
-  mkChart(
-    "c-requests",
-    [
-      { label: "running", color: accent, fmt: int },
-      { label: "waiting", color: amber, fmt: int },
-    ],
-    {
-      series: [
-        {},
-        line(accent, {
-          fill: `${accent}22`,
-          paths: uPlot.paths.stepped!({ align: 1 }),
-        }),
-        line(amber, { paths: uPlot.paths.stepped!({ align: 1 }) }),
-      ],
-      scales: { x: { time: true }, y: { range: floor(2) } },
-      axes: axes(),
-    },
-    (s) => ({
-      data: [secs(s.t), s.requestsRunning, s.requestsWaiting],
-      raw: [s.requestsRunning, s.requestsWaiting],
-    }),
   );
   new ResizeObserver(() => {
     for (const c of charts) {

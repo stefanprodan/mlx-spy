@@ -44,9 +44,10 @@
             <div class="sub" id="t-generated-sub"></div>
           </div>
           <div class="tile">
-            <div class="lbl">GPU</div>
-            <div class="val"><span id="t-gpu">0</span><span class="unit">%</span></div>
-            <div class="bar"><div class="fill" id="t-gpu-bar"></div></div>
+            <div class="lbl">Cache efficiency</div>
+            <div class="val"><span id="t-eff">-</span><span class="unit">% reused</span></div>
+            <div class="bar"><div class="fill" id="t-eff-bar"></div></div>
+            <div class="sub" id="t-eff-sub"></div>
           </div>
           <div class="tile">
             <div class="lbl">Memory</div>
@@ -55,14 +56,16 @@
             <div class="sub" id="t-mem-sub"></div>
           </div>
           <div class="tile">
-            <div class="lbl">Prefix cache</div>
+            <div class="lbl">Hot cache</div>
             <div class="val"><span id="t-cache">-</span><span class="unit">GB est.</span></div>
+            <div class="bar" id="t-cache-track" hidden><div class="fill" id="t-cache-bar"></div></div>
             <div class="sub" id="t-cache-sub"></div>
           </div>
           <div class="tile">
-            <div class="lbl">Resident</div>
-            <div class="val"><span id="t-resident">0</span><span class="unit">models</span></div>
-            <div class="sub" id="t-resident-sub"></div>
+            <div class="lbl">SSD cache</div>
+            <div class="val"><span id="t-ssd">-</span><span class="unit">GB</span></div>
+            <div class="bar" id="t-ssd-track" hidden><div class="fill" id="t-ssd-bar"></div></div>
+            <div class="sub" id="t-ssd-sub"></div>
           </div>
         </div>
         <div class="sparks two">
@@ -78,14 +81,6 @@
         </div>
       </section>
 
-      <div class="shead"><h2>Cache, GPU and queue</h2></div>
-      <section class="card">
-        <div class="sparks three">
-          <div class="spark" id="c-cache"><div class="shd"><span class="lbl">Prefix cache</span><span class="chips"></span></div><div class="plot"></div></div>
-          <div class="spark" id="c-gpu"><div class="shd"><span class="lbl">GPU</span><span class="chips"></span></div><div class="plot"></div></div>
-          <div class="spark" id="c-requests"><div class="shd"><span class="lbl">Requests</span><span class="chips"></span></div><div class="plot"></div></div>
-        </div>
-      </section>
 
       <div class="shead">
         <h2>Models</h2>
