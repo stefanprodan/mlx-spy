@@ -579,8 +579,9 @@ dialog .row .btn {
   display: none;
 }
 
-/* models */
-.card.models {
+/* models, requests */
+.card.models,
+.card.requests {
   padding: 4px 16px;
 }
 table {
@@ -854,5 +855,141 @@ footer {
   .facts {
     grid-template-columns: 1fr;
     gap: 8px 0;
+  }
+}
+
+/* requests: the live bar alone in its card, then the list */
+#requests-live {
+  padding: 16px;
+  margin-bottom: 14px;
+}
+#requests-live .request {
+  margin-bottom: 0;
+}
+th {
+  padding: 10px 8px 6px;
+  border-bottom: 1px solid var(--line);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #7d8794;
+  text-align: right;
+  white-space: nowrap;
+}
+th.when,
+th.model {
+  text-align: left;
+}
+td.model {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--dim);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+td.when {
+  font-size: 13px;
+  color: var(--val);
+  white-space: nowrap;
+}
+td.when .fin {
+  font-family: var(--mono);
+}
+td.when .tag {
+  margin-left: 8px;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--faint);
+}
+td.when .tag.cancelled {
+  color: var(--amber);
+}
+td.num {
+  text-align: right;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+td.num .rate {
+  color: var(--faint);
+}
+#requests tbody tr:not(.detail) {
+  cursor: pointer;
+}
+#requests tbody tr:not(.detail):hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+#requests tr.open td {
+  border-bottom: 0;
+}
+tr.detail td {
+  padding: 2px 8px 14px;
+}
+.dgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px 24px;
+}
+.dgrid .d {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12.5px;
+  min-width: 0;
+}
+.dgrid .d:first-child {
+  grid-column: 1 / -1; /* the model id is the long one */
+}
+.dgrid .k {
+  color: var(--faint);
+  white-space: nowrap;
+}
+.dgrid .v {
+  color: var(--dim);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.empty {
+  margin: 14px 0;
+  color: var(--faint);
+  font-size: 13px;
+}
+@media (max-width: 860px) {
+  #requests .wide .rate,
+  #requests .ttft {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  /* the time turns amber for a cancel instead of the tag, and the total
+     goes: finished, model, prompt and generated are what fits */
+  #requests .wide,
+  #requests .cached,
+  #requests .total,
+  #requests .tag {
+    display: none;
+  }
+  tr.cancelled td.when .fin {
+    color: var(--amber);
+  }
+  tr.detail td {
+    padding: 0 4px 12px;
+  }
+  .dgrid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  #requests-live {
+    padding: 12px;
+  }
+  td.model {
+    max-width: 80px;
+  }
+  .card.requests {
+    overflow-x: auto;
   }
 }

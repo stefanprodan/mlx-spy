@@ -278,6 +278,55 @@ describe("Sampler", () => {
     history.close();
   });
 
+  test("a finished request is stored with the only resident model", async () => {
+    const engine = new FakeEngine([
+      idle,
+      (b) => {
+        b.gauges.requests_running = 1;
+      },
+      (b) => {
+        b.counters.generation_tokens_total += 50;
+        b.counters.prompt_tokens_total += 200;
+        b.counters.prefill_tokens_total += 120;
+        b.counters.requests_success_total += 1;
+        b.histograms.decode_time_seconds.count += 1;
+        b.histograms.decode_time_seconds.sum += 2;
+        b.histograms.time_to_first_token_seconds.count += 1;
+        b.histograms.time_to_first_token_seconds.sum += 0.4;
+      },
+      idle,
+    ]);
+    // the fixture has two models resident: with one, the request is its
+    engine.models = async () =>
+      parseModels(modelsFixture).map((m, i) => ({ ...m, loaded: i === 0 }));
+    const history = new History(":memory:");
+    const c = clock();
+    const s = new Sampler(engine, history, { now: c.now });
+    for (let i = 0; i < 4; i++) {
+      await s.tick();
+      c.advance(1000);
+    }
+    const list = history.requests();
+    expect(list).toHaveLength(1);
+    expect(list[0]).toMatchObject({
+      startedAt: 1_001_000,
+      finishedAt: 1_002_000,
+      generated: 50,
+      promptTokens: 200,
+      prefillTokens: 120,
+      decodeMs: 2000,
+      ttftMs: 400,
+      cancelled: false,
+      model: "Jundot/Qwen3.8-27B-oQ4e-mtp",
+    });
+    // the sample's last request carries the attribution too
+    expect(history.latest()?.lastRequest?.model).toBe(list[0].model);
+    // no second row for the same request on later ticks
+    await s.tick();
+    expect(history.requests()).toHaveLength(1);
+    history.close();
+  });
+
   test("an engine restart during an outage still bumps the epoch", async () => {
     const engine = new FakeEngine([
       idle,
@@ -389,6 +438,7 @@ describe("web", () => {
     expect(body.series.t).toHaveLength(2);
     expect((await get("/api/history")).status).toBe(200);
     expect((await get("/api/history?range=2h")).status).toBe(400);
+    expect(await (await get("/api/requests")).json()).toEqual([]);
     expect((await get("/nope")).status).toBe(404);
     expect(
       (

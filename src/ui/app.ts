@@ -15,6 +15,7 @@ import "uplot/dist/uPlot.min.css";
 import type { ActionEvent, ActionName } from "../actions.ts";
 import type { Capability } from "../engine/types.ts";
 import type { Range, Series } from "../history.ts";
+import type { LastRequest } from "../requests.ts";
 import type { Sample } from "../sample.ts";
 import type { snapshot, WsMessage } from "../web.ts";
 
@@ -26,6 +27,8 @@ const ENGINE_NAME: Record<Snapshot["engine"]["id"], string> = {
 };
 
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
+// one bundle serves both paths; the view is the one the path names
+const view = location.pathname === "/requests" ? "requests" : "monitor";
 const css = (name: string) =>
   getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
@@ -848,6 +851,186 @@ async function runAction(action: ActionName, model: string | null) {
   }
 }
 
+// ---------- the Requests page ----------
+
+// The last finished requests, newest first, as the server keeps them; a
+// sample whose last request is not the head is a new one to prepend.
+let reqs: LastRequest[] = [];
+const REQUESTS_SHOWN = 50;
+// a completion and a cancel can share a finish time: the pair is the key
+const reqKey = (r: LastRequest) => `${r.finishedAt}:${r.cancelled ? 1 : 0}`;
+// rows the user opened: a phone hides most columns and a tap shows them all
+// under the row; the list re-renders on every new request
+const openReqs = new Set<string>();
+
+// "0.3 s", "12.4 s", "1m 12s"
+const dur = (ms: number) =>
+  ms < 60_000 ? `${(ms / 1000).toFixed(1)} s` : short(ms);
+
+function renderRequests() {
+  const tbody = $("requests").querySelector("tbody")!;
+  $("requests-empty").hidden = reqs.length > 0;
+  // rows that aged out or were wiped take their open state with them
+  const keys = new Set(reqs.map(reqKey));
+  for (const k of openReqs) if (!keys.has(k)) openReqs.delete(k);
+  const num = (text: string, rate?: string) => {
+    const td = el("td", "num", text);
+    if (rate) td.append(el("span", "rate", ` · ${rate}`));
+    return td;
+  };
+  const tps = (tokens: number, ms: number) =>
+    tokens > 0 && ms > 0 ? `${whole((tokens / ms) * 1000)} tok/s` : "";
+  const cell = (label: string, value: string) => {
+    const div = el("div", "d");
+    div.append(el("span", "k", label), el("span", "v", value));
+    return div;
+  };
+  // every field, for the row a tap opened
+  const details = (r: LastRequest) => {
+    const tr = el("tr", "detail");
+    const td = el("td");
+    td.colSpan = 10;
+    const grid = el("div", "dgrid");
+    const cached = r.promptTokens - r.prefillTokens;
+    const engineMs = r.prefillMs + r.decodeMs;
+    grid.append(
+      cell("Model", r.model ?? "unknown"),
+      cell(
+        "Started",
+        r.startedAt != null ? fmtStamp.format(r.startedAt) : "not seen",
+      ),
+      cell("Prompt", r.promptTokens > 0 ? `${count(r.promptTokens)} tok` : "-"),
+      cell(
+        "Cached",
+        r.promptTokens > 0 && cached > 0
+          ? `${count(cached)} tok · ${whole((cached / r.promptTokens) * 100)}%`
+          : "-",
+      ),
+      cell("Generated", `${count(r.generated)} tok`),
+      cell(
+        "Prefill",
+        r.prefillMs
+          ? [dur(r.prefillMs), tps(r.prefillTokens, r.prefillMs)]
+              .filter(Boolean)
+              .join(" · ")
+          : "-",
+      ),
+      cell(
+        "Decode",
+        r.decodeMs
+          ? [dur(r.decodeMs), tps(r.generated, r.decodeMs)]
+              .filter(Boolean)
+              .join(" · ")
+          : "-",
+      ),
+      cell("TTFT", r.ttftMs != null ? dur(r.ttftMs) : "-"),
+      cell(
+        "Total",
+        engineMs
+          ? dur(engineMs)
+          : r.startedAt != null
+            ? dur(r.finishedAt - r.startedAt)
+            : "-",
+      ),
+      cell(
+        "Outcome",
+        r.cancelled
+          ? r.count > 1
+            ? `${r.count} requests cancelled by their clients in the same second`
+            : "cancelled by the client"
+          : r.count > 1
+            ? `${r.count} requests completed in the same second`
+            : "completed",
+      ),
+    );
+    td.append(grid);
+    tr.append(td);
+    return tr;
+  };
+  tbody.replaceChildren(
+    ...reqs.flatMap((r) => {
+      const tr = el("tr", r.cancelled ? "cancelled" : "");
+      const when = el("td", "when");
+      when.append(el("span", "fin", fmtStamp.format(r.finishedAt)));
+      if (r.count > 1) when.append(el("span", "tag", `×${r.count}`));
+      if (r.cancelled) when.append(el("span", "tag cancelled", "cancelled"));
+      // the prompt is unknown for a cancel (its counters never moved)
+      const cached = r.promptTokens - r.prefillTokens;
+      const engineMs = r.prefillMs + r.decodeMs;
+      const total =
+        engineMs > 0
+          ? engineMs
+          : r.startedAt != null
+            ? r.finishedAt - r.startedAt
+            : 0;
+      // the id is known only when one model was resident at the finish
+      const model = el("td", "model", r.model ? r.model.split("/").pop() : "-");
+      if (r.model) model.title = r.model;
+      tr.append(
+        when,
+        model,
+        num(r.promptTokens > 0 ? count(r.promptTokens) : "-"),
+        num(
+          r.promptTokens > 0 && cached > 0
+            ? `${whole((cached / r.promptTokens) * 100)}%`
+            : "-",
+        ),
+        num(count(r.generated)),
+        num(
+          r.prefillMs ? dur(r.prefillMs) : "-",
+          tps(r.prefillTokens, r.prefillMs),
+        ),
+        num(r.decodeMs ? dur(r.decodeMs) : "-", tps(r.generated, r.decodeMs)),
+        num(r.ttftMs != null ? dur(r.ttftMs) : "-"),
+        num(total ? dur(total) : "-"),
+      );
+      const wide = tr.querySelectorAll("td.num");
+      wide[3].classList.add("wide");
+      wide[4].classList.add("wide");
+      wide[5].classList.add("ttft");
+      wide[1].classList.add("cached");
+      wide[6].classList.add("total");
+      const more = details(r);
+      const key = reqKey(r);
+      const open = openReqs.has(key);
+      tr.classList.toggle("open", open);
+      more.hidden = !open;
+      tr.onclick = () => {
+        const now = more.hidden === true;
+        more.hidden = !now;
+        tr.classList.toggle("open", now);
+        if (now) openReqs.add(key);
+        else openReqs.delete(key);
+      };
+      return [tr, more];
+    }),
+  );
+}
+
+function fetchRequests() {
+  return fetch("/api/requests")
+    .then((r) => r.json())
+    .then((list: LastRequest[]) => {
+      reqs = list;
+      renderRequests();
+    })
+    .catch(() => {});
+}
+
+// A sample carrying a request the list does not have: merged in by key
+// and kept in finish order, so a fetch racing a sample cannot duplicate or
+// misplace a row.
+function noteRequest(s: Sample) {
+  const last = s.lastRequest;
+  if (!last) return;
+  const key = reqKey(last);
+  if (reqs.some((r) => reqKey(r) === key)) return;
+  reqs = [last, ...reqs]
+    .sort((a, b) => b.finishedAt - a.finishedAt)
+    .slice(0, REQUESTS_SHOWN);
+  renderRequests();
+}
+
 function fetchSnapshot() {
   return fetch("/api/snapshot")
     .then((r) => r.json())
@@ -1183,7 +1366,8 @@ function connect() {
       modelsKey = modelsKeyOf(msg.data.models);
       if (msg.data.sample) renderTiles(msg.data.sample);
       // after a reconnect the series has a hole: fetch it again
-      if (connected) void loadRange(range);
+      if (view === "requests") void fetchRequests();
+      else if (connected) void loadRange(range);
       connected = true;
     } else if (msg.type === "event") {
       showEvent(msg.data);
@@ -1192,7 +1376,12 @@ function connect() {
         lastDecode = lastPrefill = null;
         lastCacheHit = lastCacheTok = null;
         lastReq = prevTok = null;
-        void loadRange(range);
+        if (view === "requests") {
+          reqs = [];
+          renderRequests();
+        } else {
+          void loadRange(range);
+        }
       }
       // another tab may have run it; the residency changed either way
       void fetchSnapshot();
@@ -1201,6 +1390,7 @@ function connect() {
       appendLive(msg.data);
       renderTiles(msg.data);
       refreshModels(msg.data);
+      if (view === "requests") noteRequest(msg.data);
     }
   };
   ws.onclose = () => {
@@ -1227,6 +1417,19 @@ $("ranges").addEventListener("click", (ev) => {
   void loadRange(btn.dataset.range as Range);
 });
 
-setupCharts();
-void loadRange("1h");
+for (const a of document.querySelectorAll<HTMLAnchorElement>(".menu a")) {
+  a.classList.toggle("active", a.dataset.view === view);
+}
+if (view === "requests") {
+  // the live bar and the connection pill move over; the monitor's charts
+  // are never built (redraw is a no-op without them)
+  document.title = "mlx-spy · requests";
+  $("view-monitor").hidden = true;
+  $("view-requests").hidden = false;
+  $("requests-head").append($("ws-state"));
+  $("requests-live").append($("req"));
+} else {
+  setupCharts();
+  void loadRange("1h");
+}
 connect();

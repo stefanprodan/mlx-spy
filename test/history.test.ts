@@ -307,3 +307,82 @@ describe("History migration", () => {
     }
   });
 });
+
+describe("History requests", () => {
+  const req = (finishedAt: number, model: string | null = "org/m") => ({
+    startedAt: finishedAt - 1000,
+    finishedAt,
+    count: 1,
+    cancelled: false,
+    generated: 10,
+    promptTokens: 100,
+    prefillTokens: 60,
+    prefillMs: 300,
+    decodeMs: 700,
+    ttftMs: 320,
+    model,
+  });
+
+  test("keeps the newest 50, newest first, and clear wipes them", () => {
+    const h = new History(":memory:");
+    for (let i = 1; i <= 55; i++) h.push(sample(i * 1000));
+    for (let i = 1; i <= 55; i++) h.addRequest(req(i * 1000));
+    const list = h.requests();
+    expect(list).toHaveLength(50);
+    expect(list[0].finishedAt).toBe(55_000);
+    expect(list[49].finishedAt).toBe(6000);
+    expect(list[0]).toEqual(req(55_000));
+    // a cancel with no model and no ttft round-trips as such
+    h.addRequest({
+      ...req(56_000, null),
+      cancelled: true,
+      ttftMs: null,
+      startedAt: null,
+    });
+    const top = h.requests()[0];
+    expect(top.cancelled).toBe(true);
+    expect(top.ttftMs).toBeNull();
+    expect(top.startedAt).toBeNull();
+    expect(top.model).toBeNull();
+    h.clear();
+    expect(h.requests()).toEqual([]);
+    h.close();
+  });
+
+  test("a completion and a cancel at the same time are two rows", () => {
+    const h = new History(":memory:");
+    h.addRequest(req(1000));
+    h.addRequest({ ...req(1000, null), cancelled: true, generated: 3 });
+    // the same one again is not a third row
+    h.addRequest(req(1000));
+    const list = h.requests();
+    expect(list).toHaveLength(2);
+    expect(list.find((r) => r.cancelled)?.generated).toBe(3);
+    expect(list.find((r) => !r.cancelled)?.generated).toBe(10);
+    h.close();
+  });
+
+  test("the first cut of the requests table is dropped and rebuilt", () => {
+    const { Database } = require("bun:sqlite");
+    const path = `${require("node:os").tmpdir()}/mlx-spy-reqs-${process.pid}.sqlite`;
+    const old = new Database(path, { create: true });
+    old.run(`CREATE TABLE requests (finished_at INTEGER PRIMARY KEY,
+      started_at INTEGER, count INTEGER NOT NULL, cancelled INTEGER NOT NULL,
+      generated INTEGER NOT NULL, prompt_tokens INTEGER NOT NULL,
+      prefill_tokens INTEGER NOT NULL, prefill_ms INTEGER NOT NULL,
+      decode_ms INTEGER NOT NULL, ttft_ms REAL)`);
+    old.run("INSERT INTO requests VALUES (5, 4, 1, 0, 1, 1, 1, 1, 1, NULL)");
+    old.close();
+    try {
+      const h = new History(path);
+      expect(h.requests()).toEqual([]);
+      h.addRequest(req(9000));
+      expect(h.requests()[0].model).toBe("org/m");
+      h.close();
+    } finally {
+      for (const f of ["", "-wal", "-shm"]) {
+        require("node:fs").rmSync(path + f, { force: true });
+      }
+    }
+  });
+});

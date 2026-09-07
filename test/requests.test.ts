@@ -246,6 +246,25 @@ describe("trackRequests", () => {
     expect(s[4].last).toBe(s[3].last);
   });
 
+  test("a completion and a cancel in one tick are both reported", () => {
+    const s = run([
+      reading(1000),
+      reading(2000, { requests_running: 2 }),
+      // one finished, the other's client left, the gauge already reads 0
+      reading(
+        3000,
+        { generation_tokens_live: 30 },
+        { generated: 9, decodeSecs: 1 },
+      ),
+      reading(4000),
+    ]);
+    expect(s[2].finished.map((r) => r.cancelled)).toEqual([false, true]);
+    expect(s[2].finished[0].generated).toBe(9);
+    expect(s[2].last).toBe(s[2].finished[1]);
+    expect(s[3].finished).toEqual([]);
+    expect(s[3].last).toBe(s[2].last);
+  });
+
   test("a cancelled request is marked as such", () => {
     const s = run([
       reading(1000, { requests_running: 1 }),
@@ -317,6 +336,7 @@ describe("trackRequests", () => {
         starts: [500],
         inFlight: { startedAt: 500, prefillMs: 9, decodeMs: 9 },
         last,
+        finished: [],
         doneAt: null,
       },
       null,

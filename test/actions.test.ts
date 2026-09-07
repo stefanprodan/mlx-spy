@@ -377,6 +377,10 @@ describe("clearDirContents", () => {
     expect(history.count()).toBe(0);
     expect(history.latest()).toBeNull();
     expect(history.loadSamplerState().epoch).toBe(0);
+    // the last request went with the history: the next sample cannot put
+    // it back on the page
+    expect(history.loadSamplerState().lastRequest).toBeNull();
+    expect(history.requests()).toEqual([]);
     history.close();
   });
 });

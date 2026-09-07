@@ -89,7 +89,10 @@ src/sampler.ts       the 1 Hz loop: reads metrics each tick, models every 5 s,
 src/history.ts       ring buffer (1 h) plus bun:sqlite: samples table, 7 day
                      retention pruned from the writer, bucketed series() per
                      range in columnar form for uPlot; models table (ids the
-                     engine lists, the user's favorite flag; synced each fetch)
+                     engine lists, the user's favorite flag; synced each fetch);
+                     requests table (the last 50 finished or cancelled
+                     requests as the tracker saw them, plus the model when
+                     exactly one was resident)
 src/actions.ts       the control actions: load (as the engine default),
                      unload (hands the default to a model still resident,
                      the favorite first) and default through the
@@ -102,12 +105,15 @@ src/actions.ts       the control actions: load (as the engine default),
                      logs every outcome, keeps the last 50 events; spawn and
                      directory wipe are injectable for tests
 src/web.ts           Bun.serve: the page (HTML import passed in from main.ts),
-                     /api/snapshot, /api/history?range=, POST /api/actions/
+                     /api/snapshot, /api/history?range=, /api/requests,
+                     POST /api/actions/
                      <name>, /ws (snapshot on connect, then pub/sub of one
                      sample per tick and one event per finished action);
                      handle() is separate from serve() so tests call it with
                      a Request; tailscaleAddress() picks the default bind
-src/ui/index.html    the dashboard: tile row, five uPlot charts, models table
+src/ui/index.html    the dashboard, one bundle for two paths: / (monitor) and
+                     /requests (the live bar moved over, then the stored
+                     list); tile row, five uPlot charts, models table
                      with load/unload/default buttons, Restart engine and Clear
                      disk cache in the section head, a confirm dialog;
                      Bun bundles style.css and app.ts from it (also into the

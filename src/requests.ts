@@ -29,12 +29,18 @@ export type LastRequest = {
   prefillMs: number; // the engine's own timings
   decodeMs: number;
   ttftMs: number | null;
+  // the engine reports nothing per model: the sampler fills this in when
+  // exactly one model was resident at the finish, else it stays unset
+  model?: string | null;
 };
 
 export type RequestState = {
   starts: number[]; // start times of the open requests, oldest first
   inFlight: InFlight | null;
   last: LastRequest | null;
+  // what ended this tick, in order: a completion, a cancel, or both (a
+  // request finishing while another's client leaves); `last` is the latest
+  finished: LastRequest[];
   doneAt: number | null; // the last tick a completion was counted
 };
 
@@ -42,6 +48,7 @@ export const EMPTY_REQUESTS: RequestState = {
   starts: [],
   inFlight: null,
   last: null,
+  finished: [],
   doneAt: null,
 };
 
@@ -77,6 +84,7 @@ export function trackRequests(
         ? { startedAt: cur.t, prefillMs: 0, decodeMs: 0 }
         : null,
       last: state.last,
+      finished: [],
       doneAt: null,
     };
   }
@@ -87,6 +95,7 @@ export function trackRequests(
     b.histograms.decodeTimeSeconds.count - a.histograms.decodeTimeSeconds.count;
   let starts = state.starts;
   let last = state.last;
+  const finished: LastRequest[] = [];
   if (done > 0) {
     const ttftN =
       b.histograms.ttftSeconds.count - a.histograms.ttftSeconds.count;
@@ -111,6 +120,7 @@ export function trackRequests(
             )
           : null,
     };
+    finished.push(last);
     starts = starts.slice(done);
   }
   const doneAt = done > 0 ? cur.t : state.doneAt;
@@ -142,10 +152,11 @@ export function trackRequests(
       decodeMs: state.inFlight?.decodeMs ?? 0,
       ttftMs: null,
     };
+    finished.push(last);
     starts = starts.slice(dropped);
   }
   if (!running || !starts.length) {
-    return { starts: [], inFlight: null, last, doneAt };
+    return { starts: [], inFlight: null, last, finished, doneAt };
   }
   // the engine is busy: time since the previous tick went to the phase it
   // was in at that tick
@@ -162,5 +173,5 @@ export function trackRequests(
           decodeMs: prevIn.decodeMs + (wasPrefilling ? 0 : dt),
         }
       : { startedAt: starts[0], prefillMs: 0, decodeMs: 0 };
-  return { starts, inFlight, last, doneAt };
+  return { starts, inFlight, last, finished, doneAt };
 }

@@ -244,6 +244,7 @@ export class Actions {
       }
       case "historyClear": {
         const n = this.deps.history.clear();
+        this.deps.sampler.forgetLastRequest();
         return `removed ${n} sample${n === 1 ? "" : "s"}`;
       }
     }

@@ -28,8 +28,10 @@ By default it binds the host's Tailscale address (else 127.0.0.1) on port
 the model list with your daily-driver star (dropped when the engine stops
 listing a model). There is no auth: the tailnet is the boundary.
 
-- `GET /` the dashboard
+- `GET /` the dashboard, `GET /requests` the request in flight and the
+  last 50 finished ones
 - `GET /api/snapshot` latest sample and the model list
+- `GET /api/requests` the last 50 finished requests, newest first
 - `GET /api/history?range=1h|6h|24h|7d` columnar series, bucketed for the
   longer ranges
 - `WS /ws` a snapshot on connect, then one sample per second and an event
@@ -46,7 +48,10 @@ engine footprint and RSS; weights, estimated RAM cache, MLX pool), the cache
 tier directories, the model list, and the request in flight or the last one
 finished (start time, tokens generated, prompt size and cached share, prefill
 and decode time; the engine reports counts, not requests, so with several
-in flight the bar shows the engine as a whole). The engine pid, RSS, CPU, start time
+in flight the bar shows the engine as a whole). Every finished or
+cancelled request is also kept, the last 50, with the model it ran on when
+exactly one was resident (the engine reports nothing per model); the
+Requests page lists them under the live bar. The engine pid, RSS, CPU, start time
 and disk tier are only probed when the engine runs on the same host; the
 Runtime section shows them next to facts about the host (OS, chip, cores,
 GPU cores, memory, disk). The RAM cache and SSD

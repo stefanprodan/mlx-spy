@@ -12,6 +12,7 @@ import type { LastRequest } from "./requests.ts";
 import type { Sample } from "./sample.ts";
 
 export const RING_SIZE = 3600; // one hour at 1 Hz
+export const REQUESTS_KEPT = 50; // finished requests the Requests page lists
 export const DAY_MS = 86_400_000;
 
 export const RANGES = {
@@ -126,6 +127,26 @@ export class History {
       last_seen INTEGER NOT NULL
     )`);
     this.migrateModels();
+    // The last finished requests, one row each as the request bar saw them
+    // (a cancel included), for the Requests page. Capped at REQUESTS_KEPT
+    // from the writer, like the samples.
+    this.migrateRequests();
+    // a completion and a cancel can share a tick: the pair is the key
+    this.db.run(`CREATE TABLE IF NOT EXISTS requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      finished_at INTEGER NOT NULL,
+      started_at INTEGER,
+      count INTEGER NOT NULL,
+      cancelled INTEGER NOT NULL,
+      generated INTEGER NOT NULL,
+      prompt_tokens INTEGER NOT NULL,
+      prefill_tokens INTEGER NOT NULL,
+      prefill_ms INTEGER NOT NULL,
+      decode_ms INTEGER NOT NULL,
+      ttft_ms REAL,
+      model TEXT,
+      UNIQUE (finished_at, cancelled)
+    )`);
     // columns named: a migrated file appends them in a different order than
     // CREATE TABLE lists them
     this.insert = this.db.prepare(`INSERT OR REPLACE INTO samples (
@@ -366,6 +387,17 @@ export class History {
       .run({ v: JSON.stringify(state) });
   }
 
+  // The first cut of the requests table was keyed on finished_at alone (and
+  // at first had no model column): it is dropped, the list is short-lived.
+  private migrateRequests() {
+    const cols = (
+      this.db.query("PRAGMA table_info(requests)").all() as { name: string }[]
+    ).map((c) => c.name);
+    if (cols.length && !cols.includes("id")) {
+      this.db.run("DROP TABLE requests");
+    }
+  }
+
   // The first cut of the table called the flag is_default.
   private migrateModels() {
     const cols = (
@@ -407,10 +439,63 @@ export class History {
     return row?.id ?? null;
   }
 
-  // Wipe the samples, keeping the sampler state so the epoch stays honest.
+  // A request that just finished (or was cancelled): keep it, drop the
+  // oldest beyond the cap.
+  addRequest(r: LastRequest) {
+    this.db.transaction(() => {
+      this.db
+        .query(
+          `INSERT OR REPLACE INTO requests (finished_at, started_at, count,
+            cancelled, generated, prompt_tokens, prefill_tokens, prefill_ms,
+            decode_ms, ttft_ms, model)
+          VALUES ($finishedAt, $startedAt, $count, $cancelled, $generated,
+            $promptTokens, $prefillTokens, $prefillMs, $decodeMs, $ttftMs,
+            $model)`,
+        )
+        .run({
+          finishedAt: r.finishedAt,
+          startedAt: r.startedAt,
+          count: r.count,
+          cancelled: r.cancelled ? 1 : 0,
+          generated: r.generated,
+          promptTokens: r.promptTokens,
+          prefillTokens: r.prefillTokens,
+          prefillMs: r.prefillMs,
+          decodeMs: r.decodeMs,
+          ttftMs: r.ttftMs,
+          model: r.model ?? null,
+        });
+      this.db
+        .query(
+          `DELETE FROM requests WHERE id NOT IN
+            (SELECT id FROM requests ORDER BY finished_at DESC, id DESC LIMIT $n)`,
+        )
+        .run({ n: REQUESTS_KEPT });
+    })();
+  }
+
+  // Newest first.
+  requests(): LastRequest[] {
+    const rows = this.db
+      .query(
+        `SELECT finished_at AS finishedAt, started_at AS startedAt, count,
+          cancelled, generated, prompt_tokens AS promptTokens,
+          prefill_tokens AS prefillTokens, prefill_ms AS prefillMs,
+          decode_ms AS decodeMs, ttft_ms AS ttftMs, model
+        FROM requests ORDER BY finished_at DESC, id DESC LIMIT $n`,
+      )
+      .all({ n: REQUESTS_KEPT }) as any[];
+    return rows.map((r) => ({ ...r, cancelled: r.cancelled === 1 }));
+  }
+
+  // Wipe the samples and the request list, keeping the sampler state so
+  // the epoch stays honest.
   clear(): number {
     const n = this.count();
-    this.db.run("DELETE FROM samples");
+    this.db.transaction(() => {
+      this.db.run("DELETE FROM samples");
+      this.db.run("DELETE FROM requests");
+    })();
     this.ring.length = 0;
     return n;
   }

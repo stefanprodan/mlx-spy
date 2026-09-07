@@ -137,6 +137,8 @@ export async function handle(req: Request, deps: WebDeps): Promise<Response> {
   switch (url.pathname) {
     case "/api/snapshot":
       return json(snapshot(deps));
+    case "/api/requests":
+      return json(deps.history.requests());
     case "/api/history": {
       const range = url.searchParams.get("range") ?? "1h";
       if (!isRange(range)) {
@@ -166,7 +168,8 @@ export function serve(
     // no HMR endpoint or dev error pages in production; `bun --watch`
     // restarts the process for the dev loop
     development: false,
-    routes: { "/": page },
+    // one bundle, two views: the client shows the one the path names
+    routes: { "/": page, "/requests": page },
     fetch(req, srv) {
       if (new URL(req.url).pathname === "/ws") {
         if (!sameOrigin(req)) {

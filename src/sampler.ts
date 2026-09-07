@@ -122,6 +122,9 @@ export class Sampler {
     const state = history.loadSamplerState();
     this.epoch = state.epoch;
     this.requests = { ...EMPTY_REQUESTS, last: state.lastRequest };
+    // the list may predate this request (a database from before the list
+    // existed): the write is idempotent
+    if (state.lastRequest) history.addRequest(state.lastRequest);
     if (state.counters) this.prev = baseline(state.counters);
   }
 
@@ -155,6 +158,17 @@ export class Sampler {
 
   currentDisk(): DiskDir[] {
     return this.disk;
+  }
+
+  // The history was wiped: the last request goes with it, or the next
+  // sample would put it straight back on the page.
+  forgetLastRequest() {
+    this.requests = { ...this.requests, last: null };
+    this.history.saveSamplerState({
+      epoch: this.epoch,
+      counters: this.prev?.metrics.counters ?? null,
+      lastRequest: null,
+    });
   }
 
   // After an action the residency picture changed; do not wait for the
@@ -291,6 +305,20 @@ export class Sampler {
           restored || reset ? null : this.prev,
           reading,
         );
+        // what ended this tick goes to the list, attributed to the model
+        // when it is the only one resident: the list is refreshed first,
+        // the periodic one can be 5 s stale (an unload since would blame
+        // the wrong model)
+        if (this.requests.finished.length) {
+          const loaded = (await this.refreshModels()).filter((m) => m.loaded);
+          const model = loaded.length === 1 ? loaded[0].id : null;
+          let last = this.requests.last;
+          for (const r of this.requests.finished) {
+            last = { ...r, model };
+            this.history.addRequest(last);
+          }
+          this.requests = { ...this.requests, last };
+        }
         if (restored) {
           rates.ttftMs = null;
           rates.ttftN = 0;
