@@ -30,7 +30,14 @@ const WRITE_EVERY_BYTES = 2048;
 const HTML_EVERY_MS = 1000;
 
 export type ChatWsEvent =
-  | { kind: "started"; chat: ChatSummary; user: Message; message: Message }
+  // deletedFrom: regenerate and edit removed that row and every later one
+  | {
+      kind: "started";
+      chat: ChatSummary;
+      user: Message;
+      message: Message;
+      deletedFrom?: number;
+    }
   | {
       kind: "delta";
       chatId: string;
@@ -163,7 +170,11 @@ export class ChatRunner {
     return summary;
   }
 
-  send(chatId: string, text: string): { user: Message; message: Message } {
+  send(
+    chatId: string,
+    text: string,
+    deletedFrom?: number,
+  ): { user: Message; message: Message } {
     this.ensureIdle();
     this.validateText(text);
     let chat = this.requireChat(chatId);
@@ -177,7 +188,7 @@ export class ChatRunner {
       status: "done",
       createdAt: this.now(),
     });
-    return this.startReply(this.requireChat(chatId), user);
+    return this.startReply(this.requireChat(chatId), user, deletedFrom);
   }
 
   regenerate(chatId: string): { user: Message; message: Message } {
@@ -190,7 +201,7 @@ export class ChatRunner {
     }
     this.validateModel(chat.model);
     this.deps.store.deleteFrom(chatId, last.id);
-    return this.startReply(this.requireChat(chatId), user);
+    return this.startReply(this.requireChat(chatId), user, last.id);
   }
 
   edit(
@@ -206,7 +217,7 @@ export class ChatRunner {
       throw new ChatError(400, "The message to edit must be a user message");
     }
     this.deps.store.deleteFrom(chatId, messageId);
-    return this.send(chatId, content);
+    return this.send(chatId, content, messageId);
   }
 
   stop(chatId: string): void {
@@ -235,6 +246,7 @@ export class ChatRunner {
   private startReply(
     chat: Chat,
     user: Message,
+    deletedFrom?: number,
   ): { user: Message; message: Message } {
     const startedAt = this.now();
     const message = this.deps.store.addMessage(chat.id, "assistant", {
@@ -268,6 +280,7 @@ export class ChatRunner {
       chat: chatSummary(current),
       user,
       message,
+      deletedFrom,
     });
     this.deps.log(`chat ${chat.id} sent ${chat.model}`);
     const request = this.request(current, user.id);
