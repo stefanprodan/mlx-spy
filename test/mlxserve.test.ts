@@ -1,10 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
+  buildChatBody,
+  chatEvents,
   limitsFromArgs,
   parseLaunchdArgs,
   parseMetrics,
   parseModels,
   parseSize,
+  parseSse,
 } from "../src/engine/mlxserve.ts";
 import metricsFixture from "./fixtures/metrics.json";
 import modelsFixture from "./fixtures/models.json";
@@ -138,5 +141,152 @@ describe("launch configuration", () => {
     expect(limitsFromArgs(["--prefix-cache-mem", "big"]).hotBytes).toBe(
       2 * GiB,
     );
+  });
+});
+
+describe("chat stream", () => {
+  test("parses the recorded SSE fixture across arbitrary read boundaries", async () => {
+    const stream = await Bun.file("test/fixtures/chat-stream.sse").text();
+    let rest = "";
+    const frames: string[] = [];
+    let offset = 0;
+    let seed = 17;
+    while (offset < stream.length) {
+      seed = (seed * 48271) % 0x7fffffff;
+      const size = (seed % 97) + 1;
+      const parsed = parseSse(rest, stream.slice(offset, offset + size));
+      frames.push(...parsed.frames);
+      rest = parsed.rest;
+      offset += size;
+    }
+    expect(rest).toBe("");
+    expect(frames).toHaveLength(83);
+    const events = frames.flatMap(chatEvents);
+    expect(events.map((event) => event.kind)).toEqual([
+      ...Array(79).fill("reasoning"),
+      "finish",
+      "usage",
+    ]);
+    expect(
+      events
+        .filter((event) => event.kind === "reasoning")
+        .map((event) => event.text)
+        .join(""),
+    ).toBe(
+      'The user wants me to say hello in exactly five words. Let me think of a greeting that\'s exactly five words long.\n\nOptions:\n- "Hello there, my friend" - 4 words\n- "Hello there, my dear friend" - 5 words ✓\n- "Hi there, how are you" - 5 words ✓\n- "Hello, nice to meet you',
+    );
+    expect(events.slice(-2)).toEqual([
+      { kind: "finish", reason: "length", details: null },
+      {
+        kind: "usage",
+        stats: {
+          promptTokens: 46,
+          cachedTokens: 0,
+          generated: 80,
+          prefillMs: 914.624,
+          decodeMs: 2318.088,
+          tokenizeMs: 2.892,
+        },
+      },
+    ]);
+  });
+
+  test("ignores comments and preserves a frame split across reads", () => {
+    const first = parseSse("", ': keepalive\r\ndata: {"choices":');
+    expect(first.frames).toEqual([]);
+    const second = parseSse(first.rest, "[]}\r\n\r\n");
+    expect(second.frames).toEqual(['{"choices":[]}']);
+    expect(second.rest).toBe("");
+  });
+
+  test("maps finish details, errors and fallback usage fields", () => {
+    expect(
+      chatEvents(
+        JSON.stringify({
+          choices: [
+            {
+              delta: {},
+              finish_reason: "stop",
+              finish_details: { type: "repetition_loop" },
+            },
+          ],
+        }),
+      ),
+    ).toEqual([{ kind: "finish", reason: "stop", details: "repetition_loop" }]);
+    expect(
+      chatEvents(JSON.stringify({ error: { message: "out of memory" } })),
+    ).toEqual([{ kind: "error", message: "out of memory" }]);
+    expect(
+      chatEvents(
+        JSON.stringify({
+          choices: [],
+          usage: {
+            prompt_tokens: 10,
+            completion_tokens: 3,
+            prompt_tokens_details: {},
+          },
+          timings: { cached_n: 7, prompt_ms: 2, predicted_ms: 4 },
+        }),
+      ),
+    ).toEqual([
+      {
+        kind: "usage",
+        stats: {
+          promptTokens: 10,
+          cachedTokens: 7,
+          generated: 3,
+          prefillMs: 2,
+          decodeMs: 4,
+          tokenizeMs: null,
+        },
+      },
+    ]);
+    expect(chatEvents("[DONE]")).toEqual([]);
+  });
+
+  test("builds the mlx-serve body with optional settings and reasoning", () => {
+    const base = {
+      model: "org/model",
+      messages: [
+        { role: "user" as const, content: "hello" },
+        {
+          role: "assistant" as const,
+          content: "answer",
+          reasoning: "thought",
+        },
+      ],
+      thinking: false,
+      reasoningEffort: "high",
+      temperature: null,
+      topP: 0.8,
+      maxTokens: null,
+    };
+    expect(buildChatBody(base)).toEqual({
+      model: "org/model",
+      messages: [
+        { role: "user", content: "hello" },
+        {
+          role: "assistant",
+          content: "answer",
+          reasoning_content: "thought",
+        },
+      ],
+      enable_thinking: false,
+      top_p: 0.8,
+      stream: true,
+      stream_options: { include_usage: true },
+    });
+    expect(
+      buildChatBody({
+        ...base,
+        thinking: true,
+        temperature: 0,
+        maxTokens: 40,
+      }),
+    ).toMatchObject({
+      reasoning_effort: "high",
+      temperature: 0,
+      max_tokens: 40,
+    });
   });
 });

@@ -16,6 +16,8 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import pkg from "../package.json";
 import { Actions } from "./actions.ts";
+import { ChatRunner } from "./chat.ts";
+import { ChatStore } from "./chats.ts";
 import { MlxServe, parseSize } from "./engine/mlxserve.ts";
 import { History } from "./history.ts";
 import { createHostProbes } from "./host/index.ts";
@@ -55,6 +57,12 @@ const HELP = `\x1b[1mmlx-spy\x1b[0m - monitor and control an LLM inference serve
 
 \x1b[1mAPI:\x1b[0m
   GET /                        the dashboard
+  GET /requests                finished and in-flight engine requests
+  GET /chat[/<id>]             persistent chats
+  GET|POST /api/chats          list or create chats
+  GET|PATCH|DELETE /api/chats/<id>
+                               read, update or delete a chat
+  POST /api/chats/<id>/<name>  messages, regenerate, edit or stop
   GET /api/snapshot            latest sample and model list
   GET /api/history?range=1h    series for 1h, 6h, 24h or 7d
   WS  /ws                      snapshot on connect, then one sample per second
@@ -174,14 +182,28 @@ const log = (line: string) =>
 
 if (dbPath !== ":memory:") mkdirSync(dirname(dbPath), { recursive: true });
 const history = new History(dbPath, retentionDays);
+const chats = new ChatStore(history.db);
+const repaired = chats.repairInterrupted();
+if (repaired > 0) {
+  log(
+    `chat repaired ${repaired} interrupted repl${repaired === 1 ? "y" : "ies"}`,
+  );
+}
 const sampler = new Sampler(engine, history, { log, probes, local });
 const actions = new Actions({ engine, sampler, history, local, log });
+const chat = new ChatRunner({
+  engine,
+  store: chats,
+  models: () => sampler.currentModels(),
+  log,
+});
 const web = serve(
   {
     engine,
     sampler,
     history,
     actions,
+    chat,
     version: VERSION,
     local,
     limits,
@@ -197,6 +219,7 @@ log(
 
 const shutdown = () => {
   sampler.stop();
+  chat.shutdown();
   web.stop();
   history.close();
   process.exit(0);

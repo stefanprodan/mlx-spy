@@ -26,6 +26,6 @@
     }
   },
   "files": {
-    "includes": ["**", "!bin/", "!*.bun-build", "!.idea/", "!plans/"]
+    "includes": ["**", "!bin/", "!*.bun-build", "!.idea/", "!plans"]
   }
 }

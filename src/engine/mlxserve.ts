@@ -14,6 +14,8 @@ import { join } from "node:path";
 import type {
   CacheLimits,
   Capability,
+  ChatEvent,
+  ChatRequest,
   Engine,
   EngineMetrics,
   HistogramSummary,
@@ -25,6 +27,8 @@ import type {
 const TIMEOUT_MS = 3000;
 // Loads can take seconds (mmap of tens of GB); unloads a few seconds too.
 const ACTION_TIMEOUT_MS = 120_000;
+export const CHAT_HEADERS_TIMEOUT_MS = 30_000;
+const CHAT_SILENCE_TIMEOUT_MS = 5 * 60_000;
 
 const num = (v: unknown) =>
   typeof v === "number" && Number.isFinite(v) ? v : 0;
@@ -93,6 +97,117 @@ export function parseModels(body: any): ModelInfo[] {
     }));
 }
 
+export function buildChatBody(req: ChatRequest) {
+  const body: Record<string, unknown> = {
+    model: req.model,
+    messages: req.messages.map((message) => ({
+      role: message.role,
+      content: message.content,
+      ...(message.role === "assistant" && message.reasoning
+        ? { reasoning_content: message.reasoning }
+        : {}),
+    })),
+    enable_thinking: req.thinking,
+    stream: true,
+    stream_options: { include_usage: true },
+  };
+  if (req.thinking && req.reasoningEffort != null) {
+    body.reasoning_effort = req.reasoningEffort;
+  }
+  if (req.temperature != null) body.temperature = req.temperature;
+  if (req.topP != null) body.top_p = req.topP;
+  if (req.maxTokens != null) body.max_tokens = req.maxTokens;
+  return body;
+}
+
+// Frames are returned as their joined data payload. Comments count as bytes
+// for liveness in the reader but carry no event for the runner.
+export function parseSse(
+  buffer: string,
+  chunk: string,
+): { frames: string[]; rest: string } {
+  let rest = buffer + chunk;
+  const frames: string[] = [];
+  while (true) {
+    const split = /\r?\n\r?\n/.exec(rest);
+    if (!split || split.index === undefined) break;
+    const raw = rest.slice(0, split.index);
+    rest = rest.slice(split.index + split[0].length);
+    const data = raw
+      .split(/\r?\n/)
+      .filter((line) => !line.startsWith(":"))
+      .filter((line) => line === "data" || line.startsWith("data:"))
+      .map((line) => line.slice(5).replace(/^ /, ""));
+    if (data.length > 0) frames.push(data.join("\n"));
+  }
+  return { frames, rest };
+}
+
+export function chatEvents(json: string): ChatEvent[] {
+  if (json.trim() === "[DONE]") return [];
+  let body: any;
+  try {
+    body = JSON.parse(json);
+  } catch {
+    return [{ kind: "error", message: "invalid JSON in engine stream" }];
+  }
+  if (body?.error) {
+    const message =
+      typeof body.error.message === "string"
+        ? body.error.message
+        : typeof body.error === "string"
+          ? body.error
+          : "engine generation failed";
+    return [{ kind: "error", message }];
+  }
+  const events: ChatEvent[] = [];
+  const choice = Array.isArray(body?.choices) ? body.choices[0] : undefined;
+  const delta = choice?.delta;
+  if (typeof delta?.reasoning_content === "string" && delta.reasoning_content) {
+    events.push({ kind: "reasoning", text: delta.reasoning_content });
+  }
+  if (typeof delta?.content === "string" && delta.content) {
+    events.push({ kind: "content", text: delta.content });
+  }
+  if (typeof choice?.finish_reason === "string") {
+    events.push({
+      kind: "finish",
+      reason: choice.finish_reason,
+      details:
+        typeof choice.finish_details?.type === "string"
+          ? choice.finish_details.type
+          : null,
+    });
+  }
+  if (
+    body?.usage &&
+    Array.isArray(body?.choices) &&
+    body.choices.length === 0
+  ) {
+    const usage = body.usage;
+    const timings = body.timings ?? {};
+    events.push({
+      kind: "usage",
+      stats: {
+        promptTokens: num(usage.prompt_tokens),
+        cachedTokens:
+          typeof usage.prompt_tokens_details?.cached_tokens === "number"
+            ? usage.prompt_tokens_details.cached_tokens
+            : num(timings.cached_n),
+        generated:
+          typeof timings.predicted_n === "number"
+            ? timings.predicted_n
+            : num(usage.completion_tokens),
+        prefillMs: num(timings.prompt_ms),
+        decodeMs: num(timings.predicted_ms),
+        tokenizeMs:
+          typeof timings.tokenize_ms === "number" ? timings.tokenize_ms : null,
+      },
+    });
+  }
+  return events;
+}
+
 export class MlxServe implements Engine {
   readonly id = "mlxserve" as const;
   readonly url: string;
@@ -151,6 +266,80 @@ export class MlxServe implements Engine {
     return parseMetrics(body);
   }
 
+  async *chat(req: ChatRequest, signal: AbortSignal): AsyncIterable<ChatEvent> {
+    const controller = new AbortController();
+    const combined = AbortSignal.any([signal, controller.signal]);
+    const headersTimer = setTimeout(
+      () => controller.abort(new Error("engine response headers timed out")),
+      CHAT_HEADERS_TIMEOUT_MS,
+    );
+    let response: Response;
+    try {
+      response = await fetch(`${this.url}/v1/chat/completions`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(buildChatBody(req)),
+        signal: combined,
+      });
+    } finally {
+      clearTimeout(headersTimer);
+    }
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      yield {
+        kind: "error",
+        message: `HTTP ${response.status}${text ? `: ${text}` : ""}`,
+      };
+      return;
+    }
+    if (!response.body) {
+      yield { kind: "error", message: "engine response has no stream" };
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let rest = "";
+    try {
+      while (true) {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const read = reader.read().then(
+          (value) => ({ value }),
+          (error) => ({ error }),
+        );
+        const silence = new Promise<{ silent: true }>((resolve) => {
+          timer = setTimeout(
+            () => resolve({ silent: true }),
+            CHAT_SILENCE_TIMEOUT_MS,
+          );
+        });
+        const result = await Promise.race([read, silence]);
+        if (timer) clearTimeout(timer);
+        if ("silent" in result) {
+          controller.abort(new Error("engine silent for 5 min"));
+          yield { kind: "error", message: "engine silent for 5 min" };
+          return;
+        }
+        if ("error" in result) throw result.error;
+        if (result.value.done) break;
+        const parsed = parseSse(
+          rest,
+          decoder.decode(result.value.value, {
+            stream: true,
+          }),
+        );
+        rest = parsed.rest;
+        for (const frame of parsed.frames) {
+          if (frame.trim() === "[DONE]") return;
+          for (const event of chatEvents(frame)) yield event;
+        }
+      }
+    } finally {
+      await reader.cancel().catch(() => {});
+      reader.releaseLock();
+    }
+  }
+
   // Model ids are "<org>/<name>" in serve mode; callers pass the full id.
   async load(id: string, asDefault: boolean): Promise<void> {
     await this.post("/v1/load-model", { model: id, default: asDefault });
@@ -161,7 +350,14 @@ export class MlxServe implements Engine {
   }
 
   capabilities(): Set<Capability> {
-    return new Set(["load", "unload", "default", "restart", "diskClear"]);
+    return new Set([
+      "chat",
+      "load",
+      "unload",
+      "default",
+      "restart",
+      "diskClear",
+    ]);
   }
 
   // The SSD prefix cache tier: one <fingerprint>/ directory per model.

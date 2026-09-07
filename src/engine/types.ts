@@ -6,9 +6,12 @@
 // src/engine/, not a rewrite. Names are normalised here: adapters translate
 // their server's counter names into these fields.
 
+import type { MessageStats } from "../chats.ts";
+
 export type EngineId = "mlxserve" | "omlx";
 
 export type Capability =
+  | "chat"
   | "load"
   | "unload"
   | "default"
@@ -82,12 +85,38 @@ export type CacheLimits = {
   diskBytes: number;
 };
 
+export type ChatMessageIn = {
+  role: "system" | "user" | "assistant";
+  content: string;
+  reasoning?: string;
+};
+
+export type ChatRequest = {
+  model: string;
+  messages: ChatMessageIn[];
+  thinking: boolean;
+  reasoningEffort?: string | null;
+  temperature?: number | null;
+  topP?: number | null;
+  maxTokens?: number | null;
+};
+
+export type ChatEvent =
+  | { kind: "reasoning"; text: string }
+  | { kind: "content"; text: string }
+  | { kind: "finish"; reason: string; details: string | null }
+  | { kind: "usage"; stats: MessageStats }
+  | { kind: "error"; message: string };
+
 export interface Engine {
   readonly id: EngineId;
   readonly url: string;
   health(): Promise<boolean>;
   models(): Promise<ModelInfo[]>;
   metrics(): Promise<EngineMetrics>;
+  // Optional at the base contract so monitoring-only adapters stay valid;
+  // engines advertise "chat" only when this method is implemented.
+  chat?(req: ChatRequest, signal: AbortSignal): AsyncIterable<ChatEvent>;
   load(id: string, asDefault: boolean): Promise<void>;
   unload(id: string): Promise<void>;
   capabilities(): Set<Capability>;

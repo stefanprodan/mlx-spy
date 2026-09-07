@@ -69,7 +69,7 @@ export type SamplerState = {
 };
 
 export class History {
-  private readonly db: Database;
+  readonly db: Database;
   private readonly ring: Sample[] = [];
   private readonly insert;
   private readonly prune;
@@ -79,6 +79,7 @@ export class History {
   constructor(path: string, retentionDays = 7) {
     this.retentionMs = retentionDays * DAY_MS;
     this.db = new Database(path, { create: true, strict: true });
+    this.db.run("PRAGMA foreign_keys = ON");
     // WAL keeps the 1 Hz writer from blocking history reads
     this.db.run("PRAGMA journal_mode = WAL");
     this.db.run("PRAGMA synchronous = NORMAL");
