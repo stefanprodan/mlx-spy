@@ -107,6 +107,16 @@ export class History {
     this.db.run(
       "CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
     );
+    // The models the engine lists, so the favorite (the daily driver, one
+    // at most) survives engine restarts and page reloads. Sizes and state
+    // stay live from the engine.
+    this.db.run(`CREATE TABLE IF NOT EXISTS models (
+      id TEXT PRIMARY KEY,
+      favorite INTEGER NOT NULL DEFAULT 0,
+      first_seen INTEGER NOT NULL,
+      last_seen INTEGER NOT NULL
+    )`);
+    this.migrateModels();
     this.insert = this.db.prepare(`INSERT OR REPLACE INTO samples VALUES (
       $t, $engineUp, $epoch, $decodeTps, $prefillTps, $requestsRunning,
       $requestsWaiting, $cacheHitPct, $cacheTokenPct, $gpuPct, $procFootprint,
@@ -319,6 +329,47 @@ export class History {
     this.db
       .query("INSERT OR REPLACE INTO meta (key, value) VALUES ('sampler', $v)")
       .run({ v: JSON.stringify(state) });
+  }
+
+  // The first cut of the table called the flag is_default.
+  private migrateModels() {
+    const cols = (
+      this.db.query("PRAGMA table_info(models)").all() as { name: string }[]
+    ).map((c) => c.name);
+    if (cols.includes("is_default")) {
+      this.db.run("ALTER TABLE models RENAME COLUMN is_default TO favorite");
+    }
+  }
+
+  // The engine's current model list: new ids are added, ids the engine no
+  // longer lists are dropped along with their favorite flag.
+  syncModels(ids: string[], now = Date.now()) {
+    const upsert = this.db.query(
+      `INSERT INTO models (id, first_seen, last_seen) VALUES ($id, $t, $t)
+       ON CONFLICT(id) DO UPDATE SET last_seen = $t`,
+    );
+    const drop = this.db.query("DELETE FROM models WHERE last_seen <> $t");
+    this.db.transaction(() => {
+      for (const id of ids) upsert.run({ id, t: now });
+      drop.run({ t: now });
+    })();
+  }
+
+  // Toggle: the id becomes the only favorite, or stops being one if it
+  // already was. Returns the favorite after the call.
+  toggleFavorite(id: string): string | null {
+    const was = this.favorite();
+    this.db
+      .query("UPDATE models SET favorite = (id = $id AND $on)")
+      .run({ id, on: was === id ? 0 : 1 });
+    return this.favorite();
+  }
+
+  favorite(): string | null {
+    const row = this.db
+      .query("SELECT id FROM models WHERE favorite = 1 LIMIT 1")
+      .get() as { id: string } | null;
+    return row?.id ?? null;
   }
 
   // Wipe the samples, keeping the sampler state so the epoch stays honest.

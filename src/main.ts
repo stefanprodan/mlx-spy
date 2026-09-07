@@ -60,7 +60,8 @@ const HELP = `\x1b[1mmlx-spy\x1b[0m - monitor and control an LLM inference serve
   WS  /ws                      snapshot on connect, then one sample per second
   POST /api/actions/<name>     load, unload, default (body {"model"}), free,
                                diskClear (the last two only for a local engine),
-                               historyClear (wipes the sample database)
+                               historyClear (wipes the sample database),
+                               favorite (toggles the daily-driver star)
 
 \x1b[1mExamples:\x1b[0m
   mlx-spy --engine http://127.0.0.1:11234 --once

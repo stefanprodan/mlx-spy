@@ -23,6 +23,7 @@ import modelsFixture from "./fixtures/models.json";
 
 const QWEN = "Jundot/Qwen3.8-27B-oQ4e-mtp";
 const APODEX = "stefanprodan/Apodex-1.1-mini-oQ4e-mtp";
+const ORNITH = "stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp";
 
 // An engine whose load/unload mutate its model list, as mlx-serve does.
 class ControlEngine implements Engine {
@@ -130,24 +131,65 @@ describe("Actions", () => {
     s.actions.onEvent((e) => events.push(e));
     const ev = await s.actions.run("unload", { model: QWEN });
     expect(ev).toMatchObject({ action: "unload", model: QWEN, ok: true });
-    expect(s.engine.calls).toEqual([`unload ${QWEN}`]);
+    // Ornith is still resident: it takes over as the engine's default
+    expect(s.engine.calls).toEqual([`unload ${QWEN}`, `load ${ORNITH} true`]);
     expect(s.sampler.currentModels().find((m) => m.id === QWEN)?.loaded).toBe(
       false,
     );
     expect(events).toEqual([ev]);
     expect(s.actions.events).toEqual([ev]);
-    expect(s.logs).toEqual([`action unload ${QWEN}: ok in 0 ms (unloaded)`]);
+    expect(s.logs).toEqual([
+      `action unload ${QWEN}: ok in 0 ms (unloaded; ${ORNITH} is the default)`,
+    ]);
     s.history.close();
   });
 
-  test("load and default", async () => {
+  test("unloading the last resident model leaves no default to set", async () => {
+    const s = await setup();
+    await s.actions.run("unload", { model: QWEN });
+    s.engine.calls = [];
+    const ev = await s.actions.run("unload", { model: ORNITH });
+    expect(ev.detail).toBe("unloaded");
+    expect(s.engine.calls).toEqual([`unload ${ORNITH}`]);
+    s.history.close();
+  });
+
+  test("the favorite takes the default over another resident model", async () => {
+    const s = await setup();
+    await s.actions.run("load", { model: APODEX }); // three resident in the fake
+    await s.actions.run("favorite", { model: APODEX });
+    s.engine.calls = [];
+    await s.actions.run("unload", { model: QWEN });
+    expect(s.engine.calls).toEqual([`unload ${QWEN}`, `load ${APODEX} true`]);
+    s.history.close();
+  });
+
+  test("load makes the model the default", async () => {
     const s = await setup();
     await s.actions.run("load", { model: APODEX });
     await s.actions.run("default", { model: QWEN });
     expect(s.engine.calls).toEqual([
-      `load ${APODEX} false`,
+      `load ${APODEX} true`,
       `load ${QWEN} true`,
     ]);
+    s.history.close();
+  });
+
+  test("favorite toggles mlx-spy's own mark, one model at most", async () => {
+    const s = await setup(false); // no engine call: works remotely too
+    const fav = () =>
+      s.sampler.currentModels().find((m) => m.favorite)?.id ?? null;
+    expect((await s.actions.run("favorite", { model: QWEN })).detail).toBe(
+      "daily driver",
+    );
+    expect(fav()).toBe(QWEN);
+    await s.actions.run("favorite", { model: APODEX });
+    expect(fav()).toBe(APODEX);
+    expect((await s.actions.run("favorite", { model: APODEX })).detail).toBe(
+      "no daily driver",
+    );
+    expect(fav()).toBeNull();
+    expect(s.engine.calls).toEqual([]);
     s.history.close();
   });
 

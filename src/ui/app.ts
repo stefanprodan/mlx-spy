@@ -198,6 +198,7 @@ function renderTiles(s: Sample) {
       ? `${Math.round((gen / allTok) * 100)}% of ${count(allTok)} total`
       : "no request in view";
   renderServer(s);
+  renderActivity(s);
 }
 
 // The live half of the Runtime section: the engine's residency and process.
@@ -345,28 +346,37 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return e;
 }
 
+// One row per model: a state dot and the id split at its last slash, the
+// size and context in dim text, the engine's state word, icon buttons.
+// Activity is engine-wide (the engine does not say which model is busy)
+// and lives in the section head, see renderActivity.
 function renderModels(snap: Snapshot) {
   const tbody = $("models").querySelector("tbody")!;
   tbody.replaceChildren(
     ...snap.models.map((m) => {
       const tr = el("tr", m.loaded ? "ready" : "");
-      const caps = el("td", "caps");
-      for (const c of m.capabilities) caps.append(el("span", "cap", c));
+      const slash = m.id.lastIndexOf("/");
+      const name = el("td", "name");
+      name.title = m.id;
+      const row = el("div");
+      // model ids are Hugging Face repo ids
+      const link = el("a", "model", m.id.slice(slash + 1));
+      link.href = `https://huggingface.co/${m.id}`;
+      link.target = "_blank";
+      link.rel = "noopener";
+      row.append(
+        el("span", `dot ${dotFor(m.state)}`),
+        el("span", "owner", slash > 0 ? `${m.id.slice(0, slash)}/` : ""),
+        link,
+      );
+      name.append(row);
+      const facts = [`${gb(m.loaded ? m.bytesResident : m.bytesOnDisk)} GB`];
+      if (m.contextLength != null) {
+        facts.push(`${Math.round(m.contextLength / 1024)}K ctx`);
+      }
       tr.append(
-        el("td", "id", m.id),
-        caps,
-        el(
-          "td",
-          "num",
-          m.loaded
-            ? `${gb(m.bytesResident)} GB`
-            : `${gb(m.bytesOnDisk)} GB on disk`,
-        ),
-        el(
-          "td",
-          "num",
-          m.contextLength == null ? "" : `${count(m.contextLength)} ctx`,
-        ),
+        name,
+        el("td", "meta", facts.join(" · ")),
         el("td", `state ${m.state}`, m.state),
         modelButtons(m, snap),
       );
@@ -407,24 +417,102 @@ function setEnabled(btn: HTMLButtonElement, on: boolean, why: string) {
   btn.title = on ? "" : why;
 }
 
+const ICON = {
+  play: "M5 3l9 5-9 5z",
+  stop: "M4 4h8v8H4z",
+  star: "M8 1.6l2 4.1 4.5.6-3.3 3.2.8 4.5L8 11.9l-4 2.1.8-4.5L1.5 6.3 6 5.7z",
+};
+
+function icon(d: string) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 16 16");
+  svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", d);
+  svg.append(path);
+  return svg;
+}
+
+function dotFor(state: string) {
+  switch (state) {
+    case "ready":
+      return "ready";
+    case "loading":
+      return "loading";
+    case "evicting":
+      return "evicting";
+    case "error":
+    case "failed":
+      return "error";
+    default:
+      return "";
+  }
+}
+
+// Icon buttons with the action as tooltip and label: the favorite star on
+// every model, then load for an unloaded one or unload for a resident one.
 function modelButtons(m: Snapshot["models"][number], snap: Snapshot) {
   const td = el("td", "act");
   const can = (c: Capability) => snap.engine.capabilities.includes(c);
-  const btn = (label: string, action: ActionName, cls = "") => {
-    const b = el("button", `btn ${cls}`.trim(), label);
+  const btn = (label: string, glyph: string, action: ActionName, cls = "") => {
+    const b = el("button", `ibtn ${cls}`.trim());
     b.type = "button";
+    b.title = label;
+    b.setAttribute("aria-label", label);
     b.disabled = busy !== null;
+    b.append(icon(glyph));
     b.onclick = () => void runAction(action, m.id);
     return b;
   };
+  // the star is mlx-spy's own mark, on every model, one at most
+  td.append(
+    m.favorite
+      ? btn("Daily driver", ICON.star, "favorite", "on")
+      : btn("Mark as daily driver", ICON.star, "favorite"),
+  );
   if (m.loaded) {
-    if (can("default")) td.append(btn("Set default", "default"));
-    if (can("unload")) td.append(btn("Unload", "unload", "danger"));
+    if (can("unload")) td.append(btn("Unload", ICON.stop, "unload", "danger"));
   } else if (can("load")) {
-    td.append(btn("Load", "load"));
-    if (can("default")) td.append(btn("Load as default", "default"));
+    td.append(btn("Load", ICON.play, "load"));
   }
   return td;
+}
+
+// The engine-wide activity in the Models head: the phase, what the running
+// requests have done so far and for how long, and the queue.
+function renderActivity(s: Sample) {
+  const pill = $("models-phase");
+  const parts: string[] = [];
+  let phase = "idle";
+  let cls = "pill";
+  if (!s.engineUp) {
+    phase = "unreachable";
+    cls = "pill err";
+  } else if (s.requestsPrefilling > 0) {
+    phase = "prefilling";
+    cls = "pill prefill";
+    if (s.prefillTokensLive > 0) {
+      parts.push(`${count(s.prefillTokensLive)} tokens`);
+    }
+  } else if (s.requestsRunning > 0) {
+    phase = "generating";
+    cls = "pill live";
+    parts.push(`${count(s.inflightTokens)} tokens`);
+  }
+  if (phase !== "idle" && s.engineUp && s.phaseSince != null) {
+    parts.push(duration(s.t - s.phaseSince));
+  }
+  if (s.requestsRunning > 1) parts.push(`${s.requestsRunning} running`);
+  pill.textContent = phase;
+  pill.className = cls;
+  const act = $("models-activity");
+  act.replaceChildren(parts.join(" · "));
+  if (s.requestsWaiting > 0) {
+    act.append(
+      parts.length ? " · " : "",
+      el("span", "warn", `${s.requestsWaiting} waiting`),
+    );
+  }
 }
 
 const ACTION_LABEL: Record<ActionName, string> = {
@@ -434,6 +522,7 @@ const ACTION_LABEL: Record<ActionName, string> = {
   free: "restart engine",
   diskClear: "clear disk cache",
   historyClear: "clear history",
+  favorite: "daily driver",
 };
 
 // The dialog copy states what happens, from the engine notes: an unload
@@ -448,17 +537,19 @@ function confirmText(action: ActionName, model: string | null): string {
   const m = `<code>${model ?? ""}</code>`;
   switch (action) {
     case "load":
-      return `Load ${m}? Reading the weights takes a few seconds.${evict}`;
+      return `Load ${m}? Reading the weights takes a few seconds; it becomes the default model.${evict}`;
     case "default":
       return `Make ${m} the default model? It is loaded if needed and chat requests without a model go to it.${evict}`;
     case "unload":
-      return `Unload ${m}? Its weights and RAM prefix cache are freed; the SSD tier is kept.`;
+      return `Unload ${m}? Its weights and RAM prefix cache are freed; the SSD tier is kept. A model still resident becomes the default.`;
     case "free":
       return "Restart the engine service? Every model is unloaded and its RAM is freed; the hot cache is gone. The SSD tier is kept and comes back on the next load.";
     case "diskClear":
       return `Restart the engine service and delete the SSD cache tier (${gb(diskTotal)} GB)? Every model is unloaded and every cached prefix is gone.`;
     case "historyClear":
       return "Delete the stored history? Every sample of the last 7 days is removed from mlx-spy's database and the graphs start over. The engine is not touched.";
+    case "favorite":
+      return ""; // a toggle, no dialog
   }
 }
 
@@ -475,7 +566,7 @@ function confirm(html: string, okLabel: string): Promise<boolean> {
 
 function setBusy(action: ActionName | null) {
   busy = action;
-  for (const b of document.querySelectorAll<HTMLButtonElement>(".btn")) {
+  for (const b of document.querySelectorAll<HTMLButtonElement>(".btn, .ibtn")) {
     if (b.closest("dialog")) continue;
     b.disabled = action !== null || b.title !== "";
   }
@@ -514,6 +605,7 @@ async function runAction(action: ActionName, model: string | null) {
   if (busy) return;
   const label = ACTION_LABEL[action];
   if (
+    action !== "favorite" &&
     !(await confirm(
       confirmText(action, model),
       label[0].toUpperCase() + label.slice(1),
@@ -828,7 +920,9 @@ function appendLive(s: Sample) {
 // residency picture changes, not 60 times a minute.
 let modelsKey = "";
 const modelsKeyOf = (models: Sample["models"]) =>
-  models.map((m) => `${m.id}:${m.state}:${m.bytesResident}`).join("|");
+  models
+    .map((m) => `${m.id}:${m.state}:${m.bytesResident}:${m.favorite ? 1 : 0}`)
+    .join("|");
 
 function refreshModels(s: Sample) {
   const key = modelsKeyOf(s.models);

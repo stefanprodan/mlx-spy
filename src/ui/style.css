@@ -424,47 +424,73 @@ dialog .row {
 
 /* models */
 .card.models {
-  padding: 6px 16px;
+  padding: 4px 16px;
 }
 table {
   width: 100%;
   border-collapse: collapse;
 }
 td {
-  padding: 10px 8px;
+  padding: 12px 8px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
 }
 tr:last-child td {
   border-bottom: 0;
 }
-tr.ready td {
-  background: rgba(16, 185, 129, 0.05);
-}
-td.id {
+td.name {
   font-family: var(--mono);
-  font-size: 12.5px;
-  word-break: break-all;
+  font-size: 13px;
+  width: 100%; /* the id takes what the fixed-width cells leave */
 }
-td.caps {
-  width: 40%;
+td.name div {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
 }
-.cap {
-  display: inline-block;
-  background: #1e2a3a;
-  color: var(--accent);
-  border: 1px solid #26344a;
-  border-radius: 999px;
-  padding: 1px 8px;
-  font-size: 11px;
-  margin: 1px 3px 1px 0;
+td.name .dot {
+  margin-right: 10px;
 }
-td.num {
-  text-align: right;
+td.name .owner {
+  color: var(--faint);
+  white-space: nowrap;
+}
+td.name .model {
+  color: var(--val);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+td.name .model:hover {
+  text-decoration: underline;
+}
+.dot.ready {
+  background: #10b981;
+}
+.dot.loading {
+  background: var(--accent);
+  animation: blink 1s ease-in-out infinite;
+}
+.dot.evicting {
+  background: var(--amber);
+  animation: blink 1s ease-in-out infinite;
+}
+.dot.error {
+  background: var(--red);
+}
+@keyframes blink {
+  50% {
+    opacity: 0.3;
+  }
+}
+td.meta {
   color: var(--dim);
   white-space: nowrap;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 td.state {
   text-align: right;
@@ -472,23 +498,77 @@ td.state {
   font-size: 12.5px;
   color: var(--faint);
   width: 1%;
+  padding-left: 16px;
 }
 td.state.ready {
   color: var(--green-2);
 }
-td.state.loading {
+td.state.loading,
+td.state.evicting {
   color: var(--accent);
 }
-td.state.error {
+td.state.error,
+td.state.failed {
   color: #f28b82;
 }
 td.act {
   text-align: right;
   white-space: nowrap;
   width: 1%;
+  padding-left: 12px;
 }
-td.act .btn {
+.ibtn {
+  width: 28px;
+  height: 28px;
   margin-left: 4px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--dim);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+.ibtn svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+}
+.ibtn:hover {
+  background: #26282b;
+  color: var(--fg);
+}
+.ibtn.danger:hover {
+  background: #3a1a20;
+  border-color: #5a2630;
+  color: #ff95a8;
+}
+.ibtn.on {
+  color: var(--amber);
+  border-color: #4a3a12;
+}
+.ibtn.on:hover {
+  color: var(--amber);
+}
+.ibtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.ibtn:disabled:hover {
+  background: transparent;
+  color: var(--dim);
+}
+.ibtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.pill.prefill {
+  background: #12233a;
+  color: var(--accent);
+}
+.shead .hint .warn {
+  color: var(--amber);
 }
 
 /* runtime facts: two label/value columns, engine left, host right */

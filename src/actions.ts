@@ -5,7 +5,8 @@
 // adapter; free (a launchd restart of the service) and disk clear (delete the
 // SSD cache tier contents) are the program's only spawns and file deletions,
 // and both run only when the engine is on this host; history clear wipes
-// mlx-spy's own sample database and touches no engine. Every action is an
+// mlx-spy's own sample database and touches no engine, as does favorite
+// (the daily-driver mark on one model). Every action is an
 // explicit user request from the UI, is checked against the engine's
 // capabilities and the current model list, runs one at a time, and is logged
 // with its outcome. The sampler never calls into here.
@@ -23,6 +24,7 @@ export const ACTION_NAMES = [
   "free",
   "diskClear",
   "historyClear",
+  "favorite",
 ] as const;
 export type ActionName = (typeof ACTION_NAMES)[number];
 
@@ -126,6 +128,7 @@ export class Actions {
     const capability = name === "free" ? "restart" : name;
     if (
       capability !== "historyClear" &&
+      capability !== "favorite" &&
       !this.deps.engine.capabilities().has(capability)
     ) {
       throw new ActionError(403, `${this.deps.engine.id} cannot ${name}`);
@@ -192,15 +195,34 @@ export class Actions {
 
   private async perform(name: ActionName, model: string | null) {
     switch (name) {
-      case "load":
-        await this.deps.engine.load(model!, false);
-        return "loaded";
-      case "unload":
+      // A load makes the model the engine's default, and an unload hands the
+      // default to the model still resident (the favorite first): a request
+      // without a model then goes to what is in memory instead of cold
+      // loading something else.
+      case "load": {
+        const asDefault = this.deps.engine.capabilities().has("default");
+        await this.deps.engine.load(model!, asDefault);
+        return asDefault ? "loaded as default" : "loaded";
+      }
+      case "unload": {
         await this.deps.engine.unload(model!);
-        return "unloaded";
+        if (!this.deps.engine.capabilities().has("default")) return "unloaded";
+        const rest = (await this.deps.sampler.refreshModels()).filter(
+          (m) => m.loaded && m.id !== model,
+        );
+        const next = rest.find((m) => m.favorite) ?? rest[0];
+        if (!next) return "unloaded";
+        await this.deps.engine.load(next.id, true);
+        return `unloaded; ${next.id} is the default`;
+      }
       case "default":
         await this.deps.engine.load(model!, true);
         return "loaded as default";
+      case "favorite": {
+        const fav = this.deps.history.toggleFavorite(model!);
+        this.deps.sampler.stampFavorite();
+        return fav === model ? "daily driver" : "no daily driver";
+      }
       case "free":
         return this.restart();
       case "diskClear": {

@@ -46,6 +46,9 @@ export class Sampler {
   private prev: Reading | null = null;
   // where the live token gauges last moved, for the rates between moves
   private live: LiveState = EMPTY_LIVE;
+  // the engine-wide phase (idle, prefilling, generating) and when it began
+  private phase = "idle";
+  private phaseSince: number | null = null;
   private epoch: number;
   private models: ModelInfo[] = [];
   private ticksSinceModels = MODELS_EVERY_TICKS; // fetch on the first tick
@@ -120,6 +123,21 @@ export class Sampler {
     return this.models;
   }
 
+  // A fresh list from the engine: record it and stamp the user's favorite.
+  private setModels(list: ModelInfo[]) {
+    this.history.syncModels(
+      list.map((m) => m.id),
+      this.now(),
+    );
+    this.stampFavorite(list);
+  }
+
+  // The favorite changed (or the list did): re-stamp without a fetch.
+  stampFavorite(list: ModelInfo[] = this.models) {
+    const fav = this.history.favorite();
+    this.models = list.map((m) => ({ ...m, favorite: m.id === fav }));
+  }
+
   currentDisk(): DiskDir[] {
     return this.disk;
   }
@@ -128,7 +146,7 @@ export class Sampler {
   // periodic fetch. Failures keep the last list, as in tick().
   async refreshModels(): Promise<ModelInfo[]> {
     try {
-      this.models = await this.engine.models();
+      this.setModels(await this.engine.models());
       this.ticksSinceModels = 0;
     } catch {
       // the next tick retries
@@ -224,6 +242,8 @@ export class Sampler {
         // rather than computing rates over the outage
         this.prev = null;
         this.live = EMPTY_LIVE;
+        this.phase = "idle";
+        this.phaseSince = null;
         this.models = [];
       } else {
         reading.t = t;
@@ -249,12 +269,29 @@ export class Sampler {
         if (++this.ticksSinceModels >= MODELS_EVERY_TICKS) {
           this.ticksSinceModels = 0;
           try {
-            this.models = await this.engine.models();
+            this.setModels(await this.engine.models());
           } catch {
             // keep the last list; the next tick retries
           }
         }
-        sample = buildSample(reading, rates, this.models, host);
+        const g = reading.metrics.gauges;
+        const phase =
+          g.requestsPrefilling > 0
+            ? "prefilling"
+            : g.requestsRunning > 0
+              ? "generating"
+              : "idle";
+        if (phase !== this.phase) {
+          this.phase = phase;
+          this.phaseSince = t;
+        }
+        sample = buildSample(
+          reading,
+          rates,
+          this.models,
+          host,
+          this.phaseSince,
+        );
         this.prev = reading;
         this.history.saveSamplerState({
           epoch: this.epoch,

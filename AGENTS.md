@@ -83,12 +83,16 @@ src/sampler.ts       the 1 Hz loop: reads metrics each tick, models every 5 s,
                      the history meta table; tick() is public for tests
 src/history.ts       ring buffer (1 h) plus bun:sqlite: samples table, 7 day
                      retention pruned from the writer, bucketed series() per
-                     range in columnar form for uPlot
-src/actions.ts       the control actions: load/unload/default through the
+                     range in columnar form for uPlot; models table (ids the
+                     engine lists, the user's favorite flag; synced each fetch)
+src/actions.ts       the control actions: load (as the engine default),
+                     unload (hands the default to a model still resident,
+                     the favorite first) and default through the
                      adapter, free (launchctl kickstart -k of the service
                      label), diskClear (restart, then delete the children
                      of the adapter's cache dirs), local-only, and
-                     historyClear (wipes the sample table); validates the
+                     historyClear (wipes the sample table) and favorite (the
+                     daily-driver toggle, mlx-spy's own); validates the
                      model id against the current list, one action at a time,
                      logs every outcome, keeps the last 50 events; spawn and
                      directory wipe are injectable for tests

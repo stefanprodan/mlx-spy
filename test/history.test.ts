@@ -12,6 +12,10 @@ function sample(t: number, over: Partial<Sample> = {}): Sample {
     prefillTps: 0,
     requestsRunning: 1,
     requestsWaiting: 0,
+    requestsPrefilling: 0,
+    prefillTokensLive: 0,
+    inflightTokens: 0,
+    phaseSince: null,
     cacheHitPct: null,
     cacheTokenPct: null,
     ttftMs: null,
@@ -152,6 +156,44 @@ describe("History", () => {
     expect(s.engineUp).toEqual([0]);
     expect(s.decodeTps).toEqual([null]);
     h.close();
+  });
+});
+
+describe("History models", () => {
+  test("sync adds, keeps and drops ids; the favorite persists", () => {
+    const h = new History(":memory:");
+    h.syncModels(["a", "b"], 1000);
+    expect(h.toggleFavorite("b")).toBe("b");
+    // b still listed: the flag survives a resync
+    h.syncModels(["b", "c"], 2000);
+    expect(h.favorite()).toBe("b");
+    // one at most: starring c moves the flag; starring it again clears it
+    expect(h.toggleFavorite("c")).toBe("c");
+    expect(h.toggleFavorite("c")).toBeNull();
+    h.toggleFavorite("b");
+    // b gone from the engine: so is its flag
+    h.syncModels(["c"], 3000);
+    expect(h.favorite()).toBeNull();
+    expect(h.toggleFavorite("zzz")).toBeNull(); // unknown id
+    h.close();
+  });
+
+  test("an is_default column from the first cut is renamed", () => {
+    const { Database } = require("bun:sqlite");
+    const path = `${require("node:os").tmpdir()}/mlx-spy-models-${process.pid}.sqlite`;
+    const old = new Database(path, { create: true });
+    old.run(
+      "CREATE TABLE models (id TEXT PRIMARY KEY, is_default INTEGER NOT NULL DEFAULT 0, first_seen INTEGER NOT NULL, last_seen INTEGER NOT NULL)",
+    );
+    old.run("INSERT INTO models VALUES ('a', 1, 1, 1)");
+    old.close();
+    try {
+      const h = new History(path);
+      expect(h.favorite()).toBe("a");
+      h.close();
+    } finally {
+      require("node:fs").rmSync(path, { force: true });
+    }
   });
 });
 

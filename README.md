@@ -24,8 +24,9 @@ bun src/main.ts --engine http://127.0.0.1:11234 --once     # one sample
 ```
 
 By default it binds the host's Tailscale address (else 127.0.0.1) on port
-11235 and writes `~/.mlx-spy/history.sqlite`. There is no auth: the tailnet
-is the boundary.
+11235 and writes `~/.mlx-spy/history.sqlite`, which holds the samples and
+the model list with your daily-driver star (dropped when the engine stops
+listing a model). There is no auth: the tailnet is the boundary.
 
 - `GET /` the dashboard
 - `GET /api/snapshot` latest sample and the model list
@@ -35,7 +36,8 @@ is the boundary.
   per finished action
 - `POST /api/actions/load|unload|default` with `{"model": "<id>"}`, and
   `POST /api/actions/free|diskClear` (local engine only), and
-  `POST /api/actions/historyClear` (wipes mlx-spy's own sample database)
+  `POST /api/actions/historyClear` (wipes mlx-spy's own sample database),
+  `POST /api/actions/favorite` with `{"model"}` (toggles the daily-driver star)
 
 A sample carries the engine state, live decode and prefill tok/s (rated between
 moves of the engine's 2 s live gauges, carried while the phase runs), cache
