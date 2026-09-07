@@ -803,3 +803,54 @@ footer {
     display: none;
   }
 }
+
+/* phones: one column everywhere, the model id gets the row, the owner
+   prefix and the size column go (the id link's title still has them) */
+@media (max-width: 600px) {
+  .page {
+    padding: 18px 14px 40px;
+  }
+  .top {
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+  .shead {
+    flex-wrap: wrap;
+  }
+  .shead .hint {
+    order: 1;
+    flex: 1 0 100%;
+  }
+  .cur-head span,
+  .cur-foot span {
+    white-space: nowrap;
+  }
+  .cur-head,
+  .cur-foot {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+  td.name {
+    max-width: 0; /* min-content 0: the id ellipsizes instead of widening the table */
+  }
+  td {
+    padding: 12px 4px;
+  }
+  td.name .owner,
+  td.meta {
+    display: none;
+  }
+  td.state {
+    padding-left: 8px;
+  }
+  td.act {
+    padding-left: 6px;
+  }
+  .ibtn {
+    margin-left: 2px;
+  }
+  .facts {
+    grid-template-columns: 1fr;
+    gap: 8px 0;
+  }
+}
