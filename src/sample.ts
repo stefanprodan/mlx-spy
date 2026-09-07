@@ -48,6 +48,7 @@ export type Sample = {
   cacheHitPct: number | null; // hits / queries over the window
   cacheTokenPct: number | null; // cached prompt tokens / prompt tokens, windowed
   ttftMs: number | null; // mean TTFT of requests that finished in the window
+  ttftN: number; // how many requests that mean covers
   gpuPct: number;
   generatedTokens: number; // lifetime counter (this epoch)
   promptTokens: number; // lifetime prompt tokens, cached or not (this epoch)
@@ -86,6 +87,7 @@ export type Rates = {
   cacheHitPct: number | null;
   cacheTokenPct: number | null;
   ttftMs: number | null;
+  ttftN: number;
   live: LiveState; // carry into the next computeRates call
 };
 
@@ -201,6 +203,7 @@ export function computeRates(
     cacheHitPct: null,
     cacheTokenPct: null,
     ttftMs: null,
+    ttftN: 0,
   };
   const g1 = cur.metrics.gauges;
   const running = g1.requestsRunning > 0 || g1.requestsPrefilling > 0;
@@ -278,6 +281,11 @@ export function computeRates(
       prev.metrics.histograms.ttftSeconds,
       cur.metrics.histograms.ttftSeconds,
     ),
+    ttftN: Math.max(
+      0,
+      cur.metrics.histograms.ttftSeconds.count -
+        prev.metrics.histograms.ttftSeconds.count,
+    ),
     live: next,
   };
 }
@@ -328,6 +336,7 @@ export function buildSample(
     cacheHitPct: rates.cacheHitPct,
     cacheTokenPct: rates.cacheTokenPct,
     ttftMs: rates.ttftMs,
+    ttftN: rates.ttftN,
     gpuPct: g.gpuPct,
     generatedTokens: cur.metrics.counters.generationTokens,
     promptTokens: cur.metrics.counters.promptTokens,
@@ -376,6 +385,7 @@ export function downSample(
     cacheHitPct: null,
     cacheTokenPct: null,
     ttftMs: null,
+    ttftN: 0,
     gpuPct: 0,
     generatedTokens: 0,
     promptTokens: 0,

@@ -353,15 +353,19 @@ function inView(k: "decodeTps" | "prefillTps"): string {
   return n ? `avg ${whole(sum / n)} · peak ${whole(peak)}` : "";
 }
 
-// the mean of a per-tick mean (TTFT of the requests finished that second)
-// over the loaded range; null when no request finished in view
+// the mean TTFT over the loaded range, each point weighted by the requests
+// its own mean covers; null when no request finished in view
 function inViewMean(k: "ttftMs"): number | null {
+  if (!series) return null;
   let sum = 0;
   let n = 0;
-  for (const v of series?.[k] ?? []) {
-    if (v == null) continue;
-    sum += v;
-    n++;
+  const v = series[k];
+  for (let i = 0; i < v.length; i++) {
+    const x = v[i];
+    const w = series.ttftN[i];
+    if (x == null || !(w > 0)) continue;
+    sum += x * w;
+    n += w;
   }
   return n ? sum / n : null;
 }
@@ -1128,6 +1132,7 @@ function appendLive(s: Sample) {
     s.disk.reduce((n, d) => n + d.bytes, 0),
   );
   push("ttftMs", s.ttftMs);
+  push("ttftN", s.ttftN);
   push("generationTokens", s.generatedTokens);
   push("requestsTotal", s.requestsTotal);
   push("promptTokens", s.promptTokens);

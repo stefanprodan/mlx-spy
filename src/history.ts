@@ -50,7 +50,8 @@ export type Series = {
   hostCompressed: number[];
   procRss: number[];
   diskBytes: number[];
-  ttftMs: (number | null)[];
+  ttftMs: (number | null)[]; // mean over the bucket, weighted by ttftN
+  ttftN: number[]; // requests the mean covers
   generationTokens: number[];
   requestsTotal: number[];
   promptTokens: number[];
@@ -104,6 +105,7 @@ export class History {
       proc_rss INTEGER NOT NULL DEFAULT 0,
       disk_bytes INTEGER NOT NULL DEFAULT 0,
       ttft_ms REAL,
+      ttft_n INTEGER NOT NULL DEFAULT 0,
       generation_tokens INTEGER NOT NULL DEFAULT 0,
       requests_total INTEGER NOT NULL DEFAULT 0,
       prompt_tokens INTEGER NOT NULL DEFAULT 0,
@@ -131,14 +133,14 @@ export class History {
       requests_waiting, cache_hit_pct, cache_token_pct, gpu_pct, proc_footprint,
       weights, hot_cache_est, mlx_active, mlx_pool, host_total, host_free,
       host_inactive, host_wired, host_compressed, proc_rss, disk_bytes,
-      ttft_ms, generation_tokens, requests_total, prompt_tokens,
+      ttft_ms, ttft_n, generation_tokens, requests_total, prompt_tokens,
       cached_prompt_tokens, requests_cancelled
     ) VALUES (
       $t, $engineUp, $epoch, $decodeTps, $prefillTps, $requestsRunning,
       $requestsWaiting, $cacheHitPct, $cacheTokenPct, $gpuPct, $procFootprint,
       $weights, $hotCacheEst, $mlxActive, $mlxPool, $hostTotal, $hostFree,
       $hostInactive, $hostWired, $hostCompressed, $procRss, $diskBytes,
-      $ttftMs, $generationTokens, $requestsTotal, $promptTokens,
+      $ttftMs, $ttftN, $generationTokens, $requestsTotal, $promptTokens,
       $cachedPromptTokens, $requestsCancelled)`);
     this.prune = this.db.prepare("DELETE FROM samples WHERE t < $before");
   }
@@ -164,6 +166,7 @@ export class History {
       "prompt_tokens",
       "cached_prompt_tokens",
       "requests_cancelled",
+      "ttft_n",
     ]) {
       if (!have.has(col)) {
         this.db.run(
@@ -203,6 +206,7 @@ export class History {
       procRss: s.mem.procRss,
       diskBytes: s.disk.reduce((n, d) => n + d.bytes, 0),
       ttftMs: s.ttftMs,
+      ttftN: s.ttftN,
       generationTokens: s.generatedTokens,
       requestsTotal: s.requestsTotal,
       promptTokens: s.promptTokens,
@@ -233,9 +237,12 @@ export class History {
 
   // Series covering [now - range, now]. Bucket width grows with the range so
   // the point count stays near TARGET_POINTS; rates and ratios are averaged
-  // (SQL avg skips nulls, so idle buckets stay null), queue depths take the
-  // max so a short burst is not averaged away, epoch takes the max so a
-  // restart inside a bucket shows on the bucket it landed in.
+  // (SQL avg skips nulls, so idle buckets stay null), TTFT is weighted by
+  // the requests each tick's mean covers, queue depths take the max so a
+  // short burst is not averaged away, and the epoch and the lifetime
+  // counters come from the bucket's last row, so a restart inside a bucket
+  // shows on the bucket it landed in with that process's counters, never
+  // the old process's higher ones.
   series(range: Range, now = Date.now()): Series {
     const spanMs = RANGES[range];
     // the hour stays raw (3600 points is fine for uPlot); longer ranges bucket
@@ -245,8 +252,12 @@ export class History {
         : Math.max(1000, Math.ceil(spanMs / TARGET_POINTS / 1000) * 1000);
     const rows = this.db
       .query(
-        `SELECT (t / $bucket) * $bucket AS t,
-          min(engine_up) AS engineUp, max(epoch) AS epoch,
+        `SELECT a.*, l.epoch, l.generation_tokens AS generationTokens,
+          l.requests_total AS requestsTotal, l.prompt_tokens AS promptTokens,
+          l.cached_prompt_tokens AS cachedPromptTokens,
+          l.requests_cancelled AS requestsCancelled
+        FROM (SELECT (b.t / $bucket) * $bucket AS t,
+          min(engine_up) AS engineUp,
           avg(decode_tps) AS decodeTps, avg(prefill_tps) AS prefillTps,
           max(requests_running) AS requestsRunning,
           max(requests_waiting) AS requestsWaiting,
@@ -257,14 +268,13 @@ export class History {
           avg(host_total) AS hostTotal, avg(host_free) AS hostFree,
           avg(host_inactive) AS hostInactive, avg(host_wired) AS hostWired,
           avg(host_compressed) AS hostCompressed, avg(proc_rss) AS procRss,
-          avg(disk_bytes) AS diskBytes, avg(ttft_ms) AS ttftMs,
-          max(generation_tokens) AS generationTokens,
-          max(requests_total) AS requestsTotal,
-          max(prompt_tokens) AS promptTokens,
-          max(cached_prompt_tokens) AS cachedPromptTokens,
-          max(requests_cancelled) AS requestsCancelled
-        FROM samples WHERE t >= $since AND t <= $now
-        GROUP BY 1 ORDER BY 1`,
+          avg(disk_bytes) AS diskBytes,
+          sum(ttft_ms * ttft_n) / nullif(sum(ttft_n), 0) AS ttftMs,
+          sum(ttft_n) AS ttftN,
+          max(b.t) AS lastT
+        FROM samples b WHERE b.t >= $since AND b.t <= $now
+        GROUP BY 1) a JOIN samples l ON l.t = a.lastT
+        ORDER BY a.t`,
       )
       .all({ bucket: bucketMs, since: now - spanMs, now }) as any[];
     const out: Series = {
@@ -291,6 +301,7 @@ export class History {
       procRss: [],
       diskBytes: [],
       ttftMs: [],
+      ttftN: [],
       generationTokens: [],
       requestsTotal: [],
       promptTokens: [],
@@ -321,6 +332,7 @@ export class History {
       out.procRss.push(Math.round(r.procRss));
       out.diskBytes.push(Math.round(r.diskBytes));
       out.ttftMs.push(r.ttftMs === null ? null : Math.round(r.ttftMs));
+      out.ttftN.push(r.ttftN);
       out.generationTokens.push(r.generationTokens);
       out.requestsTotal.push(r.requestsTotal);
       out.promptTokens.push(r.promptTokens);

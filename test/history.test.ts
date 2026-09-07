@@ -21,6 +21,7 @@ function sample(t: number, over: Partial<Sample> = {}): Sample {
     cacheHitPct: null,
     cacheTokenPct: null,
     ttftMs: null,
+    ttftN: 0,
     gpuPct: 50,
     generatedTokens: 0,
     promptTokens: 0,
@@ -102,6 +103,46 @@ describe("History", () => {
     // the epoch bump in the last 100 s shows on the last buckets
     expect(s.epoch.at(-1)).toBe(1);
     expect(s.epoch[0]).toBe(0);
+    h.close();
+  });
+
+  test("a bucket takes the epoch and counters of its last row, TTFT weighted", () => {
+    const h = new History(":memory:");
+    const now = 6 * 3_600_000; // 24 s buckets
+    const t0 = now - 24_000; // one whole bucket before the last
+    // the old process, then a restart 10 s into the bucket
+    for (let i = 0; i < 10; i++) {
+      h.push(
+        sample(t0 + i * 1000, {
+          epoch: 0,
+          generatedTokens: 1000 + i,
+          requestsTotal: 50,
+          ttftMs: i === 5 ? 1000 : null,
+          ttftN: i === 5 ? 1 : 0,
+        }),
+      );
+    }
+    for (let i = 10; i < 24; i++) {
+      h.push(
+        sample(t0 + i * 1000, {
+          epoch: 1,
+          generatedTokens: i,
+          requestsTotal: 2,
+          ttftMs: i === 20 ? 100 : null,
+          ttftN: i === 20 ? 9 : 0,
+        }),
+      );
+    }
+    const s = h.series("6h", now);
+    const i = s.t.indexOf(t0);
+    expect(i).toBeGreaterThanOrEqual(0);
+    expect(s.epoch[i]).toBe(1);
+    // not the old process's 1009
+    expect(s.generationTokens[i]).toBe(23);
+    expect(s.requestsTotal[i]).toBe(2);
+    // (1000 * 1 + 100 * 9) / 10, not the unweighted 550
+    expect(s.ttftMs[i]).toBe(190);
+    expect(s.ttftN[i]).toBe(10);
     h.close();
   });
 
@@ -243,6 +284,7 @@ describe("History migration", () => {
       const s1 = {
         ...sample(3000),
         ttftMs: 1234,
+        ttftN: 1,
         generatedTokens: 11,
         promptTokens: 12,
         cachedPromptTokens: 13,

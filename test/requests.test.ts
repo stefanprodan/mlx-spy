@@ -224,6 +224,28 @@ describe("trackRequests", () => {
     expect(s[4].starts).toEqual([]);
   });
 
+  test("a cancel inside the lag window after a completion is still seen", () => {
+    const s = run([
+      reading(1000),
+      reading(2000, { requests_running: 2 }),
+      // one completed, the gauge still reads 2
+      reading(
+        3000,
+        { requests_running: 2, generation_tokens_live: 40 },
+        { generated: 9, decodeSecs: 1 },
+      ),
+      // the other one's client went away: below the known starts
+      reading(4000),
+      reading(5000),
+    ]);
+    expect(s[2].starts).toEqual([2000]);
+    expect(s[3].inFlight).toBeNull();
+    expect(s[3].last?.cancelled).toBe(true);
+    expect(s[3].last?.startedAt).toBe(2000);
+    expect(s[3].last?.generated).toBe(5);
+    expect(s[4].last).toBe(s[3].last);
+  });
+
   test("a cancelled request is marked as such", () => {
     const s = run([
       reading(1000, { requests_running: 1 }),

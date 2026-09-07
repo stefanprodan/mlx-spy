@@ -38,6 +38,7 @@ describe("computeRates", () => {
       cacheHitPct: null,
       cacheTokenPct: null,
       ttftMs: null,
+      ttftN: 0,
       live: {
         decode: { t: 1000, value: 26, rate: 0, moves: [], hold: 0 },
         prefill: { t: 1000, value: 0, rate: 0, moves: [], hold: 0 },

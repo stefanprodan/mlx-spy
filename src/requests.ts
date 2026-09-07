@@ -121,8 +121,10 @@ export function trackRequests(
   // request, so a rise there waits until the gauge is trusted again
   const started = lag ? 0 : Math.max(0, open(cur) - starts.length);
   for (let i = 0; i < started; i++) starts = [...starts, cur.t];
-  const dropped = Math.max(0, open(prev) - done - open(cur));
-  if (dropped > 0 && !lag) {
+  // the gauge only ever lags above the known starts (completions leave the
+  // count before they leave it), so a count below them is never lag
+  const dropped = Math.max(0, starts.length - open(cur));
+  if (dropped > 0) {
     // gone without a completion: a cancelled request, known only from the
     // live gauges of the previous read and the phase clock
     last = {
@@ -142,8 +144,6 @@ export function trackRequests(
     };
     starts = starts.slice(dropped);
   }
-  // a stale count leaves a start behind: drop the newest
-  if (starts.length > open(cur)) starts = starts.slice(0, open(cur));
   if (!running || !starts.length) {
     return { starts: [], inFlight: null, last, doneAt };
   }

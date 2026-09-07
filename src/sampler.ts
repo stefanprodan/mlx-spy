@@ -293,6 +293,7 @@ export class Sampler {
         );
         if (restored) {
           rates.ttftMs = null;
+          rates.ttftN = 0;
           rates.windowMs = null;
           rates.decodeTps = null;
           rates.prefillTps = null;
