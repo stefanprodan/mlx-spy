@@ -35,6 +35,7 @@ export type Sample = {
   ttftMs: number | null; // mean TTFT of requests that finished in the window
   gpuPct: number;
   generatedTokens: number; // lifetime counter (this epoch)
+  promptTokens: number; // lifetime prompt tokens, cached or not (this epoch)
   requestsTotal: number; // lifetime successful requests (this epoch)
   enginePid: number | null; // only when the engine runs on this host
   engineStartedAt: number | null; // unix ms, from the process table (local)
@@ -201,6 +202,7 @@ export function buildSample(
     ttftMs: rates.ttftMs,
     gpuPct: g.gpuPct,
     generatedTokens: cur.metrics.counters.generationTokens,
+    promptTokens: cur.metrics.counters.promptTokens,
     requestsTotal: cur.metrics.counters.requestsSuccess,
     enginePid: host.pid,
     engineStartedAt: host.proc?.startedAt || null,
@@ -239,6 +241,7 @@ export function downSample(
     ttftMs: null,
     gpuPct: 0,
     generatedTokens: 0,
+    promptTokens: 0,
     requestsTotal: 0,
     enginePid: null,
     engineStartedAt: null,

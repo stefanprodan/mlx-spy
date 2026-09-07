@@ -154,7 +154,7 @@ function renderTiles(s: Sample) {
   }
   $("t-generated").textContent = count(s.generatedTokens);
   $("t-generated-sub").textContent =
-    `${count(s.requestsTotal)} request${s.requestsTotal === 1 ? "" : "s"} this run`;
+    `${count(s.promptTokens + s.generatedTokens)} total with ${count(s.promptTokens)} prompt`;
   renderServer(s);
 }
 

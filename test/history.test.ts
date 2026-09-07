@@ -17,6 +17,7 @@ function sample(t: number, over: Partial<Sample> = {}): Sample {
     ttftMs: null,
     gpuPct: 50,
     generatedTokens: 0,
+    promptTokens: 0,
     requestsTotal: 0,
     enginePid: null,
     engineStartedAt: null,
