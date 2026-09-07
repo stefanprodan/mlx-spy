@@ -149,7 +149,7 @@ function renderTiles(s: Sample) {
   prevTok = s.engineUp
     ? { prompt: s.promptTokens, cached: s.cachedPromptTokens }
     : null;
-  $("t-cache").textContent = s.engineUp ? gb(s.mem.hotCacheEst) : "-";
+  $("t-cache").textContent = s.engineUp ? gb(s.mem.hotCacheEst, 0) : "-";
   // the budget is per resident model, so the tile's ceiling scales with them
   const loaded = s.models.filter((m) => m.loaded).length;
   const hotMax = limits && limits.hotBytes > 0 ? limits.hotBytes * loaded : 0;
@@ -162,7 +162,7 @@ function renderTiles(s: Sample) {
   const ssd = s.disk.reduce((n, d) => n + d.bytes, 0);
   const dirs = s.disk.length;
   const ssdMax = limits && limits.diskBytes > 0 ? limits.diskBytes * dirs : 0;
-  $("t-ssd").textContent = engineLocal ? gb(ssd) : "-";
+  $("t-ssd").textContent = engineLocal ? gb(ssd, 0) : "-";
   setBar("t-ssd-bar", ssdMax ? (ssd / ssdMax) * 100 : 0);
   $("t-ssd-track").hidden = !engineLocal || !ssdMax;
   $("t-ssd-sub").textContent = !engineLocal
@@ -179,7 +179,7 @@ function renderTiles(s: Sample) {
   $("t-eff-sub").textContent = lastReq
     ? `${count(lastReq.cached)} of ${count(lastReq.prompt)} prompt tokens`
     : "no request in the last hour";
-  $("t-mem").textContent = gb(s.mem.procFootprint);
+  $("t-mem").textContent = gb(s.mem.procFootprint, 0);
   const total = s.mem.hostTotal;
   const avail = s.mem.hostFree + s.mem.hostInactive;
   if (total > 0) {
@@ -205,7 +205,7 @@ function renderServer(s: Sample) {
   const loaded = s.models.filter((m) => m.loaded).length;
   const weights = $("engine-weights");
   weights.replaceChildren(
-    s.engineUp ? `${gb(s.mem.weights)} GB` : "-",
+    s.engineUp ? `${gb(s.mem.weights, 0)} GB` : "-",
     el(
       "small",
       "",
@@ -234,8 +234,8 @@ function renderServer(s: Sample) {
       : `up ${duration(s.t - s.engineStartedAt)}`;
   es.className = s.engineUp ? "pill live" : "pill err";
   $("engine-mem").replaceChildren(
-    pid == null ? "-" : `${gb(s.mem.procFootprint)} GB`,
-    el("small", "", pid == null ? why : `RSS ${gb(s.mem.procRss)} GB`),
+    pid == null ? "-" : `${gb(s.mem.procFootprint, 0)} GB`,
+    el("small", "", pid == null ? why : `RSS ${gb(s.mem.procRss, 0)} GB`),
   );
   $("engine-cpu").replaceChildren(
     pid == null || s.engineCpuPct == null ? "-" : `${num(s.engineCpuPct)}%`,
