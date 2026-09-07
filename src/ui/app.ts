@@ -38,6 +38,8 @@ const gb = (b: number | null | undefined, d = 1) =>
 // GB below a terabyte, TB above, for the host disk
 const size = (b: number) =>
   b >= 1e12 ? `${(b / 1e12).toFixed(1)} TB` : `${gb(b, 0)} GB`;
+// binary, as About This Mac labels memory (96 GB, not 103)
+const gib = (b: number) => Math.round(b / 2 ** 30).toString();
 const num = (n: number | null | undefined, d = 0) =>
   n == null ? "-" : n.toFixed(d);
 const count = (n: number) =>
@@ -153,8 +155,12 @@ function renderTiles(s: Sample) {
     $("t-mem-sub").textContent = "engine footprint";
   }
   $("t-generated").textContent = count(s.generatedTokens);
-  $("t-generated-sub").textContent =
-    `${count(s.promptTokens + s.generatedTokens)} total with ${count(s.promptTokens)} prompt`;
+  $("t-generated-sub").textContent = (() => {
+    const total = s.promptTokens + s.generatedTokens;
+    return total > 0
+      ? `${Math.round((s.generatedTokens / total) * 100)}% of ${count(total)} total`
+      : "";
+  })();
   renderServer(s);
 }
 
@@ -186,19 +192,22 @@ function renderServer(s: Sample) {
     s.engineStartedAt == null
       ? ""
       : ` · up ${duration(s.t - s.engineStartedAt)}`;
+  $("engine-proc").textContent = pid == null ? "" : `pid ${pid}${up}`;
   $("engine-mem").replaceChildren(
     pid == null ? "-" : `${gb(s.mem.procFootprint)} GB`,
-    el(
-      "small",
-      "",
-      pid == null ? why : `RSS ${gb(s.mem.procRss)} GB · pid ${pid}${up}`,
-    ),
+    el("small", "", pid == null ? why : `RSS ${gb(s.mem.procRss)} GB`),
   );
   $("engine-cpu").replaceChildren(
     pid == null || s.engineCpuPct == null ? "-" : `${num(s.engineCpuPct)}%`,
     el("small", "", pid == null ? why : "of one core, like top"),
   );
   $("engine-gpu").textContent = s.engineUp ? `${num(s.gpuPct)}%` : "-";
+  if (s.mem.hostTotal > 0) {
+    $("host-mem").replaceChildren(
+      `${gib(s.mem.hostTotal)} GB`,
+      el("small", "", `${gib(s.mem.hostFree + s.mem.hostInactive)} GB free`),
+    );
+  }
 }
 
 // "3d 4h", "2h 15m", "40s"
@@ -243,14 +252,9 @@ function renderHost(snap: Snapshot) {
   $("host-chip").replaceChildren(h.chip ?? "unknown", el("small", "", cores));
   $("host-gpu").textContent =
     h.gpuCores != null ? `${h.gpuCores} cores` : "not detected";
-  $("host-mem").textContent = `${gb(h.memTotal, 0)} GB unified`;
   $("host-disk").replaceChildren(
-    h.disk ? `${size(h.disk.free)} free` : "-",
-    el(
-      "small",
-      "",
-      h.disk ? `of ${size(h.disk.total)} on ${h.diskPath}` : "not probed",
-    ),
+    h.disk ? size(h.disk.total) : "-",
+    el("small", "", h.disk ? `${size(h.disk.free)} free` : "not probed"),
   );
 }
 
@@ -304,9 +308,6 @@ function renderModels(snap: Snapshot) {
   );
   const disk = snap.disk;
   const total = disk.reduce((n, d) => n + d.bytes, 0);
-  $("disk-note").textContent = snap.engine.local
-    ? `SSD cache tier ${gb(total)} GB in ${disk.length} dir${disk.length === 1 ? "" : "s"}`
-    : "remote engine: pid, RSS and SSD tier not probed";
   diskTotal = total;
   engineLocal = snap.engine.local;
   limits = snap.engine.limits;
