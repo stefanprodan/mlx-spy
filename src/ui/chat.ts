@@ -95,7 +95,12 @@ function group(t: number, now: number): string {
 
 const chatIdFromPath = () => {
   const m = /^\/chat\/([^/]+)$/.exec(location.pathname);
-  return m ? decodeURIComponent(m[1]) : null;
+  if (!m) return null;
+  try {
+    return decodeURIComponent(m[1]);
+  } catch {
+    return null;
+  }
 };
 
 async function api<T>(
@@ -790,8 +795,14 @@ export function mountChat(): ChatPage {
       } else if (ev.contentAt > v.content.length) gap = true;
     }
     if (gap && current) {
-      // a delta ahead of the text: the socket dropped some; reload the row
-      void open(current.id, false);
+      // a delta ahead of the text: the socket dropped some. The row in the
+      // DB may lag the runner's buffer by one throttle window, so reload
+      // after it, once per gap
+      if (loading === null) {
+        loading = current.id;
+        const id = current.id;
+        setTimeout(() => void open(id, false), 400);
+      }
       return;
     }
     renderBody(v, null);
@@ -799,7 +810,8 @@ export function mountChat(): ChatPage {
 
   function applyHtml(ev: Extract<ChatWsEvent, { kind: "html" }>) {
     const v = live.get(ev.messageId);
-    if (!v || ev.htmlAt > v.content.length) return;
+    // an event buffered before the fetch must not move the boundary back
+    if (!v || ev.htmlAt > v.content.length || ev.htmlAt < v.htmlAt) return;
     v.htmlAt = ev.htmlAt;
     renderBody(v, ev.html);
   }
@@ -980,11 +992,18 @@ export function mountChat(): ChatPage {
 
   // ---------- navigation ----------
 
+  // a slower fetch from an earlier navigation must not win over a later one
+  let opening = 0;
   async function open(id: string, push: boolean) {
-    loading = id;
-    pending = [];
+    const token = ++opening;
+    // events buffered for this chat since boot or a gap stay queued
+    if (loading !== id) {
+      loading = id;
+      pending = [];
+    }
     try {
       const chat = await api<Chat>(`/api/chats/${encodeURIComponent(id)}`);
+      if (token !== opening) return;
       current = chat;
       if (push) history.pushState(null, "", `/chat/${encodeURIComponent(id)}`);
       note(null);
@@ -997,10 +1016,14 @@ export function mountChat(): ChatPage {
       for (const ev of queued) onChat(ev);
       input.focus();
     } catch (err) {
+      if (token !== opening) return;
       loading = null;
       pending = [];
       fail(err);
-      showDraft(true);
+      // a chat that is gone leaves; a passing failure keeps what is on screen
+      if (err instanceof Error && err.message.startsWith("HTTP 404")) {
+        showDraft(true);
+      } else if (!current) showDraft(false);
     }
   }
 
@@ -1054,8 +1077,11 @@ export function mountChat(): ChatPage {
   // ---------- boot ----------
 
   let booted = false;
+  // buffer events for the chat in the URL from the first socket message on
+  loading = chatIdFromPath();
   void fetchList().then(() => {
     const id = chatIdFromPath();
+    if (!id) loading = null;
     if (id) void open(id, false);
     else if (models.length) showDraft(false);
     booted = true;

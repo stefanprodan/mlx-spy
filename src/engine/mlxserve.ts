@@ -29,6 +29,10 @@ const TIMEOUT_MS = 3000;
 const ACTION_TIMEOUT_MS = 120_000;
 export const CHAT_HEADERS_TIMEOUT_MS = 30_000;
 const CHAT_SILENCE_TIMEOUT_MS = 5 * 60_000;
+export const MAX_SSE_FRAME_BYTES = 1024 * 1024;
+const CHAT_ERROR_BODY_MAX_BYTES = 4 * 1024;
+const CHAT_ERROR_BODY_TIMEOUT_MS = 10_000;
+const OVERSIZED_SSE_FRAME = "engine sent an oversized stream frame";
 
 const num = (v: unknown) =>
   typeof v === "number" && Number.isFinite(v) ? v : 0;
@@ -132,6 +136,9 @@ export function parseSse(
     const split = /\r?\n\r?\n/.exec(rest);
     if (!split || split.index === undefined) break;
     const raw = rest.slice(0, split.index);
+    if (new TextEncoder().encode(raw).byteLength > MAX_SSE_FRAME_BYTES) {
+      throw new Error(OVERSIZED_SSE_FRAME);
+    }
     rest = rest.slice(split.index + split[0].length);
     const data = raw
       .split(/\r?\n/)
@@ -140,7 +147,62 @@ export function parseSse(
       .map((line) => line.slice(5).replace(/^ /, ""));
     if (data.length > 0) frames.push(data.join("\n"));
   }
+  if (new TextEncoder().encode(rest).byteLength > MAX_SSE_FRAME_BYTES) {
+    throw new Error(OVERSIZED_SSE_FRAME);
+  }
   return { frames, rest };
+}
+
+async function readErrorBody(
+  response: Response,
+  controller: AbortController,
+): Promise<string> {
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  type ReadResult =
+    | { kind: "read"; done: boolean; value?: Uint8Array }
+    | { kind: "timeout" };
+  const timeout = new Promise<ReadResult>((resolve) => {
+    timer = setTimeout(
+      () => resolve({ kind: "timeout" }),
+      CHAT_ERROR_BODY_TIMEOUT_MS,
+    );
+  });
+  try {
+    while (size < CHAT_ERROR_BODY_MAX_BYTES) {
+      const read: Promise<ReadResult> = reader.read().then((result) => ({
+        kind: "read",
+        done: result.done,
+        value: result.value,
+      }));
+      const result = await Promise.race([read, timeout]);
+      if (result.kind === "timeout") {
+        controller.abort(new Error("engine error body timed out"));
+        return "";
+      }
+      if (result.done || !result.value) break;
+      const remaining = CHAT_ERROR_BODY_MAX_BYTES - size;
+      const chunk = result.value.subarray(0, remaining);
+      chunks.push(chunk);
+      size += chunk.byteLength;
+    }
+    const body = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+      body.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return new TextDecoder().decode(body);
+  } catch {
+    return "";
+  } finally {
+    if (timer) clearTimeout(timer);
+    void reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
 }
 
 export function chatEvents(json: string): ChatEvent[] {
@@ -285,7 +347,7 @@ export class MlxServe implements Engine {
       clearTimeout(headersTimer);
     }
     if (!response.ok) {
-      const text = await response.text().catch(() => "");
+      const text = await readErrorBody(response, controller);
       yield {
         kind: "error",
         message: `HTTP ${response.status}${text ? `: ${text}` : ""}`,
@@ -322,12 +384,22 @@ export class MlxServe implements Engine {
         }
         if ("error" in result) throw result.error;
         if (result.value.done) break;
-        const parsed = parseSse(
-          rest,
-          decoder.decode(result.value.value, {
-            stream: true,
-          }),
-        );
+        let parsed: ReturnType<typeof parseSse>;
+        try {
+          parsed = parseSse(
+            rest,
+            decoder.decode(result.value.value, {
+              stream: true,
+            }),
+          );
+        } catch (err) {
+          if (!(err instanceof Error) || err.message !== OVERSIZED_SSE_FRAME) {
+            throw err;
+          }
+          controller.abort(err);
+          yield { kind: "error", message: OVERSIZED_SSE_FRAME };
+          return;
+        }
         rest = parsed.rest;
         for (const frame of parsed.frames) {
           if (frame.trim() === "[DONE]") return;

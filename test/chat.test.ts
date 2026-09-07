@@ -295,7 +295,31 @@ describe("ChatRunner", () => {
       kind: "done",
       message: { status: "stopped" },
     });
+    expect(s.runner.running()).toBeNull();
     s.runner.stop(s.chat.id);
+    s.engine.streams[0].end();
+    await turn();
+    s.db.close();
+  });
+
+  test("blocks a new send until an aborted iterator has drained", async () => {
+    const s = setup();
+    s.runner.send(s.chat.id, "first");
+    await turn();
+    const stream = s.engine.streams[0];
+    s.runner.stop(s.chat.id);
+    await rejects(
+      () => s.runner.send(s.chat.id, "second"),
+      409,
+      /Still cancelling the previous reply/,
+    );
+    stream.end();
+    await turn();
+    expect(() => s.runner.send(s.chat.id, "second")).not.toThrow();
+    await turn();
+    s.runner.stop(s.chat.id);
+    s.engine.streams[1].end();
+    await turn();
     s.db.close();
   });
 
@@ -349,6 +373,9 @@ describe("ChatRunner", () => {
       /already answering in first title/,
     );
     s.runner.stop(s.chat.id);
+    await turn();
+    s.engine.streams[0].end();
+    await turn();
     s.db.close();
   });
 
@@ -377,7 +404,112 @@ describe("ChatRunner", () => {
       content: "edited",
     });
     s.runner.stop(s.chat.id);
+    s.engine.streams[2].end();
+    await turn();
     s.db.close();
+  });
+
+  test("validates edit and regenerate before deleting conversation rows", async () => {
+    const s = setup();
+    const first = s.runner.send(s.chat.id, "original");
+    await turn();
+    await finish(s.engine.streams[0]);
+    const before = s.store.get(s.chat.id)!.messages;
+    s.models.length = 0;
+
+    await rejects(
+      () => s.runner.edit(s.chat.id, first.user.id, "edited"),
+      400,
+      /not loaded anymore/,
+    );
+    expect(s.store.get(s.chat.id)?.messages).toEqual(before);
+    await rejects(
+      () => s.runner.regenerate(s.chat.id),
+      400,
+      /not loaded anymore/,
+    );
+    expect(s.store.get(s.chat.id)?.messages).toEqual(before);
+    s.db.close();
+  });
+
+  test("clears the generation when the terminal store write fails", async () => {
+    const s = setup();
+    const finishReply = s.store.finishReply.bind(s.store);
+    let fail = true;
+    s.store.finishReply = (...args) => {
+      if (fail) {
+        fail = false;
+        throw new Error("disk full");
+      }
+      return finishReply(...args);
+    };
+    s.runner.send(s.chat.id, "first");
+    await turn();
+    await finish(s.engine.streams[0]);
+    expect(s.logs.at(-1)).toContain(
+      `chat ${s.chat.id} finish failed: disk full`,
+    );
+    expect(() => s.runner.send(s.chat.id, "second")).not.toThrow();
+    await turn();
+    s.runner.stop(s.chat.id);
+    s.engine.streams[1].end();
+    await turn();
+    s.db.close();
+  });
+
+  test("stop preserves completion and shutdown stores available usage", async () => {
+    const stopped = setup();
+    const first = stopped.runner.send(stopped.chat.id, "first");
+    await turn();
+    const firstStream = stopped.engine.streams[0];
+    firstStream.push({ kind: "finish", reason: "stop", details: null });
+    await turn();
+    stopped.runner.stop(stopped.chat.id);
+    expect(stopped.engine.signals[0].aborted).toBe(false);
+    firstStream.push({
+      kind: "usage",
+      stats: {
+        promptTokens: 8,
+        cachedTokens: 2,
+        generated: 3,
+        prefillMs: 10,
+        decodeMs: 20,
+        tokenizeMs: null,
+      },
+    });
+    firstStream.end();
+    await turn();
+    expect(stopped.store.message(first.message.id)).toMatchObject({
+      status: "done",
+      stats: { promptTokens: 8, generated: 3 },
+    });
+    stopped.db.close();
+
+    const shutdown = setup();
+    const second = shutdown.runner.send(shutdown.chat.id, "second");
+    await turn();
+    const secondStream = shutdown.engine.streams[0];
+    secondStream.push({ kind: "finish", reason: "stop", details: null });
+    secondStream.push({
+      kind: "usage",
+      stats: {
+        promptTokens: 9,
+        cachedTokens: 1,
+        generated: 4,
+        prefillMs: 11,
+        decodeMs: 22,
+        tokenizeMs: 1,
+      },
+    });
+    await turn();
+    shutdown.runner.shutdown();
+    expect(shutdown.store.message(second.message.id)).toMatchObject({
+      status: "done",
+      stats: { promptTokens: 9, generated: 4 },
+    });
+    secondStream.end();
+    await turn();
+    shutdown.db.close();
   });
 
   test("remove stops a stream first and shutdown marks one interrupted", async () => {
@@ -388,6 +520,8 @@ describe("ChatRunner", () => {
     expect(s.engine.signals[0].aborted).toBe(true);
     expect(s.store.get(s.chat.id)).toBeNull();
     expect(s.events.at(-1)).toEqual({ kind: "deleted", chatId: s.chat.id });
+    s.engine.streams[0].end();
+    await turn();
 
     const next = s.runner.create({
       model: MODEL,
@@ -403,6 +537,8 @@ describe("ChatRunner", () => {
     s.runner.shutdown();
     expect(s.engine.signals[1].aborted).toBe(true);
     expect(s.store.message(reply.message.id)?.status).toBe("interrupted");
+    s.engine.streams[1].end();
+    await turn();
     s.db.close();
   });
 

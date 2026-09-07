@@ -1401,6 +1401,7 @@ function connect() {
       chat?.onChat(msg.data);
     } else if (view === "chat") {
       chat?.onSample(msg.data);
+      refreshModels(msg.data);
     } else {
       // the series first, so the tiles' range totals include this tick
       appendLive(msg.data);

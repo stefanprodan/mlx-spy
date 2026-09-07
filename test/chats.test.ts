@@ -169,6 +169,21 @@ describe("ChatStore", () => {
     db.close();
   });
 
+  test("transaction rolls replacement writes back together", () => {
+    const { db, store } = setup();
+    const chat = store.create(defaults);
+    const original = store.addMessage(chat.id, "user", { content: "old" });
+    expect(() =>
+      store.transaction(() => {
+        store.deleteFrom(chat.id, original.id);
+        store.addMessage(chat.id, "user", { content: "new" });
+        throw new Error("rollback");
+      }),
+    ).toThrow("rollback");
+    expect(store.get(chat.id)?.messages).toEqual([original]);
+    db.close();
+  });
+
   test("repairs streaming rows at boot and reports the count", () => {
     const { db, store } = setup();
     const first = store.create(defaults);

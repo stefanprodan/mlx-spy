@@ -260,6 +260,10 @@ export class ChatStore {
     );
   }
 
+  transaction<T>(fn: () => T): T {
+    return this.db.transaction(fn)();
+  }
+
   create(settings: ChatSettings, title = ""): Chat {
     const id = crypto.randomUUID();
     const now = this.now();

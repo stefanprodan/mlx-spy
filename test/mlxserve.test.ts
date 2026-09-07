@@ -3,6 +3,8 @@ import {
   buildChatBody,
   chatEvents,
   limitsFromArgs,
+  MAX_SSE_FRAME_BYTES,
+  MlxServe,
   parseLaunchdArgs,
   parseMetrics,
   parseModels,
@@ -197,6 +199,83 @@ describe("chat stream", () => {
     const second = parseSse(first.rest, "[]}\r\n\r\n");
     expect(second.frames).toEqual(['{"choices":[]}']);
     expect(second.rest).toBe("");
+  });
+
+  test("rejects an SSE frame that grows beyond one megabyte", async () => {
+    const originalFetch = globalThis.fetch;
+    const captured: { signal: AbortSignal | null } = { signal: null };
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(
+          new TextEncoder().encode("x".repeat(MAX_SSE_FRAME_BYTES + 1)),
+        );
+      },
+    });
+    globalThis.fetch = (async (
+      _input: string | URL | Request,
+      init?: RequestInit,
+    ) => {
+      captured.signal = init?.signal ?? null;
+      return new Response(body);
+    }) as unknown as typeof fetch;
+    try {
+      const events = [];
+      const engine = new MlxServe("http://fake");
+      for await (const event of engine.chat(
+        {
+          model: "org/model",
+          messages: [{ role: "user", content: "hello" }],
+          thinking: false,
+          reasoningEffort: null,
+          temperature: null,
+          topP: null,
+          maxTokens: null,
+        },
+        new AbortController().signal,
+      )) {
+        events.push(event);
+      }
+      expect(events).toEqual([
+        { kind: "error", message: "engine sent an oversized stream frame" },
+      ]);
+      expect(captured.signal?.aborted).toBe(true);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("caps a non-2xx body without waiting for its stream to end", async () => {
+    const originalFetch = globalThis.fetch;
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode("x".repeat(5000)));
+      },
+    });
+    globalThis.fetch = (async () =>
+      new Response(body, { status: 503 })) as unknown as typeof fetch;
+    try {
+      const events = [];
+      const engine = new MlxServe("http://fake");
+      for await (const event of engine.chat(
+        {
+          model: "org/model",
+          messages: [{ role: "user", content: "hello" }],
+          thinking: false,
+          reasoningEffort: null,
+          temperature: null,
+          topP: null,
+          maxTokens: null,
+        },
+        new AbortController().signal,
+      )) {
+        events.push(event);
+      }
+      expect(events).toEqual([
+        { kind: "error", message: `HTTP 503: ${"x".repeat(4096)}` },
+      ]);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 
   test("maps finish details, errors and fallback usage fields", () => {

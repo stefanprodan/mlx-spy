@@ -125,6 +125,7 @@ function finishReason(event: Extract<ChatEvent, { kind: "finish" }>): string {
 
 export class ChatRunner {
   private generation: Generation | null = null;
+  private draining: Generation | null = null;
   private readonly listeners = new Set<(event: ChatWsEvent) => void>();
   private readonly now: () => number;
 
@@ -138,7 +139,7 @@ export class ChatRunner {
   }
 
   running(): { chatId: string; messageId: number } | null {
-    return this.generation
+    return this.generation && !this.generation.terminal
       ? {
           chatId: this.generation.chatId,
           messageId: this.generation.messageId,
@@ -177,18 +178,12 @@ export class ChatRunner {
   ): { user: Message; message: Message } {
     this.ensureIdle();
     this.validateText(text);
-    let chat = this.requireChat(chatId);
+    const chat = this.requireChat(chatId);
     this.validateModel(chat.model);
-    if (chat.title === "" && chat.messages.length === 0) {
-      chat = this.deps.store.update(chatId, { title: titleFrom(text) })!;
-      this.publish({ kind: "chat", chat: chatSettings(chat) });
-    }
-    const user = this.deps.store.addMessage(chatId, "user", {
-      content: text,
-      status: "done",
-      createdAt: this.now(),
-    });
-    return this.startReply(this.requireChat(chatId), user, deletedFrom);
+    const turn = this.deps.store.transaction(() =>
+      this.insertTurn(chatId, text),
+    );
+    return this.startReply(turn, deletedFrom);
   }
 
   regenerate(chatId: string): { user: Message; message: Message } {
@@ -200,8 +195,17 @@ export class ChatRunner {
       throw new ChatError(400, "The last message is not an assistant reply");
     }
     this.validateModel(chat.model);
-    this.deps.store.deleteFrom(chatId, last.id);
-    return this.startReply(this.requireChat(chatId), user, last.id);
+    const turn = this.deps.store.transaction(() => {
+      this.deps.store.deleteFrom(chatId, last.id);
+      const current = this.requireChat(chatId);
+      return {
+        chat: current,
+        user,
+        message: this.insertReply(current),
+        titleChanged: false,
+      };
+    });
+    return this.startReply(turn, last.id);
   }
 
   edit(
@@ -216,8 +220,12 @@ export class ChatRunner {
     if (row?.role !== "user") {
       throw new ChatError(400, "The message to edit must be a user message");
     }
-    this.deps.store.deleteFrom(chatId, messageId);
-    return this.send(chatId, content, messageId);
+    this.validateModel(chat.model);
+    const turn = this.deps.store.transaction(() => {
+      this.deps.store.deleteFrom(chatId, messageId);
+      return this.insertTurn(chatId, content);
+    });
+    return this.startReply(turn, messageId);
   }
 
   stop(chatId: string): void {
@@ -225,7 +233,10 @@ export class ChatRunner {
     if (!generation || generation.chatId !== chatId || generation.terminal) {
       return;
     }
-    generation.controller.abort();
+    // The engine may need another read to observe the abort and release its
+    // single slot, so a persisted terminal row is not yet an idle engine.
+    if (generation.finishReason !== null) return;
+    this.beginDrain(generation);
     this.finish(generation, "stopped", null);
   }
 
@@ -239,21 +250,53 @@ export class ChatRunner {
   shutdown(): void {
     const generation = this.generation;
     if (!generation || generation.terminal) return;
-    generation.controller.abort();
-    this.finish(generation, "interrupted", null);
+    this.beginDrain(generation);
+    this.finish(
+      generation,
+      generation.finishReason === null ? "interrupted" : "done",
+      null,
+    );
+  }
+
+  private insertTurn(chatId: string, text: string) {
+    let chat = this.requireChat(chatId);
+    const titleChanged = chat.title === "" && chat.messages.length === 0;
+    if (titleChanged) {
+      chat = this.deps.store.update(chatId, { title: titleFrom(text) })!;
+    }
+    const user = this.deps.store.addMessage(chatId, "user", {
+      content: text,
+      status: "done",
+      createdAt: this.now(),
+    });
+    chat = this.requireChat(chatId);
+    return {
+      chat,
+      user,
+      message: this.insertReply(chat),
+      titleChanged,
+    };
+  }
+
+  private insertReply(chat: Chat): Message {
+    return this.deps.store.addMessage(chat.id, "assistant", {
+      status: "streaming",
+      model: chat.model,
+      createdAt: this.now(),
+    });
   }
 
   private startReply(
-    chat: Chat,
-    user: Message,
+    turn: {
+      chat: Chat;
+      user: Message;
+      message: Message;
+      titleChanged: boolean;
+    },
     deletedFrom?: number,
   ): { user: Message; message: Message } {
-    const startedAt = this.now();
-    const message = this.deps.store.addMessage(chat.id, "assistant", {
-      status: "streaming",
-      model: chat.model,
-      createdAt: startedAt,
-    });
+    const { chat, user, message } = turn;
+    const startedAt = message.createdAt;
     const generation: Generation = {
       chatId: chat.id,
       messageId: message.id,
@@ -275,6 +318,9 @@ export class ChatRunner {
     };
     this.generation = generation;
     const current = this.requireChat(chat.id);
+    if (turn.titleChanged) {
+      this.publish({ kind: "chat", chat: chatSettings(current) });
+    }
     this.publish({
       kind: "started",
       chat: chatSummary(current),
@@ -356,6 +402,8 @@ export class ChatRunner {
       if (!generation.terminal) {
         this.finish(generation, "error", describe(err));
       }
+    } finally {
+      if (this.draining === generation) this.draining = null;
     }
   }
 
@@ -438,39 +486,46 @@ export class ChatRunner {
   ) {
     if (generation.terminal || this.generation !== generation) return;
     generation.terminal = true;
-    this.deps.store.writeReply(generation.messageId, {
-      content: generation.content,
-      reasoning: generation.reasoning,
-    });
     const finishedAt = this.now();
-    // a reply cut while still reasoning: the block lasted until the end
-    const thinkingMs =
-      generation.thinkingMs ??
-      (generation.reasoningStartedAt === null
-        ? null
-        : finishedAt - generation.reasoningStartedAt);
-    const message = this.deps.store.finishReply(generation.messageId, {
-      status,
-      error,
-      finishReason: generation.finishReason,
-      model: generation.model,
-      finishedAt,
-      ttftMs: generation.ttftMs,
-      thinkingMs,
-      stats: status === "done" ? generation.stats : null,
-    });
-    this.generation = null;
-    if (!message) return;
-    this.publish({
-      kind: "html",
-      chatId: generation.chatId,
-      messageId: generation.messageId,
-      html: message.html ?? "",
-      htmlAt: message.content.length,
-    });
-    const chat = this.requireChat(generation.chatId);
-    this.publish({ kind: "done", chat: chatSummary(chat), message });
-    this.logFinish(generation, message, finishedAt);
+    try {
+      this.deps.store.writeReply(generation.messageId, {
+        content: generation.content,
+        reasoning: generation.reasoning,
+      });
+      // A reply cut while still reasoning lasted until the terminal write.
+      const thinkingMs =
+        generation.thinkingMs ??
+        (generation.reasoningStartedAt === null
+          ? null
+          : finishedAt - generation.reasoningStartedAt);
+      const message = this.deps.store.finishReply(generation.messageId, {
+        status,
+        error,
+        finishReason: generation.finishReason,
+        model: generation.model,
+        finishedAt,
+        ttftMs: generation.ttftMs,
+        thinkingMs,
+        stats: status === "done" ? generation.stats : null,
+      });
+      if (!message) return;
+      this.publish({
+        kind: "html",
+        chatId: generation.chatId,
+        messageId: generation.messageId,
+        html: message.html ?? "",
+        htmlAt: message.content.length,
+      });
+      const chat = this.requireChat(generation.chatId);
+      this.publish({ kind: "done", chat: chatSummary(chat), message });
+      this.logFinish(generation, message, finishedAt);
+    } catch (err) {
+      this.deps.log(
+        `chat ${generation.chatId} finish failed: ${describe(err)}`,
+      );
+    } finally {
+      if (this.generation === generation) this.generation = null;
+    }
   }
 
   private logFinish(
@@ -514,12 +569,23 @@ export class ChatRunner {
   }
 
   private ensureIdle() {
+    if (this.draining) {
+      throw new ChatError(
+        409,
+        "Still cancelling the previous reply; try again in a moment",
+      );
+    }
     if (!this.generation) return;
     const chat = this.deps.store.get(this.generation.chatId);
     throw new ChatError(
       409,
       `mlx-spy is already answering in ${chat?.title || "another chat"}`,
     );
+  }
+
+  private beginDrain(generation: Generation) {
+    this.draining = generation;
+    generation.controller.abort();
   }
 
   private requireChat(id: string): Chat {

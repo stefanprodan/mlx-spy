@@ -81,7 +81,7 @@ none. `ttftMs` is measured by mlx-spy from the request to the first token, and
 
 Settings live on the chat and apply to the next message. `thinking` maps to
 the engine's `enable_thinking`; `reasoningEffort` is `low`, `medium`,
-`high` or null for the engine default; the sampling fields are null for the
+`high`, `none` (an explicit off) or null for the engine default; the sampling fields are null for the
 engine defaults. Reasoning is stored and sent back to the engine on later
 turns as `reasoning_content`.
 
@@ -94,7 +94,7 @@ an action finishes in any tab, and `{type: "chat"}` for the chat:
 
 | `data.kind` | Fields | When |
 |---|---|---|
-| `started` | `chat, user, message` | a reply started; both rows are new |
+| `started` | `chat, user, message, deletedFrom?` | a reply started; both rows are new. After a regenerate or an edit, `deletedFrom` is the id of the first row that was removed: drop it and every later one |
 | `delta` | `chatId, messageId, content?, contentAt, reasoning?, reasoningAt` | text arrived; `*At` is the length of the buffer before it, so a client applies a delta only when it continues the text it has |
 | `html` | `chatId, messageId, html, htmlAt` | at most once a second: the reply rendered up to `htmlAt` characters |
 | `done` | `chat, message` | the reply reached a terminal status, given by `message.status` |
