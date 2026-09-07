@@ -121,6 +121,24 @@ export function computeRates(
   const g0 = b.metrics.gauges;
   const g1 = cur.metrics.gauges;
   const running = g1.requestsRunning > 0 || g1.requestsPrefilling > 0;
+  const livePrefill = liveRate(
+    g0.prefillTokensLive,
+    g1.prefillTokensLive,
+    running,
+    liveSecs,
+  );
+  // The live gauge is published once per prefill chunk and zeroed when the
+  // prefill ends, so a prefill of a single chunk (a mostly cached prompt)
+  // never shows on it. When a request completed in this window, rate the
+  // computed tokens over the prefill time instead: the engine's own figure.
+  const ph0 = prev.metrics.histograms.prefillTimeSeconds;
+  const ph1 = cur.metrics.histograms.prefillTimeSeconds;
+  const prefillSecs = ph1.sum - ph0.sum;
+  const finishedPrefill =
+    livePrefill === 0 && ph1.count > ph0.count && prefillSecs > 0
+      ? Math.round(((c.prefillTokens - a.prefillTokens) / prefillSecs) * 10) /
+        10
+      : livePrefill;
   return {
     epoch: prevEpoch,
     windowMs,
@@ -130,12 +148,7 @@ export function computeRates(
       running,
       liveSecs,
     ),
-    prefillTps: liveRate(
-      g0.prefillTokensLive,
-      g1.prefillTokensLive,
-      running,
-      liveSecs,
-    ),
+    prefillTps: finishedPrefill,
     cacheHitPct: pct(
       c.cacheHits - a.cacheHits,
       c.cacheQueries - a.cacheQueries,

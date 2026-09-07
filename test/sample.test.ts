@@ -78,6 +78,32 @@ describe("computeRates", () => {
     expect(computeRates(a, b, 0).prefillTps).toBe(640);
   });
 
+  test("a one-chunk prefill never shows on the live gauge: rate it at completion", () => {
+    // A 52411-token prompt with 51836 cached: 575 computed tokens in one
+    // chunk, 8.53 s of prefill. The engine logs 67.4 tok/s for it.
+    const a = reading(1000, { prefill_tokens_total: 10354 });
+    const b = reading(2000, { prefill_tokens_total: 10929 });
+    b.metrics.histograms.prefillTimeSeconds = {
+      count: a.metrics.histograms.prefillTimeSeconds.count + 1,
+      sum: a.metrics.histograms.prefillTimeSeconds.sum + 8.53,
+    };
+    expect(computeRates(a, b, 0).prefillTps).toBe(67.4);
+    // no request finished: an idle window still reads 0
+    expect(
+      computeRates(a, reading(2000, { prefill_tokens_total: 10354 }), 0)
+        .prefillTps,
+    ).toBe(0);
+    // the live gauge, when it does move, wins over the completion figure
+    const c = reading(
+      2000,
+      { prefill_tokens_total: 10929 },
+      { prefill_tokens_live: 2048, requests_prefilling: 1 },
+    );
+    c.metrics.histograms.prefillTimeSeconds =
+      b.metrics.histograms.prefillTimeSeconds;
+    expect(computeRates(a, c, 0).prefillTps).toBe(2048);
+  });
+
   test("cache ratios come from counter deltas, not lifetime totals", () => {
     const a = reading(1000);
     const b = reading(2000, {
