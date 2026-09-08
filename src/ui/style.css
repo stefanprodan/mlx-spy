@@ -898,14 +898,32 @@ td.when {
 td.when .fin {
   font-family: var(--mono);
 }
+tr.cancelled td.when .fin {
+  color: var(--amber);
+}
 td.when .tag {
   margin-left: 8px;
   font-family: inherit;
   font-size: 11px;
   color: var(--faint);
 }
-td.when .tag.cancelled {
-  color: var(--amber);
+/* the disclosure chevron: right when closed, down when open */
+td.when .chev {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 12px 2px 2px;
+  border-right: 1.5px solid var(--faint);
+  border-bottom: 1.5px solid var(--faint);
+  transform: rotate(-45deg);
+  transition: transform 0.12s;
+}
+tr.open td.when .chev {
+  transform: rotate(45deg);
+  border-color: var(--accent);
+}
+#requests tbody tr:not(.detail):hover td.when .chev {
+  border-color: var(--dim);
 }
 td.num {
   text-align: right;
@@ -926,31 +944,40 @@ td.num .rate {
 #requests tr.open td {
   border-bottom: 0;
 }
+/* the opened row: an inset panel of label-over-value cells, the same
+   shape as the tiles; a phone lays them out as label/value lines */
 tr.detail td {
-  padding: 2px 8px 14px;
+  padding: 0 8px 14px;
 }
 .dgrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 8px 24px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px 20px;
+  padding: 12px 14px;
+  background: var(--inset);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
 }
 .dgrid .d {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 12.5px;
+  flex-direction: column;
+  gap: 4px;
   min-width: 0;
 }
 .dgrid .d:first-child {
   grid-column: 1 / -1; /* the model id is the long one */
 }
 .dgrid .k {
-  color: var(--faint);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #7d8794;
   white-space: nowrap;
 }
 .dgrid .v {
-  color: var(--dim);
-  text-align: right;
+  font-size: 13px;
+  color: var(--val);
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 .empty {
@@ -965,16 +992,16 @@ tr.detail td {
   }
 }
 @media (max-width: 600px) {
-  /* the time turns amber for a cancel instead of the tag, and the total
-     goes: finished, model, prompt and generated are what fits */
+  /* the count tag and the total go: finished, model, prompt and
+     generated are what fits */
   #requests .wide,
   #requests .cached,
   #requests .total,
   #requests .tag {
     display: none;
   }
-  tr.cancelled td.when .fin {
-    color: var(--amber);
+  td.when .chev {
+    margin-right: 8px;
   }
   tr.detail td {
     padding: 0 4px 12px;
@@ -982,6 +1009,23 @@ tr.detail td {
   .dgrid {
     grid-template-columns: 1fr;
     gap: 6px;
+    padding: 10px 12px;
+  }
+  .dgrid .d {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .dgrid .k {
+    font-size: 12.5px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--faint);
+  }
+  .dgrid .v {
+    font-size: 12.5px;
+    color: var(--dim);
+    text-align: right;
   }
   #requests-live {
     padding: 12px;

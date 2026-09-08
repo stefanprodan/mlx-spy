@@ -957,10 +957,14 @@ function renderRequests() {
   tbody.replaceChildren(
     ...reqs.flatMap((r) => {
       const tr = el("tr", r.cancelled ? "cancelled" : "");
+      // the chevron says the row opens; a cancel turns the time amber
       const when = el("td", "when");
-      when.append(el("span", "fin", fmtStamp.format(r.finishedAt)));
+      when.append(
+        el("span", "chev"),
+        el("span", "fin", fmtStamp.format(r.finishedAt)),
+      );
       if (r.count > 1) when.append(el("span", "tag", `×${r.count}`));
-      if (r.cancelled) when.append(el("span", "tag cancelled", "cancelled"));
+      if (r.cancelled) when.title = "cancelled by the client";
       // the prompt is unknown for a cancel (its counters never moved)
       const cached = r.promptTokens - r.prefillTokens;
       const engineMs = r.prefillMs + r.decodeMs;
