@@ -1051,9 +1051,7 @@ export function mountChat(): ChatPage {
     // without tools, a reply that already has text has settled its group
     const streaming = [...live.values()].some((v) => v.content === "");
     settleAllWork(currentStreaming() && (toolsOn() || streaming));
-    stick = true;
-    scrollEl.scrollTop = scrollEl.scrollHeight;
-    jumpEl.hidden = true;
+    jumpBottom();
     renderContext();
   }
 
@@ -1097,14 +1095,34 @@ export function mountChat(): ChatPage {
     ctxEl.title = `Context used by the last reply: ${n(used)} of ${n(info.contextLength)} tokens, prompt plus generated`;
   }
 
+  // following the reply: only a scroll upwards lets go, because a
+  // programmatic scroll only ever moves down. The scroll event is async, so
+  // judging by the gap alone unsticks when a rendered block lands before
+  // the event for the previous scroll fires. A shrink (raw markdown replaced
+  // by its shorter rendering) clamps scrollTop down without anyone
+  // scrolling, so a decrease counts only while the height did not drop
+  let lastTop = 0;
+  let lastHeight = 0;
   function keepBottom() {
-    if (stick) scrollEl.scrollTop = scrollEl.scrollHeight;
+    if (!stick) return;
+    scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: "smooth" });
+  }
+  function jumpBottom() {
+    stick = true;
+    scrollEl.scrollTop = scrollEl.scrollHeight;
+    lastTop = scrollEl.scrollTop;
+    lastHeight = scrollEl.scrollHeight;
+    jumpEl.hidden = true;
   }
   scrollEl.addEventListener("scroll", () => {
-    const gap =
-      scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
-    stick = gap < 40;
-    jumpEl.hidden = gap < 80;
+    const top = scrollEl.scrollTop;
+    const height = scrollEl.scrollHeight;
+    const gap = height - top - scrollEl.clientHeight;
+    if (top < lastTop - 1 && height >= lastHeight) stick = false;
+    else if (gap < 40) stick = true;
+    lastTop = top;
+    lastHeight = height;
+    jumpEl.hidden = stick || gap < 80;
   });
   jumpEl.onclick = () => {
     stick = true;
