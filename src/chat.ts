@@ -1,9 +1,8 @@
 // Copyright 2026 Stefan Prodan.
 // SPDX-License-Identifier: Apache-2.0
 //
-// The server-side chat runner owns the engine stream after a browser leaves.
-// It persists partial replies, fans offset-based events out to every tab, and
-// allows only one generation because the local engine serves one at a time.
+// The server-side chat runner owns every engine round and tool call after a
+// browser leaves. One send remains the unit of locking, stopping and events.
 
 import {
   type Chat,
@@ -19,15 +18,34 @@ import type {
   ChatEvent,
   ChatMessageIn,
   ChatRequest,
+  ChatTool,
   Engine,
   ModelInfo,
+  ToolCall,
 } from "./engine/types.ts";
 import { renderMarkdown } from "./markdown.ts";
+import {
+  formatCurrentTime,
+  runTool,
+  type SendBudget,
+  TOOLS,
+  type ToolContext,
+  toolSchemas,
+} from "./tools.ts";
 
 const MAX_MESSAGE_BYTES = 256 * 1024;
 const WRITE_EVERY_MS = 250;
 const WRITE_EVERY_BYTES = 2048;
 const HTML_EVERY_MS = 1000;
+const MAX_ROUNDS = 8;
+const MAX_CALLS_PER_ROUND = 8;
+const MAX_CALLS_PER_SEND = 24;
+const MAX_TOOL_MS = 60_000;
+const MAX_RESULT_BYTES = 200 * 1024;
+const TOOL_INTERRUPTED = "[Tool execution was interrupted]";
+const EXHAUSTED = "Tool calls are exhausted for this turn; answer with text.";
+
+type TerminalStatus = "done" | "stopped" | "interrupted" | "error";
 
 export type ChatWsEvent =
   // deletedFrom: regenerate and edit removed that row and every later one
@@ -37,6 +55,12 @@ export type ChatWsEvent =
       user: Message;
       message: Message;
       deletedFrom?: number;
+    }
+  | {
+      kind: "row";
+      chatId: string;
+      message: Message;
+      chat: ChatSummary;
     }
   | {
       kind: "delta";
@@ -68,17 +92,23 @@ export class ChatError extends Error {
   }
 }
 
-type Generation = {
-  chatId: string;
-  messageId: number;
+type FrozenPolicy = {
   model: string;
+  systemPrompt: string;
+  thinking: boolean;
+  reasoningEffort: string | null;
+  temperature: number | null;
+  topP: number | null;
+  maxTokens: number | null;
+  tools: ChatTool[];
+};
+
+type RoundState = {
+  messageId: number;
   startedAt: number;
   content: string;
   reasoning: string;
-  controller: AbortController;
-  terminal: boolean;
   ttftMs: number | null;
-  // when the first reasoning token arrived, and how long the block took
   reasoningStartedAt: number | null;
   thinkingMs: number | null;
   lastWriteAt: number;
@@ -87,7 +117,28 @@ type Generation = {
   htmlAt: number;
   finishReason: string | null;
   stats: MessageStats | null;
+  calls: ToolCall[];
+  toolRows: Message[];
 };
+
+type ActiveSend = {
+  chatId: string;
+  userId: number;
+  policy: FrozenPolicy;
+  round: number;
+  budget: SendBudget;
+  controller: AbortController;
+  terminal: TerminalStatus | null;
+  rows: number[];
+  current: RoundState | null;
+  tools: Promise<void> | null;
+  signatures: string[];
+};
+
+type ToolExecutor = (
+  call: ToolCall,
+  ctx: ToolContext,
+) => Promise<{ text: string; error: string | null }>;
 
 export type ChatRunnerDeps = {
   engine: Engine;
@@ -95,6 +146,8 @@ export type ChatRunnerDeps = {
   models: () => ModelInfo[];
   log: (line: string) => void;
   now?: () => number;
+  version?: string;
+  runTool?: ToolExecutor;
 };
 
 function chatSummary(chat: Chat): ChatSummary {
@@ -123,14 +176,22 @@ function finishReason(event: Extract<ChatEvent, { kind: "finish" }>): string {
     : event.reason;
 }
 
+function callSignature(calls: ToolCall[]): string {
+  return JSON.stringify(
+    calls.map((call) => ({ name: call.name, arguments: call.arguments })),
+  );
+}
+
 export class ChatRunner {
-  private generation: Generation | null = null;
-  private draining: Generation | null = null;
+  private active: ActiveSend | null = null;
+  private draining: ActiveSend | null = null;
   private readonly listeners = new Set<(event: ChatWsEvent) => void>();
   private readonly now: () => number;
+  private readonly executeTool: ToolExecutor;
 
   constructor(private readonly deps: ChatRunnerDeps) {
     this.now = deps.now ?? Date.now;
+    this.executeTool = deps.runTool ?? runTool;
   }
 
   onEvent(fn: (event: ChatWsEvent) => void): () => void {
@@ -139,11 +200,10 @@ export class ChatRunner {
   }
 
   running(): { chatId: string; messageId: number } | null {
-    return this.generation && !this.generation.terminal
-      ? {
-          chatId: this.generation.chatId,
-          messageId: this.generation.messageId,
-        }
+    const send = this.active;
+    const round = send?.current;
+    return send && round && send.terminal === null
+      ? { chatId: send.chatId, messageId: round.messageId }
       : null;
   }
 
@@ -163,6 +223,12 @@ export class ChatRunner {
   }
 
   update(id: string, patch: ChatPatch): (ChatSummary & ChatSettings) | null {
+    if (
+      this.active?.chatId === id &&
+      (patch.model !== undefined || patch.toolsOff !== undefined)
+    ) {
+      throw new ChatError(409, "Model and tools cannot change during a send");
+    }
     if (patch.model !== undefined) this.validateModel(patch.model);
     const chat = this.deps.store.update(id, patch);
     if (!chat) return null;
@@ -178,34 +244,39 @@ export class ChatRunner {
   ): { user: Message; message: Message } {
     this.ensureIdle();
     this.validateText(text);
-    const chat = this.requireChat(chatId);
+    let chat = this.requireChat(chatId);
     this.validateModel(chat.model);
-    const turn = this.deps.store.transaction(() =>
-      this.insertTurn(chatId, text),
-    );
-    return this.startReply(turn, deletedFrom);
+    this.truncateMalformedHistory(chat);
+    const titleChanged = chat.title === "" && chat.messages.length === 0;
+    const user = this.deps.store.transaction(() => {
+      if (titleChanged) {
+        this.deps.store.update(chatId, { title: titleFrom(text) });
+      }
+      return this.deps.store.addMessage(chatId, "user", {
+        content: text,
+        status: "done",
+        createdAt: this.now(),
+      });
+    });
+    chat = this.requireChat(chatId);
+    return this.startSend(chat, user, titleChanged, deletedFrom);
   }
 
   regenerate(chatId: string): { user: Message; message: Message } {
     this.ensureIdle();
     const chat = this.requireChat(chatId);
-    const last = chat.messages.at(-1);
-    const user = chat.messages.at(-2);
-    if (last?.role !== "assistant" || user?.role !== "user") {
+    const user = [...chat.messages]
+      .reverse()
+      .find((row) => row.role === "user");
+    if (!user || chat.messages.at(-1)?.id === user.id) {
       throw new ChatError(400, "The last message is not an assistant reply");
     }
     this.validateModel(chat.model);
-    const turn = this.deps.store.transaction(() => {
-      this.deps.store.deleteFrom(chatId, last.id);
-      const current = this.requireChat(chatId);
-      return {
-        chat: current,
-        user,
-        message: this.insertReply(current),
-        titleChanged: false,
-      };
-    });
-    return this.startReply(turn, last.id);
+    const deletedFrom = this.deps.store.deleteAfterLastUser(chatId);
+    if (deletedFrom === null) {
+      throw new ChatError(400, "The last message is not an assistant reply");
+    }
+    return this.startSend(this.requireChat(chatId), user, false, deletedFrom);
   }
 
   edit(
@@ -221,104 +292,76 @@ export class ChatRunner {
       throw new ChatError(400, "The message to edit must be a user message");
     }
     this.validateModel(chat.model);
-    const turn = this.deps.store.transaction(() => {
+    const user = this.deps.store.transaction(() => {
       this.deps.store.deleteFrom(chatId, messageId);
-      return this.insertTurn(chatId, content);
+      return this.deps.store.addMessage(chatId, "user", {
+        content,
+        status: "done",
+        createdAt: this.now(),
+      });
     });
-    return this.startReply(turn, messageId);
+    return this.startSend(this.requireChat(chatId), user, false, messageId);
   }
 
   stop(chatId: string): void {
-    const generation = this.generation;
-    if (!generation || generation.chatId !== chatId || generation.terminal) {
-      return;
-    }
-    // The engine may need another read to observe the abort and release its
-    // single slot, so a persisted terminal row is not yet an idle engine.
-    if (generation.finishReason !== null) return;
-    this.beginDrain(generation);
-    this.finish(generation, "stopped", null);
+    const send = this.active;
+    if (!send || send.chatId !== chatId || send.terminal !== null) return;
+    this.terminate(send, "stopped");
   }
 
   remove(chatId: string): boolean {
-    if (this.generation?.chatId === chatId) this.stop(chatId);
+    if (this.active?.chatId === chatId) this.stop(chatId);
     const removed = this.deps.store.remove(chatId);
     if (removed) this.publish({ kind: "deleted", chatId });
     return removed;
   }
 
   shutdown(): void {
-    const generation = this.generation;
-    if (!generation || generation.terminal) return;
-    this.beginDrain(generation);
-    this.finish(
-      generation,
-      generation.finishReason === null ? "interrupted" : "done",
-      null,
-    );
+    const send = this.active;
+    if (!send || send.terminal !== null) return;
+    this.terminate(send, "interrupted");
   }
 
-  private insertTurn(chatId: string, text: string) {
-    let chat = this.requireChat(chatId);
-    const titleChanged = chat.title === "" && chat.messages.length === 0;
-    if (titleChanged) {
-      chat = this.deps.store.update(chatId, { title: titleFrom(text) })!;
-    }
-    const user = this.deps.store.addMessage(chatId, "user", {
-      content: text,
-      status: "done",
-      createdAt: this.now(),
-    });
-    chat = this.requireChat(chatId);
-    return {
-      chat,
-      user,
-      message: this.insertReply(chat),
-      titleChanged,
-    };
-  }
-
-  private insertReply(chat: Chat): Message {
-    return this.deps.store.addMessage(chat.id, "assistant", {
-      status: "streaming",
-      model: chat.model,
-      createdAt: this.now(),
-    });
-  }
-
-  private startReply(
-    turn: {
-      chat: Chat;
-      user: Message;
-      message: Message;
-      titleChanged: boolean;
-    },
+  private startSend(
+    chat: Chat,
+    user: Message,
+    titleChanged: boolean,
     deletedFrom?: number,
   ): { user: Message; message: Message } {
-    const { chat, user, message } = turn;
-    const startedAt = message.createdAt;
-    const generation: Generation = {
-      chatId: chat.id,
-      messageId: message.id,
+    const toolsOff = new Set(chat.toolsOff ?? []);
+    const enabled = TOOLS.map((tool) => tool.name).filter(
+      (name) => !toolsOff.has(name),
+    );
+    const tools = toolSchemas(enabled);
+    const policy: FrozenPolicy = {
       model: chat.model,
-      startedAt,
-      content: "",
-      reasoning: "",
-      controller: new AbortController(),
-      terminal: false,
-      ttftMs: null,
-      reasoningStartedAt: null,
-      thinkingMs: null,
-      lastWriteAt: startedAt,
-      lastWriteSize: 0,
-      lastHtmlAt: startedAt - HTML_EVERY_MS,
-      htmlAt: 0,
-      finishReason: null,
-      stats: null,
+      systemPrompt: this.systemPrompt(chat.systemPrompt, tools.length > 0),
+      thinking: chat.thinking,
+      reasoningEffort: chat.reasoningEffort,
+      temperature: chat.temperature,
+      topP: chat.topP,
+      maxTokens: chat.maxTokens,
+      tools,
     };
-    this.generation = generation;
+    const send: ActiveSend = {
+      chatId: chat.id,
+      userId: user.id,
+      policy,
+      round: 1,
+      budget: { toolCalls: 0, fetches: 0, toolMs: 0, resultBytes: 0 },
+      controller: new AbortController(),
+      terminal: null,
+      rows: [],
+      current: null,
+      tools: null,
+      signatures: [],
+    };
+    this.active = send;
+    // the started event carries round one's row; a row event before it
+    // would land in the page ahead of the user message
+    const message = this.beginRound(send, false);
     const current = this.requireChat(chat.id);
-    if (turn.titleChanged) {
+    if (titleChanged) {
       this.publish({ kind: "chat", chat: chatSettings(current) });
     }
     this.publish({
@@ -329,233 +372,539 @@ export class ChatRunner {
       deletedFrom,
     });
     this.deps.log(`chat ${chat.id} sent ${chat.model}`);
-    const request = this.request(current, user.id);
-    void this.consume(generation, request);
+    void this.run(send, user.id);
     return { user, message };
   }
 
-  private request(chat: Chat, throughId: number): ChatRequest {
+  private beginRound(send: ActiveSend, announce = true): Message {
+    const startedAt = this.now();
+    const message = this.deps.store.addMessage(send.chatId, "assistant", {
+      status: "streaming",
+      model: send.policy.model,
+      createdAt: startedAt,
+    });
+    send.rows.push(message.id);
+    send.current = {
+      messageId: message.id,
+      startedAt,
+      content: "",
+      reasoning: "",
+      ttftMs: null,
+      reasoningStartedAt: null,
+      thinkingMs: null,
+      lastWriteAt: startedAt,
+      lastWriteSize: 0,
+      lastHtmlAt: startedAt - HTML_EVERY_MS,
+      htmlAt: 0,
+      finishReason: null,
+      stats: null,
+      calls: [],
+      toolRows: [],
+    };
+    if (announce) this.publishRow(send.chatId, message);
+    return message;
+  }
+
+  private async run(send: ActiveSend, firstInputId: number): Promise<void> {
+    let lastInputId = firstInputId;
+    try {
+      while (send.terminal === null) {
+        const round = send.current!;
+        this.deps.log(
+          `chat ${send.chatId} round ${send.round} of ${MAX_ROUNDS}`,
+        );
+        await this.consumeRound(send, round, this.request(send, lastInputId));
+        if (send.terminal !== null) return;
+        const calls = round.calls;
+        const reason = round.finishReason?.split("/", 1)[0] ?? null;
+        if (calls.length === 0) {
+          if (reason === "error") {
+            this.fail(send, "engine generation failed");
+            return;
+          }
+          const message = this.finishRound(send, round, "done", null);
+          if (message) this.complete(send, message);
+          return;
+        }
+        if (reason === "length" || reason === "error") {
+          const message = this.finishRound(send, round, "done", null, calls);
+          if (message) this.complete(send, message);
+          return;
+        }
+        if (reason !== "stop" && reason !== "tool_calls") {
+          const message = this.finishRound(send, round, "done", null, calls);
+          if (message) this.complete(send, message);
+          return;
+        }
+
+        const signature = callSignature(calls);
+        send.signatures.push(signature);
+        const repeats =
+          send.signatures.length >= 3 &&
+          send.signatures.slice(-3).every((item) => item === signature);
+        const nextCalls = send.budget.toolCalls + calls.length;
+        const overLimit =
+          calls.length > MAX_CALLS_PER_ROUND ||
+          nextCalls > MAX_CALLS_PER_SEND ||
+          send.round >= MAX_ROUNDS;
+        const terminalReason = repeats
+          ? "tool_loop"
+          : overLimit
+            ? "tool_limit"
+            : null;
+        send.budget.toolCalls = nextCalls;
+        this.deps.store.writeReply(round.messageId, {
+          content: round.content,
+          reasoning: round.reasoning,
+        });
+        const toolRows = this.deps.store.finishToolGroup(
+          round.messageId,
+          // a null override would hide the engine's own tool_calls reason
+          this.finishFields(round, "done", null, terminalReason ?? undefined),
+          calls,
+        );
+        round.toolRows = toolRows;
+        const assistant = this.deps.store.message(round.messageId);
+        if (!assistant) throw new Error("assistant row disappeared");
+        this.publishRow(send.chatId, assistant);
+        for (const row of toolRows) {
+          send.rows.push(row.id);
+          this.publishRow(send.chatId, row);
+        }
+        if (terminalReason !== null) {
+          this.interruptTools(send, "stopped");
+          if (terminalReason === "tool_loop") {
+            this.deps.log(`chat ${send.chatId} tool loop`);
+          }
+          this.complete(send, this.deps.store.message(round.messageId)!);
+          return;
+        }
+
+        const tools = Promise.all(
+          calls.map((call, index) =>
+            this.executeCall(send, call, toolRows[index]),
+          ),
+        ).then(() => {});
+        send.tools = tools;
+        await tools;
+        send.tools = null;
+        if (send.terminal !== null) return;
+        if (
+          send.budget.toolMs >= MAX_TOOL_MS ||
+          send.budget.resultBytes >= MAX_RESULT_BYTES
+        ) {
+          const message = this.deps.store.setFinishReason(
+            round.messageId,
+            "tool_limit",
+          );
+          if (message) this.publishRow(send.chatId, message);
+          this.complete(send, message ?? assistant);
+          return;
+        }
+        lastInputId = toolRows.at(-1)!.id;
+        send.round++;
+        this.beginRound(send);
+      }
+    } catch (err) {
+      if (send.terminal === null) this.fail(send, describe(err));
+    } finally {
+      if (this.active === send) this.active = null;
+      if (this.draining === send) this.draining = null;
+    }
+  }
+
+  private async consumeRound(
+    send: ActiveSend,
+    round: RoundState,
+    request: ChatRequest,
+  ): Promise<void> {
+    const chat = this.deps.engine.chat;
+    if (!chat) throw new Error(`${this.deps.engine.id} does not support chat`);
+    for await (const event of chat.call(
+      this.deps.engine,
+      request,
+      send.controller.signal,
+    )) {
+      if (send.terminal !== null) return;
+      if (event.kind === "reasoning" || event.kind === "content") {
+        this.delta(send, round, event);
+      } else if (event.kind === "toolCallDelta") {
+        this.touchTtft(round);
+      } else if (event.kind === "toolCalls") {
+        round.calls = event.calls;
+      } else if (event.kind === "finish") {
+        round.finishReason = finishReason(event);
+      } else if (event.kind === "usage") {
+        round.stats = event.stats;
+      } else if (event.kind === "error") {
+        throw new Error(event.message);
+      }
+    }
+    if (send.terminal === null && round.finishReason === null) {
+      throw new Error("stream ended early");
+    }
+  }
+
+  private request(send: ActiveSend, throughId: number): ChatRequest {
+    const chat = this.requireChat(send.chatId);
     const messages: ChatMessageIn[] = [];
-    if (chat.systemPrompt !== "") {
-      messages.push({ role: "system", content: chat.systemPrompt });
+    let systemPrompt = send.policy.systemPrompt;
+    const lastRound = send.round === MAX_ROUNDS;
+    if (lastRound) {
+      systemPrompt = systemPrompt
+        ? `${systemPrompt}\n\n${EXHAUSTED}`
+        : EXHAUSTED;
+    }
+    if (systemPrompt !== "") {
+      messages.push({ role: "system", content: systemPrompt });
     }
     for (const message of chat.messages) {
       if (message.id > throughId) break;
-      if (message.content === "" && message.reasoning === "") continue;
+      if (
+        message.content === "" &&
+        message.reasoning === "" &&
+        message.toolCalls === null
+      ) {
+        continue;
+      }
       if (message.role === "assistant") {
         messages.push({
           role: "assistant",
-          content: message.content,
+          content:
+            message.toolCalls && message.content === ""
+              ? null
+              : message.content,
           ...(message.reasoning ? { reasoning: message.reasoning } : {}),
+          ...(message.toolCalls ? { toolCalls: message.toolCalls } : {}),
+        });
+      } else if (message.role === "tool") {
+        messages.push({
+          role: "tool",
+          toolCallId: message.toolCallId!,
+          content: message.content,
         });
       } else {
         messages.push({ role: "user", content: message.content });
       }
     }
     return {
-      model: chat.model,
+      model: send.policy.model,
       messages,
-      thinking: chat.thinking,
-      reasoningEffort: chat.reasoningEffort,
-      temperature: chat.temperature,
-      topP: chat.topP,
-      maxTokens: chat.maxTokens,
+      thinking: send.policy.thinking,
+      reasoningEffort: send.policy.reasoningEffort,
+      temperature: send.policy.temperature,
+      topP: send.policy.topP,
+      maxTokens: send.policy.maxTokens,
+      ...(!lastRound && send.policy.tools.length > 0
+        ? { tools: send.policy.tools }
+        : {}),
     };
   }
 
-  private async consume(
-    generation: Generation,
-    request: ChatRequest,
+  private async executeCall(
+    send: ActiveSend,
+    call: ToolCall,
+    row: Message,
   ): Promise<void> {
-    try {
-      const chat = this.deps.engine.chat;
-      if (!chat)
-        throw new Error(`${this.deps.engine.id} does not support chat`);
-      for await (const event of chat.call(
-        this.deps.engine,
-        request,
-        generation.controller.signal,
-      )) {
-        if (generation.terminal) return;
-        if (event.kind === "reasoning" || event.kind === "content") {
-          this.delta(generation, event);
-        } else if (event.kind === "finish") {
-          if (event.reason === "error") {
-            this.finish(generation, "error", "engine generation failed");
-            return;
-          }
-          generation.finishReason = finishReason(event);
-        } else if (event.kind === "usage") {
-          generation.stats = event.stats;
-        } else {
-          this.finish(generation, "error", event.message);
-          return;
-        }
-      }
-      if (generation.terminal) return;
-      if (generation.finishReason === null) {
-        this.finish(generation, "error", "stream ended early");
-      } else {
-        this.finish(generation, "done", null);
-      }
-    } catch (err) {
-      if (!generation.terminal) {
-        this.finish(generation, "error", describe(err));
-      }
-    } finally {
-      if (this.draining === generation) this.draining = null;
+    const running = this.deps.store.writeTool(row.id, {
+      status: "running",
+      content: "",
+      error: null,
+      finishedAt: null,
+    });
+    if (running) this.publishRow(send.chatId, running);
+    const startedAt = this.now();
+    const result = await this.executeTool(call, {
+      signal: send.controller.signal,
+      now: this.now,
+      engine: new URL(this.deps.engine.url),
+      version: this.deps.version ?? "dev",
+      budget: send.budget,
+    });
+    const elapsed = Math.max(0, this.now() - startedAt);
+    send.budget.toolMs += elapsed;
+    send.budget.resultBytes += new TextEncoder().encode(result.text).byteLength;
+    if (send.terminal !== null) return;
+    const message = this.deps.store.writeTool(row.id, {
+      status: result.error === null ? "done" : "error",
+      content: result.text,
+      error: result.error,
+      finishedAt: this.now(),
+    });
+    if (message) this.publishRow(send.chatId, message);
+    if (result.error === null) {
+      this.deps.log(`chat ${send.chatId} tool ${call.name} ${elapsed} ms`);
+    } else {
+      this.deps.log(
+        `chat ${send.chatId} tool ${call.name} error: ${result.error}`,
+      );
     }
   }
 
   private delta(
-    generation: Generation,
+    send: ActiveSend,
+    round: RoundState,
     event: Extract<ChatEvent, { kind: "reasoning" | "content" }>,
   ) {
-    const contentAt = generation.content.length;
-    const reasoningAt = generation.reasoning.length;
-    if (generation.ttftMs === null) {
-      generation.ttftMs = this.now() - generation.startedAt;
-    }
+    const contentAt = round.content.length;
+    const reasoningAt = round.reasoning.length;
+    this.touchTtft(round);
     if (event.kind === "content") {
-      if (
-        generation.reasoningStartedAt !== null &&
-        generation.thinkingMs === null
-      ) {
-        generation.thinkingMs = this.now() - generation.reasoningStartedAt;
+      if (round.reasoningStartedAt !== null && round.thinkingMs === null) {
+        round.thinkingMs = this.now() - round.reasoningStartedAt;
       }
-      generation.content += event.text;
+      round.content += event.text;
     } else {
-      if (generation.reasoningStartedAt === null) {
-        generation.reasoningStartedAt = this.now();
+      if (round.reasoningStartedAt === null) {
+        round.reasoningStartedAt = this.now();
       }
-      generation.reasoning += event.text;
+      round.reasoning += event.text;
     }
     this.publish({
       kind: "delta",
-      chatId: generation.chatId,
-      messageId: generation.messageId,
+      chatId: send.chatId,
+      messageId: round.messageId,
       content: event.kind === "content" ? event.text : undefined,
       contentAt,
       reasoning: event.kind === "reasoning" ? event.text : undefined,
       reasoningAt,
     });
-    this.flushPartial(generation);
+    this.flushPartial(round);
     if (
       event.kind === "content" &&
-      generation.content.length > generation.htmlAt &&
-      this.now() - generation.lastHtmlAt >= HTML_EVERY_MS
+      round.content.length > round.htmlAt &&
+      this.now() - round.lastHtmlAt >= HTML_EVERY_MS
     ) {
-      generation.lastHtmlAt = this.now();
-      generation.htmlAt = generation.content.length;
+      round.lastHtmlAt = this.now();
+      round.htmlAt = round.content.length;
       this.publish({
         kind: "html",
-        chatId: generation.chatId,
-        messageId: generation.messageId,
-        html: renderMarkdown(generation.content),
-        htmlAt: generation.htmlAt,
+        chatId: send.chatId,
+        messageId: round.messageId,
+        html: renderMarkdown(round.content),
+        htmlAt: round.htmlAt,
       });
     }
   }
 
-  private flushPartial(generation: Generation) {
+  private touchTtft(round: RoundState) {
+    if (round.ttftMs === null) round.ttftMs = this.now() - round.startedAt;
+  }
+
+  private flushPartial(round: RoundState) {
     const now = this.now();
     const size =
-      new TextEncoder().encode(generation.content).byteLength +
-      new TextEncoder().encode(generation.reasoning).byteLength;
+      new TextEncoder().encode(round.content).byteLength +
+      new TextEncoder().encode(round.reasoning).byteLength;
     if (
-      now - generation.lastWriteAt < WRITE_EVERY_MS &&
-      size - generation.lastWriteSize < WRITE_EVERY_BYTES
+      now - round.lastWriteAt < WRITE_EVERY_MS &&
+      size - round.lastWriteSize < WRITE_EVERY_BYTES
     ) {
       return;
     }
     if (
-      this.deps.store.writeReply(generation.messageId, {
-        content: generation.content,
-        reasoning: generation.reasoning,
+      this.deps.store.writeReply(round.messageId, {
+        content: round.content,
+        reasoning: round.reasoning,
       })
     ) {
-      generation.lastWriteAt = now;
-      generation.lastWriteSize = size;
+      round.lastWriteAt = now;
+      round.lastWriteSize = size;
     }
   }
 
-  private finish(
-    generation: Generation,
-    status: "done" | "stopped" | "interrupted" | "error",
+  private finishFields(
+    round: RoundState,
+    status: TerminalStatus,
     error: string | null,
+    reason = round.finishReason,
   ) {
-    if (generation.terminal || this.generation !== generation) return;
-    generation.terminal = true;
     const finishedAt = this.now();
+    const thinkingMs =
+      round.thinkingMs ??
+      (round.reasoningStartedAt === null
+        ? null
+        : finishedAt - round.reasoningStartedAt);
+    return {
+      status,
+      error,
+      finishReason: reason,
+      model: this.active?.policy.model ?? null,
+      finishedAt,
+      ttftMs: round.ttftMs,
+      thinkingMs,
+      stats: status === "done" ? round.stats : null,
+    };
+  }
+
+  private finishRound(
+    send: ActiveSend,
+    round: RoundState,
+    status: TerminalStatus,
+    error: string | null,
+    calls: ToolCall[] | null = null,
+  ): Message | null {
     try {
-      this.deps.store.writeReply(generation.messageId, {
-        content: generation.content,
-        reasoning: generation.reasoning,
+      this.deps.store.writeReply(round.messageId, {
+        content: round.content,
+        reasoning: round.reasoning,
       });
-      // A reply cut while still reasoning lasted until the terminal write.
-      const thinkingMs =
-        generation.thinkingMs ??
-        (generation.reasoningStartedAt === null
-          ? null
-          : finishedAt - generation.reasoningStartedAt);
-      const message = this.deps.store.finishReply(generation.messageId, {
-        status,
-        error,
-        finishReason: generation.finishReason,
-        model: generation.model,
-        finishedAt,
-        ttftMs: generation.ttftMs,
-        thinkingMs,
-        stats: status === "done" ? generation.stats : null,
-      });
-      if (!message) return;
-      this.publish({
-        kind: "html",
-        chatId: generation.chatId,
-        messageId: generation.messageId,
-        html: message.html ?? "",
-        htmlAt: message.content.length,
-      });
-      const chat = this.requireChat(generation.chatId);
-      this.publish({ kind: "done", chat: chatSummary(chat), message });
-      this.logFinish(generation, message, finishedAt);
-    } catch (err) {
-      this.deps.log(
-        `chat ${generation.chatId} finish failed: ${describe(err)}`,
+      const message = this.deps.store.finishReply(
+        round.messageId,
+        this.finishFields(round, status, error),
+        calls,
       );
-    } finally {
-      if (this.generation === generation) this.generation = null;
+      if (message) {
+        this.publish({
+          kind: "html",
+          chatId: send.chatId,
+          messageId: round.messageId,
+          html: message.html ?? "",
+          htmlAt: message.content.length,
+        });
+        this.publishRow(send.chatId, message);
+      }
+      return message;
+    } catch (err) {
+      this.deps.log(`chat ${send.chatId} finish failed: ${describe(err)}`);
+      send.terminal = "error";
+      if (this.active === send) this.active = null;
+      return null;
     }
   }
 
-  private logFinish(
-    generation: Generation,
-    message: Message,
-    finishedAt: number,
-  ) {
-    if (message.status === "stopped" || message.status === "interrupted") {
-      this.deps.log(`chat ${generation.chatId} ${message.status}`);
-      return;
+  private complete(send: ActiveSend, message: Message) {
+    if (send.terminal !== null) return;
+    send.terminal = "done";
+    if (this.active === send) this.active = null;
+    const chat = this.requireChat(send.chatId);
+    this.publish({ kind: "done", chat: chatSummary(chat), message });
+    this.logFinish(send, message);
+  }
+
+  private fail(send: ActiveSend, error: string) {
+    const round = send.current;
+    if (!round || send.terminal !== null) return;
+    try {
+      const message = this.finishRound(send, round, "error", error);
+      if (!message) return;
+      send.terminal = "error";
+      if (this.active === send) this.active = null;
+      this.publish({
+        kind: "done",
+        chat: chatSummary(this.requireChat(send.chatId)),
+        message,
+      });
+      this.deps.log(`chat ${send.chatId} error: ${error}`);
+    } catch (err) {
+      this.deps.log(`chat ${send.chatId} finish failed: ${describe(err)}`);
+      send.terminal = "error";
+      if (this.active === send) this.active = null;
     }
-    if (message.status === "error") {
-      this.deps.log(`chat ${generation.chatId} error: ${message.error}`);
-      return;
+  }
+
+  private terminate(send: ActiveSend, status: "stopped" | "interrupted") {
+    send.terminal = status;
+    this.draining = send;
+    send.controller.abort();
+    const round = send.current;
+    if (!round) return;
+    let message = this.deps.store.message(round.messageId);
+    if (message?.status === "streaming") {
+      message = this.finishRound(send, round, status, null);
     }
+    this.interruptTools(send, status);
+    if (message) {
+      this.publish({
+        kind: "done",
+        chat: chatSummary(this.requireChat(send.chatId)),
+        message,
+      });
+    }
+    this.deps.log(`chat ${send.chatId} ${status}`);
+  }
+
+  private interruptTools(send: ActiveSend, status: "stopped" | "interrupted") {
+    for (const row of send.current?.toolRows ?? []) {
+      const message = this.deps.store.writeTool(row.id, {
+        status,
+        content: TOOL_INTERRUPTED,
+        error: null,
+        finishedAt: this.now(),
+      });
+      if (message) this.publishRow(send.chatId, message);
+    }
+  }
+
+  private logFinish(send: ActiveSend, message: Message) {
     const stats = message.stats;
     if (!stats) {
-      this.deps.log(`chat ${generation.chatId} done`);
+      this.deps.log(`chat ${send.chatId} done`);
       return;
     }
-    const seconds = ((finishedAt - generation.startedAt) / 1000).toFixed(1);
-    const prefill =
-      stats.prefillMs > 0
-        ? ((stats.promptTokens - stats.cachedTokens) * 1000) / stats.prefillMs
-        : 0;
-    const decode =
-      stats.decodeMs > 0 ? (stats.generated * 1000) / stats.decodeMs : 0;
+    const seconds = (
+      (message.finishedAt! - send.current!.startedAt) /
+      1000
+    ).toFixed(1);
+    const rates: string[] = [];
+    if (stats.prefillMs !== null && stats.prefillMs > 0) {
+      const prefill =
+        ((stats.promptTokens - stats.cachedTokens) * 1000) / stats.prefillMs;
+      rates.push(`prefill ${prefill.toFixed(0)} tok/s`);
+    }
+    if (stats.decodeMs !== null && stats.decodeMs > 0) {
+      const decode = (stats.generated * 1000) / stats.decodeMs;
+      rates.push(`decode ${decode.toFixed(0)} tok/s`);
+    }
+    rates.push(`${stats.cachedTokens} cached`);
     this.deps.log(
-      `chat ${generation.chatId} done ${stats.promptTokens}+${stats.generated} tokens in ${seconds} s (prefill ${prefill.toFixed(0)} tok/s, decode ${decode.toFixed(0)} tok/s, ${stats.cachedTokens} cached)`,
+      `chat ${send.chatId} done ${stats.promptTokens}+${stats.generated} tokens in ${seconds} s (${rates.join(", ")})`,
     );
+  }
+
+  private systemPrompt(prompt: string, toolsEnabled: boolean): string {
+    if (!toolsEnabled) return prompt;
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const date = formatCurrentTime(this.now(), timezone);
+    const line = `Today's date: ${date.day_of_week}, ${date.datetime.slice(0, 10)}`;
+    return prompt ? `${prompt}\n\n${line}` : line;
+  }
+
+  private truncateMalformedHistory(chat: Chat) {
+    for (let index = 0; index < chat.messages.length; index++) {
+      const message = chat.messages[index];
+      if (message.role === "tool") {
+        this.deps.store.deleteFrom(chat.id, message.id);
+        this.deps.log(`chat ${chat.id} truncated malformed tool history`);
+        return;
+      }
+      const calls = message.toolCalls;
+      if (!calls || calls.length === 0) continue;
+      const rows = chat.messages.slice(index + 1, index + 1 + calls.length);
+      const valid =
+        rows.length === calls.length &&
+        rows.every(
+          (row, offset) =>
+            row.role === "tool" && row.toolCallId === calls[offset].id,
+        );
+      if (!valid) {
+        this.deps.store.deleteFrom(chat.id, message.id);
+        this.deps.log(`chat ${chat.id} truncated malformed tool history`);
+        return;
+      }
+      index += calls.length;
+    }
+  }
+
+  private publishRow(chatId: string, message: Message) {
+    const chat = this.deps.store.get(chatId);
+    if (!chat) return;
+    this.publish({
+      kind: "row",
+      chatId,
+      message,
+      chat: chatSummary(chat),
+    });
   }
 
   private publish(event: ChatWsEvent) {
@@ -575,17 +924,12 @@ export class ChatRunner {
         "Still cancelling the previous reply; try again in a moment",
       );
     }
-    if (!this.generation) return;
-    const chat = this.deps.store.get(this.generation.chatId);
+    if (!this.active) return;
+    const chat = this.deps.store.get(this.active.chatId);
     throw new ChatError(
       409,
       `mlx-spy is already answering in ${chat?.title || "another chat"}`,
     );
-  }
-
-  private beginDrain(generation: Generation) {
-    this.draining = generation;
-    generation.controller.abort();
   }
 
   private requireChat(id: string): Chat {

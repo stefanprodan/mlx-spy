@@ -85,11 +85,23 @@ export type CacheLimits = {
   diskBytes: number;
 };
 
-export type ChatMessageIn = {
-  role: "system" | "user" | "assistant";
-  content: string;
-  reasoning?: string;
+export type ChatTool = {
+  name: string;
+  description: string;
+  parameters: object;
 };
+
+export type ToolCall = { id: string; name: string; arguments: string };
+
+export type ChatMessageIn =
+  | { role: "system" | "user"; content: string }
+  | {
+      role: "assistant";
+      content: string | null;
+      reasoning?: string;
+      toolCalls?: ToolCall[];
+    }
+  | { role: "tool"; toolCallId: string; content: string };
 
 export type ChatRequest = {
   model: string;
@@ -99,11 +111,20 @@ export type ChatRequest = {
   temperature?: number | null;
   topP?: number | null;
   maxTokens?: number | null;
+  tools?: ChatTool[];
 };
 
 export type ChatEvent =
   | { kind: "reasoning"; text: string }
   | { kind: "content"; text: string }
+  | {
+      kind: "toolCallDelta";
+      index?: number;
+      id?: string;
+      name?: string;
+      arguments?: string;
+    }
+  | { kind: "toolCalls"; calls: ToolCall[] }
   | { kind: "finish"; reason: string; details: string | null }
   | { kind: "usage"; stats: MessageStats }
   | { kind: "error"; message: string };

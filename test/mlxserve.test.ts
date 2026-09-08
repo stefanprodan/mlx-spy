@@ -323,6 +323,40 @@ describe("chat stream", () => {
     expect(chatEvents("[DONE]")).toEqual([]);
   });
 
+  test("fills usage fields from mlx-serve timings", () => {
+    expect(
+      chatEvents(
+        JSON.stringify({
+          choices: [],
+          usage: {
+            prompt_tokens: 20,
+            completion_tokens: 9,
+            prompt_tokens_details: { cached_tokens: 2 },
+          },
+          timings: {
+            cached_n: 6,
+            predicted_n: 8,
+            prompt_ms: 12.5,
+            predicted_ms: 24.5,
+            tokenize_ms: 1.5,
+          },
+        }),
+      ),
+    ).toEqual([
+      {
+        kind: "usage",
+        stats: {
+          promptTokens: 20,
+          cachedTokens: 6,
+          generated: 8,
+          prefillMs: 12.5,
+          decodeMs: 24.5,
+          tokenizeMs: 1.5,
+        },
+      },
+    ]);
+  });
+
   test("builds the mlx-serve body with optional settings and reasoning", () => {
     const base = {
       model: "org/model",

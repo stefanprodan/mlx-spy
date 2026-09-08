@@ -15,6 +15,7 @@ import { type History, RANGES, type Range } from "./history.ts";
 import { diskSpace, type HostInfo } from "./host/info.ts";
 import type { Sample } from "./sample.ts";
 import type { Sampler } from "./sampler.ts";
+import { TOOLS } from "./tools.ts";
 
 export const DEFAULT_PORT = 11235;
 const SAMPLES_TOPIC = "samples";
@@ -222,6 +223,21 @@ function effortField(
   return effort as string;
 }
 
+function toolsField(value: Record<string, unknown>): string[] | undefined {
+  const field = value.toolsOff;
+  if (field === undefined) return undefined;
+  if (!Array.isArray(field) || field.some((name) => typeof name !== "string")) {
+    throw new HttpError(400, "toolsOff must be an array of tool names");
+  }
+  const known = new Set(TOOLS.map((tool) => tool.name));
+  for (const name of field as string[]) {
+    if (!known.has(name)) {
+      throw new HttpError(400, `unknown tool: ${name}`);
+    }
+  }
+  return [...new Set(field as string[])];
+}
+
 function settings(value: Record<string, unknown>): ChatSettings {
   return {
     model: stringField(value, "model", true)!,
@@ -232,6 +248,7 @@ function settings(value: Record<string, unknown>): ChatSettings {
     topP: numberField(value, "topP", 0, 1) ?? null,
     maxTokens:
       numberField(value, "maxTokens", 1, Number.MAX_SAFE_INTEGER, true) ?? null,
+    toolsOff: toolsField(value) ?? [],
   };
 }
 
@@ -251,6 +268,7 @@ function patch(value: Record<string, unknown>): ChatPatch {
     Number.MAX_SAFE_INTEGER,
     true,
   );
+  const toolsOff = toolsField(value);
   if (title !== undefined) result.title = title;
   if (model !== undefined) result.model = model;
   if (systemPrompt !== undefined) result.systemPrompt = systemPrompt;
@@ -259,6 +277,7 @@ function patch(value: Record<string, unknown>): ChatPatch {
   if (temperature !== undefined) result.temperature = temperature;
   if (topP !== undefined) result.topP = topP;
   if (maxTokens !== undefined) result.maxTokens = maxTokens;
+  if (toolsOff !== undefined) result.toolsOff = toolsOff;
   return result;
 }
 
@@ -368,6 +387,11 @@ export async function handle(
     }
     if (req.method !== "GET") {
       return json({ error: "method not allowed" }, 405);
+    }
+    if (url.pathname === "/api/tools") {
+      return json(
+        TOOLS.map(({ name, description }) => ({ name, description })),
+      );
     }
     switch (url.pathname) {
       case "/api/snapshot":

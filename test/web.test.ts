@@ -11,6 +11,7 @@ import type {
   ModelInfo,
 } from "../src/engine/types.ts";
 import { History } from "../src/history.ts";
+import { TOOLS } from "../src/tools.ts";
 import { handle, snapshot, type WebDeps } from "../src/web.ts";
 
 const MODEL = "org/model";
@@ -73,7 +74,9 @@ class WebEngine implements Engine {
 function setup() {
   const engine = new WebEngine();
   const history = new History(":memory:");
-  const store = new ChatStore(history.db);
+  const store = new ChatStore(history.db, Date.now, () =>
+    TOOLS.map((tool) => tool.name),
+  );
   const chat = new ChatRunner({
     engine,
     store,
@@ -312,6 +315,88 @@ describe("chat API", () => {
       content: "x".repeat(256 * 1024),
     });
     expect((await handle(oversized, s.deps)).status).toBe(400);
+    s.history.close();
+  });
+
+  test("lists tools without caching", async () => {
+    const s = setup();
+    const result = await response(s.deps, "/api/tools");
+    expect(result.status).toBe(200);
+    expect(await result.json()).toEqual([
+      {
+        name: "get_current_time",
+        description: expect.any(String),
+      },
+      {
+        name: "fetch",
+        description: expect.any(String),
+      },
+    ]);
+    s.history.close();
+  });
+
+  test("accepts known toolsOff names and rejects unknown names", async () => {
+    const s = setup();
+    const created = await response(s.deps, "/api/chats", "POST", {
+      model: MODEL,
+      toolsOff: ["get_current_time"],
+    });
+    const chat = (await created.json()) as any;
+    expect(chat.toolsOff).toEqual(["get_current_time"]);
+    const patched = await response(s.deps, `/api/chats/${chat.id}`, "PATCH", {
+      toolsOff: [],
+    });
+    expect(((await patched.json()) as any).toolsOff).toEqual([]);
+    expect(
+      (
+        await response(s.deps, "/api/chats", "POST", {
+          model: MODEL,
+          toolsOff: ["missing"],
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await response(s.deps, `/api/chats/${chat.id}`, "PATCH", {
+          toolsOff: "get_current_time",
+        })
+      ).status,
+    ).toBe(400);
+    s.history.close();
+  });
+
+  test("rejects model and toolsOff patches during an active send", async () => {
+    const s = setup();
+    const created = await response(s.deps, "/api/chats", "POST", {
+      model: MODEL,
+    });
+    const chat = (await created.json()) as any;
+    await response(s.deps, `/api/chats/${chat.id}/messages`, "POST", {
+      content: "hello",
+    });
+    expect(
+      (
+        await response(s.deps, `/api/chats/${chat.id}`, "PATCH", {
+          model: MODEL,
+        })
+      ).status,
+    ).toBe(409);
+    expect(
+      (
+        await response(s.deps, `/api/chats/${chat.id}`, "PATCH", {
+          toolsOff: ["get_current_time"],
+        })
+      ).status,
+    ).toBe(409);
+    expect(
+      (
+        await response(s.deps, `/api/chats/${chat.id}`, "PATCH", {
+          title: "allowed",
+        })
+      ).status,
+    ).toBe(200);
+    await response(s.deps, `/api/chats/${chat.id}/stop`, "POST");
+    await Bun.sleep(0);
     s.history.close();
   });
 });

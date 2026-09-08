@@ -6,6 +6,7 @@
 // the runner without owning the request to the engine.
 
 import type { Database } from "bun:sqlite";
+import type { ToolCall } from "./engine/types.ts";
 import { renderMarkdown } from "./markdown.ts";
 
 export type ChatSettings = {
@@ -16,6 +17,7 @@ export type ChatSettings = {
   temperature: number | null;
   topP: number | null;
   maxTokens: number | null;
+  toolsOff?: string[];
 };
 
 export type ChatSummary = {
@@ -30,6 +32,8 @@ export type ChatSummary = {
 export type Chat = ChatSummary & ChatSettings & { messages: Message[] };
 
 export type MessageStatus =
+  | "pending"
+  | "running"
   | "done"
   | "streaming"
   | "stopped"
@@ -40,15 +44,15 @@ export type MessageStats = {
   promptTokens: number;
   cachedTokens: number;
   generated: number;
-  prefillMs: number;
-  decodeMs: number;
+  prefillMs: number | null;
+  decodeMs: number | null;
   tokenizeMs: number | null;
 };
 
 export type Message = {
   id: number;
   chatId: string;
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "tool";
   content: string;
   html: string | null;
   reasoning: string;
@@ -62,6 +66,9 @@ export type Message = {
   // first reasoning token to first content token, measured by the runner
   thinkingMs: number | null;
   stats: MessageStats | null;
+  toolCalls: ToolCall[] | null;
+  toolCallId: string | null;
+  toolName: string | null;
 };
 
 export type ChatPatch = Partial<ChatSettings & { title: string }>;
@@ -79,11 +86,14 @@ export type AddMessageFields = Partial<
     | "ttftMs"
     | "thinkingMs"
     | "stats"
+    | "toolCalls"
+    | "toolCallId"
+    | "toolName"
   >
 > & { createdAt?: number };
 
 export type FinishReply = {
-  status: Exclude<MessageStatus, "streaming">;
+  status: "done" | "stopped" | "interrupted" | "error";
   error?: string | null;
   finishReason?: string | null;
   model: string | null;
@@ -91,6 +101,13 @@ export type FinishReply = {
   ttftMs: number | null;
   thinkingMs: number | null;
   stats: MessageStats | null;
+};
+
+export type WriteTool = {
+  status: "pending" | "running" | "done" | "error" | "stopped" | "interrupted";
+  content: string;
+  error: string | null;
+  finishedAt: number | null;
 };
 
 type ChatRow = {
@@ -103,6 +120,7 @@ type ChatRow = {
   temperature: number | null;
   topP: number | null;
   maxTokens: number | null;
+  toolsOff: string;
   createdAt: number;
   updatedAt: number;
   streaming: number;
@@ -111,7 +129,7 @@ type ChatRow = {
 type MessageRow = {
   id: number;
   chatId: string;
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "tool";
   content: string;
   reasoning: string;
   status: MessageStatus;
@@ -128,12 +146,15 @@ type MessageRow = {
   ttftMs: number | null;
   thinkingMs: number | null;
   tokenizeMs: number | null;
+  toolCalls: string | null;
+  toolCallId: string | null;
+  toolName: string | null;
 };
 
 const CHAT_SELECT = `SELECT c.id, c.title, c.model,
   c.system_prompt AS systemPrompt, c.thinking,
   c.reasoning_effort AS reasoningEffort, c.temperature,
-  c.top_p AS topP, c.max_tokens AS maxTokens,
+  c.top_p AS topP, c.max_tokens AS maxTokens, c.tools_off AS toolsOff,
   c.created_at AS createdAt, c.updated_at AS updatedAt,
   EXISTS(SELECT 1 FROM messages m
     WHERE m.chat_id = c.id AND m.status = 'streaming') AS streaming
@@ -144,59 +165,11 @@ const MESSAGE_SELECT = `SELECT id, chat_id AS chatId, role, content, reasoning,
   created_at AS createdAt, finished_at AS finishedAt,
   prompt_tokens AS promptTokens, cached_tokens AS cachedTokens, generated,
   prefill_ms AS prefillMs, decode_ms AS decodeMs, ttft_ms AS ttftMs,
-  thinking_ms AS thinkingMs, tokenize_ms AS tokenizeMs FROM messages`;
+  thinking_ms AS thinkingMs, tokenize_ms AS tokenizeMs,
+  tool_calls AS toolCalls, tool_call_id AS toolCallId,
+  tool_name AS toolName FROM messages`;
 
-function summary(row: ChatRow): ChatSummary & ChatSettings {
-  return {
-    id: row.id,
-    title: row.title,
-    model: row.model,
-    systemPrompt: row.systemPrompt,
-    thinking: row.thinking === 1,
-    reasoningEffort: row.reasoningEffort,
-    temperature: row.temperature,
-    topP: row.topP,
-    maxTokens: row.maxTokens,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-    streaming: row.streaming === 1,
-  };
-}
-
-function message(row: MessageRow): Message {
-  const stats =
-    row.promptTokens === null ||
-    row.cachedTokens === null ||
-    row.generated === null ||
-    row.prefillMs === null ||
-    row.decodeMs === null
-      ? null
-      : {
-          promptTokens: row.promptTokens,
-          cachedTokens: row.cachedTokens,
-          generated: row.generated,
-          prefillMs: row.prefillMs,
-          decodeMs: row.decodeMs,
-          tokenizeMs: row.tokenizeMs,
-        };
-  return {
-    id: row.id,
-    chatId: row.chatId,
-    role: row.role,
-    content: row.content,
-    html: row.role === "assistant" ? renderMarkdown(row.content) : null,
-    reasoning: row.reasoning,
-    status: row.status,
-    error: row.error,
-    finishReason: row.finishReason,
-    model: row.model,
-    createdAt: row.createdAt,
-    finishedAt: row.finishedAt,
-    ttftMs: row.ttftMs,
-    thinkingMs: row.thinkingMs,
-    stats,
-  };
-}
+const TOOL_INTERRUPTED = "[Tool execution was interrupted]";
 
 export function titleFrom(text: string): string {
   const line = text
@@ -209,13 +182,14 @@ export function titleFrom(text: string): string {
 }
 
 export class ChatStore {
-  private readonly now: () => number;
+  private readonly badToolCalls = new Set<number>();
 
   constructor(
     private readonly db: Database,
-    now: () => number = Date.now,
+    private readonly now: () => number = Date.now,
+    private readonly knownTools: () => string[] = () => [],
+    private readonly log: (line: string) => void = console.error,
   ) {
-    this.now = now;
     this.db.run("PRAGMA foreign_keys = ON");
     this.db.run(`CREATE TABLE IF NOT EXISTS chats (
       id TEXT PRIMARY KEY,
@@ -227,6 +201,7 @@ export class ChatStore {
       temperature REAL,
       top_p REAL,
       max_tokens INTEGER,
+      tools_off TEXT NOT NULL DEFAULT '[]',
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     )`);
@@ -244,20 +219,128 @@ export class ChatStore {
       finished_at INTEGER,
       prompt_tokens INTEGER, cached_tokens INTEGER, generated INTEGER,
       prefill_ms REAL, decode_ms REAL, ttft_ms REAL, tokenize_ms REAL,
-      thinking_ms REAL
+      thinking_ms REAL,
+      tool_calls TEXT,
+      tool_call_id TEXT,
+      tool_name TEXT
     )`);
-    // columns added after the first release are appended to an existing file
-    const have = new Set(
-      (
-        this.db.query("PRAGMA table_info(messages)").all() as { name: string }[]
-      ).map((c) => c.name),
-    );
-    if (!have.has("thinking_ms")) {
-      this.db.run("ALTER TABLE messages ADD COLUMN thinking_ms REAL");
-    }
+    this.migrateColumns("chats", {
+      tools_off: "TEXT NOT NULL DEFAULT '[]'",
+    });
+    this.migrateColumns("messages", {
+      thinking_ms: "REAL",
+      tool_calls: "TEXT",
+      tool_call_id: "TEXT",
+      tool_name: "TEXT",
+    });
     this.db.run(
       "CREATE INDEX IF NOT EXISTS messages_chat ON messages (chat_id, id)",
     );
+  }
+
+  private migrateColumns(table: "chats" | "messages", columns: object) {
+    const have = new Set(
+      (
+        this.db.query(`PRAGMA table_info(${table})`).all() as { name: string }[]
+      ).map((column) => column.name),
+    );
+    for (const [name, type] of Object.entries(columns)) {
+      if (!have.has(name)) {
+        this.db.run(`ALTER TABLE ${table} ADD COLUMN ${name} ${type}`);
+      }
+    }
+  }
+
+  private toolsOff(value: string): string[] {
+    try {
+      const names = JSON.parse(value);
+      if (!Array.isArray(names)) return [];
+      const known = new Set(this.knownTools());
+      return names.filter(
+        (name): name is string => typeof name === "string" && known.has(name),
+      );
+    } catch {
+      return [];
+    }
+  }
+
+  private summary(row: ChatRow): ChatSummary & ChatSettings {
+    return {
+      id: row.id,
+      title: row.title,
+      model: row.model,
+      systemPrompt: row.systemPrompt,
+      thinking: row.thinking === 1,
+      reasoningEffort: row.reasoningEffort,
+      temperature: row.temperature,
+      topP: row.topP,
+      maxTokens: row.maxTokens,
+      toolsOff: this.toolsOff(row.toolsOff),
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      streaming: row.streaming === 1,
+    };
+  }
+
+  private parseToolCalls(row: MessageRow): ToolCall[] | null {
+    if (row.toolCalls === null) return null;
+    try {
+      const calls = JSON.parse(row.toolCalls);
+      if (!Array.isArray(calls)) throw new Error("not an array");
+      if (
+        !calls.every(
+          (call) =>
+            typeof call?.id === "string" &&
+            typeof call?.name === "string" &&
+            typeof call?.arguments === "string",
+        )
+      ) {
+        throw new Error("invalid call");
+      }
+      return calls;
+    } catch {
+      if (!this.badToolCalls.has(row.id)) {
+        this.badToolCalls.add(row.id);
+        this.log(`chat message ${row.id} has invalid tool calls`);
+      }
+      return null;
+    }
+  }
+
+  private toMessage(row: MessageRow): Message {
+    const stats =
+      row.promptTokens === null ||
+      row.cachedTokens === null ||
+      row.generated === null
+        ? null
+        : {
+            promptTokens: row.promptTokens,
+            cachedTokens: row.cachedTokens,
+            generated: row.generated,
+            prefillMs: row.prefillMs,
+            decodeMs: row.decodeMs,
+            tokenizeMs: row.tokenizeMs,
+          };
+    return {
+      id: row.id,
+      chatId: row.chatId,
+      role: row.role,
+      content: row.content,
+      html: row.role === "assistant" ? renderMarkdown(row.content) : null,
+      reasoning: row.reasoning,
+      status: row.status,
+      error: row.error,
+      finishReason: row.finishReason,
+      model: row.model,
+      createdAt: row.createdAt,
+      finishedAt: row.finishedAt,
+      ttftMs: row.ttftMs,
+      thinkingMs: row.thinkingMs,
+      stats,
+      toolCalls: this.parseToolCalls(row),
+      toolCallId: row.toolCallId,
+      toolName: row.toolName,
+    };
   }
 
   transaction<T>(fn: () => T): T {
@@ -269,9 +352,11 @@ export class ChatStore {
     const now = this.now();
     this.db
       .query(`INSERT INTO chats (id, title, model, system_prompt, thinking,
-        reasoning_effort, temperature, top_p, max_tokens, created_at, updated_at)
+        reasoning_effort, temperature, top_p, max_tokens, tools_off,
+        created_at, updated_at)
         VALUES ($id, $title, $model, $systemPrompt, $thinking,
-          $reasoningEffort, $temperature, $topP, $maxTokens, $now, $now)`)
+          $reasoningEffort, $temperature, $topP, $maxTokens, $toolsOff,
+          $now, $now)`)
       .run({
         id,
         title,
@@ -282,6 +367,7 @@ export class ChatStore {
         temperature: settings.temperature,
         topP: settings.topP,
         maxTokens: settings.maxTokens,
+        toolsOff: JSON.stringify(settings.toolsOff ?? []),
         now,
       });
     return this.get(id)!;
@@ -301,14 +387,16 @@ export class ChatStore {
         temperature,
         topP,
         maxTokens,
+        toolsOff,
         ...item
-      } = summary(row);
+      } = this.summary(row);
       void systemPrompt;
       void thinking;
       void reasoningEffort;
       void temperature;
       void topP;
       void maxTokens;
+      void toolsOff;
       return item;
     });
   }
@@ -321,7 +409,10 @@ export class ChatStore {
     const messages = this.db
       .query(`${MESSAGE_SELECT} WHERE chat_id = $id ORDER BY id`)
       .all({ id }) as MessageRow[];
-    return { ...summary(row), messages: messages.map(message) };
+    return {
+      ...this.summary(row),
+      messages: messages.map((message) => this.toMessage(message)),
+    };
   }
 
   update(id: string, patch: ChatPatch): Chat | null {
@@ -339,12 +430,15 @@ export class ChatStore {
       ["temperature", "temperature"],
       ["topP", "top_p"],
       ["maxTokens", "max_tokens"],
+      ["toolsOff", "tools_off"],
     ];
     for (const [name, column] of names) {
       if (!(name in patch)) continue;
       columns.push(`${column} = $${name}`);
-      values[name] =
-        name === "thinking" ? (patch[name] ? 1 : 0) : (patch[name] ?? null);
+      if (name === "thinking") values[name] = patch[name] ? 1 : 0;
+      else if (name === "toolsOff") {
+        values[name] = JSON.stringify(patch[name] ?? []);
+      } else values[name] = patch[name] ?? null;
     }
     if (columns.length === 0) return this.get(id);
     columns.push("updated_at = $now");
@@ -362,47 +456,63 @@ export class ChatStore {
 
   addMessage(
     chatId: string,
-    role: "user" | "assistant",
+    role: "user" | "assistant" | "tool",
     fields: AddMessageFields = {},
   ): Message {
     const createdAt = fields.createdAt ?? this.now();
-    const stats = fields.stats ?? null;
     const result = this.db.transaction(() => {
-      const inserted = this.db
-        .query(`INSERT INTO messages (chat_id, role, content, reasoning, status,
-          error, finish_reason, model, created_at, finished_at, prompt_tokens,
-          cached_tokens, generated, prefill_ms, decode_ms, ttft_ms, tokenize_ms,
-          thinking_ms)
-          VALUES ($chatId, $role, $content, $reasoning, $status, $error,
-            $finishReason, $model, $createdAt, $finishedAt, $promptTokens,
-            $cachedTokens, $generated, $prefillMs, $decodeMs, $ttftMs,
-            $tokenizeMs, $thinkingMs)`)
-        .run({
-          chatId,
-          role,
-          content: fields.content ?? "",
-          reasoning: fields.reasoning ?? "",
-          status: fields.status ?? "done",
-          error: fields.error ?? null,
-          finishReason: fields.finishReason ?? null,
-          model: fields.model ?? null,
-          createdAt,
-          finishedAt: fields.finishedAt ?? null,
-          promptTokens: stats?.promptTokens ?? null,
-          cachedTokens: stats?.cachedTokens ?? null,
-          generated: stats?.generated ?? null,
-          prefillMs: stats?.prefillMs ?? null,
-          decodeMs: stats?.decodeMs ?? null,
-          ttftMs: fields.ttftMs ?? null,
-          tokenizeMs: stats?.tokenizeMs ?? null,
-          thinkingMs: fields.thinkingMs ?? null,
-        });
+      const id = this.insertMessage(chatId, role, fields, createdAt);
       this.db
         .query("UPDATE chats SET updated_at = $at WHERE id = $chatId")
         .run({ at: createdAt, chatId });
-      return Number(inserted.lastInsertRowid);
+      return id;
     })();
     return this.message(result)!;
+  }
+
+  private insertMessage(
+    chatId: string,
+    role: "user" | "assistant" | "tool",
+    fields: AddMessageFields,
+    createdAt: number,
+  ): number {
+    const stats = fields.stats ?? null;
+    const inserted = this.db
+      .query(`INSERT INTO messages (chat_id, role, content, reasoning, status,
+        error, finish_reason, model, created_at, finished_at, prompt_tokens,
+        cached_tokens, generated, prefill_ms, decode_ms, ttft_ms, tokenize_ms,
+        thinking_ms, tool_calls, tool_call_id, tool_name)
+        VALUES ($chatId, $role, $content, $reasoning, $status, $error,
+          $finishReason, $model, $createdAt, $finishedAt, $promptTokens,
+          $cachedTokens, $generated, $prefillMs, $decodeMs, $ttftMs,
+          $tokenizeMs, $thinkingMs, $toolCalls, $toolCallId, $toolName)`)
+      .run({
+        chatId,
+        role,
+        content: fields.content ?? "",
+        reasoning: fields.reasoning ?? "",
+        status: fields.status ?? "done",
+        error: fields.error ?? null,
+        finishReason: fields.finishReason ?? null,
+        model: fields.model ?? null,
+        createdAt,
+        finishedAt: fields.finishedAt ?? null,
+        promptTokens: stats?.promptTokens ?? null,
+        cachedTokens: stats?.cachedTokens ?? null,
+        generated: stats?.generated ?? null,
+        prefillMs: stats?.prefillMs ?? null,
+        decodeMs: stats?.decodeMs ?? null,
+        ttftMs: fields.ttftMs ?? null,
+        tokenizeMs: stats?.tokenizeMs ?? null,
+        thinkingMs: fields.thinkingMs ?? null,
+        toolCalls:
+          fields.toolCalls === undefined || fields.toolCalls === null
+            ? null
+            : JSON.stringify(fields.toolCalls),
+        toolCallId: fields.toolCallId ?? null,
+        toolName: fields.toolName ?? null,
+      });
+    return Number(inserted.lastInsertRowid);
   }
 
   writeReply(
@@ -416,43 +526,110 @@ export class ChatStore {
     return result.changes > 0;
   }
 
-  finishReply(id: number, fields: FinishReply): Message | null {
+  finishReply(
+    id: number,
+    fields: FinishReply,
+    calls: ToolCall[] | null = null,
+  ): Message | null {
+    const changed = this.db.transaction(() => {
+      const result = this.finishReplyRow(id, fields, calls);
+      if (result) this.touchFromMessage(id, fields.finishedAt);
+      return result;
+    })();
+    return changed ? this.message(id) : null;
+  }
+
+  setFinishReason(id: number, finishReason: string): Message | null {
+    const result = this.db
+      .query(`UPDATE messages SET finish_reason = $finishReason
+        WHERE id = $id AND role = 'assistant' AND status = 'done'`)
+      .run({ id, finishReason });
+    return result.changes > 0 ? this.message(id) : null;
+  }
+
+  private finishReplyRow(
+    id: number,
+    fields: FinishReply,
+    calls: ToolCall[] | null,
+  ): boolean {
     const stats = fields.stats;
+    const result = this.db
+      .query(`UPDATE messages SET status = $status, error = $error,
+        finish_reason = $finishReason, model = $model,
+        finished_at = $finishedAt, ttft_ms = $ttftMs,
+        thinking_ms = $thinkingMs, tool_calls = $toolCalls,
+        prompt_tokens = $promptTokens, cached_tokens = $cachedTokens,
+        generated = $generated, prefill_ms = $prefillMs,
+        decode_ms = $decodeMs, tokenize_ms = $tokenizeMs
+        WHERE id = $id AND role = 'assistant' AND status = 'streaming'`)
+      .run({
+        id,
+        status: fields.status,
+        error: fields.error ?? null,
+        finishReason: fields.finishReason ?? null,
+        model: fields.model,
+        finishedAt: fields.finishedAt,
+        ttftMs: fields.ttftMs,
+        thinkingMs: fields.thinkingMs,
+        toolCalls: calls === null ? null : JSON.stringify(calls),
+        promptTokens: stats?.promptTokens ?? null,
+        cachedTokens: stats?.cachedTokens ?? null,
+        generated: stats?.generated ?? null,
+        prefillMs: stats?.prefillMs ?? null,
+        decodeMs: stats?.decodeMs ?? null,
+        tokenizeMs: stats?.tokenizeMs ?? null,
+      });
+    return result.changes > 0;
+  }
+
+  finishToolGroup(
+    assistantId: number,
+    finish: FinishReply,
+    calls: ToolCall[],
+  ): Message[] {
+    return this.db.transaction(() => {
+      if (!this.finishReplyRow(assistantId, finish, calls)) return [];
+      const assistant = this.message(assistantId)!;
+      const createdAt = this.now();
+      const ids = calls.map((call) =>
+        this.insertMessage(
+          assistant.chatId,
+          "tool",
+          {
+            content: "",
+            status: "pending",
+            toolCallId: call.id,
+            toolName: call.name,
+          },
+          createdAt,
+        ),
+      );
+      this.touchFromMessage(assistantId, createdAt);
+      return ids.map((id) => this.message(id)!);
+    })();
+  }
+
+  writeTool(id: number, fields: WriteTool): Message | null {
     const changed = this.db.transaction(() => {
       const result = this.db
-        .query(`UPDATE messages SET status = $status, error = $error,
-          finish_reason = $finishReason, model = $model,
-          finished_at = $finishedAt, ttft_ms = $ttftMs,
-          thinking_ms = $thinkingMs,
-          prompt_tokens = $promptTokens, cached_tokens = $cachedTokens,
-          generated = $generated, prefill_ms = $prefillMs,
-          decode_ms = $decodeMs, tokenize_ms = $tokenizeMs
-          WHERE id = $id AND status = 'streaming'`)
-        .run({
-          id,
-          status: fields.status,
-          error: fields.error ?? null,
-          finishReason: fields.finishReason ?? null,
-          model: fields.model,
-          finishedAt: fields.finishedAt,
-          ttftMs: fields.ttftMs,
-          thinkingMs: fields.thinkingMs,
-          promptTokens: stats?.promptTokens ?? null,
-          cachedTokens: stats?.cachedTokens ?? null,
-          generated: stats?.generated ?? null,
-          prefillMs: stats?.prefillMs ?? null,
-          decodeMs: stats?.decodeMs ?? null,
-          tokenizeMs: stats?.tokenizeMs ?? null,
-        });
-      if (result.changes > 0) {
-        this.db
-          .query(`UPDATE chats SET updated_at = $at WHERE id =
-            (SELECT chat_id FROM messages WHERE id = $id)`)
-          .run({ at: fields.finishedAt, id });
+        .query(`UPDATE messages SET status = $status, content = $content,
+          error = $error, finished_at = $finishedAt
+          WHERE id = $id AND role = 'tool'
+            AND status IN ('pending', 'running')`)
+        .run({ id, ...fields });
+      if (result.changes > 0 && fields.finishedAt !== null) {
+        this.touchFromMessage(id, fields.finishedAt);
       }
       return result.changes > 0;
     })();
     return changed ? this.message(id) : null;
+  }
+
+  private touchFromMessage(id: number, at: number) {
+    this.db
+      .query(`UPDATE chats SET updated_at = $at WHERE id =
+        (SELECT chat_id FROM messages WHERE id = $id)`)
+      .run({ at, id });
   }
 
   deleteFrom(chatId: string, messageId: number): number {
@@ -469,11 +646,33 @@ export class ChatStore {
     })();
   }
 
+  deleteAfterLastUser(chatId: string): number | null {
+    return this.db.transaction(() => {
+      const user = this.db
+        .query(`SELECT id FROM messages WHERE chat_id = $chatId
+          AND role = 'user' ORDER BY id DESC LIMIT 1`)
+        .get({ chatId }) as { id: number } | null;
+      if (!user) return null;
+      const first = this.db
+        .query(`SELECT id FROM messages WHERE chat_id = $chatId
+          AND id > $id ORDER BY id LIMIT 1`)
+        .get({ chatId, id: user.id }) as { id: number } | null;
+      if (!first) return null;
+      this.db
+        .query("DELETE FROM messages WHERE chat_id = $chatId AND id > $id")
+        .run({ chatId, id: user.id });
+      this.db
+        .query("UPDATE chats SET updated_at = $at WHERE id = $chatId")
+        .run({ at: this.now(), chatId });
+      return first.id;
+    })();
+  }
+
   message(id: number): Message | null {
     const row = this.db
       .query(`${MESSAGE_SELECT} WHERE id = $id`)
       .get({ id }) as MessageRow | null;
-    return row ? message(row) : null;
+    return row ? this.toMessage(row) : null;
   }
 
   lastMessage(chatId: string): Message | null {
@@ -482,14 +681,59 @@ export class ChatStore {
         `${MESSAGE_SELECT} WHERE chat_id = $chatId ORDER BY id DESC LIMIT 1`,
       )
       .get({ chatId }) as MessageRow | null;
-    return row ? message(row) : null;
+    return row ? this.toMessage(row) : null;
+  }
+
+  repairAtBoot(finishedAt = this.now()): number {
+    return this.db.transaction(() => {
+      let repaired = this.db
+        .query(`UPDATE messages SET status = 'interrupted', finished_at = $at
+          WHERE role = 'assistant' AND status = 'streaming'`)
+        .run({ at: finishedAt }).changes;
+      repaired += this.db
+        .query(`UPDATE messages SET status = 'interrupted', content = $content,
+          finished_at = $at WHERE role = 'tool'
+          AND status IN ('pending', 'running')`)
+        .run({ at: finishedAt, content: TOOL_INTERRUPTED }).changes;
+
+      const assistants = this.db
+        .query(`${MESSAGE_SELECT} WHERE role = 'assistant'
+          AND tool_calls IS NOT NULL ORDER BY chat_id, id`)
+        .all() as MessageRow[];
+      for (const row of assistants) {
+        const calls = this.parseToolCalls(row);
+        if (!calls || calls.length === 0) continue;
+        // A repaired row may land after later turns, so call identity keeps a
+        // second boot from inserting it again.
+        const toolRows = this.db
+          .query(`SELECT tool_call_id AS toolCallId FROM messages
+            WHERE chat_id = $chatId AND role = 'tool'`)
+          .all({ chatId: row.chatId }) as {
+          toolCallId: string | null;
+        }[];
+        const have = new Set(toolRows.map((tool) => tool.toolCallId));
+        for (const call of calls) {
+          if (have.has(call.id)) continue;
+          this.insertMessage(
+            row.chatId,
+            "tool",
+            {
+              content: TOOL_INTERRUPTED,
+              status: "interrupted",
+              finishedAt,
+              toolCallId: call.id,
+              toolName: call.name,
+            },
+            finishedAt,
+          );
+          repaired++;
+        }
+      }
+      return repaired;
+    })();
   }
 
   repairInterrupted(finishedAt = this.now()): number {
-    const result = this.db
-      .query(`UPDATE messages SET status = 'interrupted', finished_at = $at
-        WHERE status = 'streaming'`)
-      .run({ at: finishedAt });
-    return result.changes;
+    return this.repairAtBoot(finishedAt);
   }
 }

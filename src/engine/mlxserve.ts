@@ -11,6 +11,11 @@
 
 import { homedir } from "node:os";
 import { join } from "node:path";
+import {
+  buildChatBody as buildOpenAiChatBody,
+  chatEvents as openAiChatEvents,
+  streamChat,
+} from "./openai.ts";
 import type {
   CacheLimits,
   Capability,
@@ -22,17 +27,17 @@ import type {
   ModelInfo,
 } from "./types.ts";
 
+export {
+  CHAT_HEADERS_TIMEOUT_MS,
+  MAX_SSE_FRAME_BYTES,
+  parseSse,
+} from "./openai.ts";
+
 // Every request from the sampler must fail fast: a hung engine must not
 // stall the 1 Hz loop, and a sample with engineUp=false is the right answer.
 const TIMEOUT_MS = 3000;
 // Loads can take seconds (mmap of tens of GB); unloads a few seconds too.
 const ACTION_TIMEOUT_MS = 120_000;
-export const CHAT_HEADERS_TIMEOUT_MS = 30_000;
-const CHAT_SILENCE_TIMEOUT_MS = 5 * 60_000;
-export const MAX_SSE_FRAME_BYTES = 1024 * 1024;
-const CHAT_ERROR_BODY_MAX_BYTES = 4 * 1024;
-const CHAT_ERROR_BODY_TIMEOUT_MS = 10_000;
-const OVERSIZED_SSE_FRAME = "engine sent an oversized stream frame";
 
 const num = (v: unknown) =>
   typeof v === "number" && Number.isFinite(v) ? v : 0;
@@ -101,173 +106,52 @@ export function parseModels(body: any): ModelInfo[] {
     }));
 }
 
-export function buildChatBody(req: ChatRequest) {
-  const body: Record<string, unknown> = {
-    model: req.model,
-    messages: req.messages.map((message) => ({
-      role: message.role,
-      content: message.content,
-      ...(message.role === "assistant" && message.reasoning
-        ? { reasoning_content: message.reasoning }
-        : {}),
-    })),
-    enable_thinking: req.thinking,
-    stream: true,
-    stream_options: { include_usage: true },
-  };
+export function buildChatBody(req: ChatRequest): Record<string, unknown> {
+  const body = buildOpenAiChatBody(req);
+  body.enable_thinking = req.thinking;
   if (req.thinking && req.reasoningEffort != null) {
     body.reasoning_effort = req.reasoningEffort;
   }
-  if (req.temperature != null) body.temperature = req.temperature;
-  if (req.topP != null) body.top_p = req.topP;
-  if (req.maxTokens != null) body.max_tokens = req.maxTokens;
   return body;
 }
 
-// Frames are returned as their joined data payload. Comments count as bytes
-// for liveness in the reader but carry no event for the runner.
-export function parseSse(
-  buffer: string,
-  chunk: string,
-): { frames: string[]; rest: string } {
-  let rest = buffer + chunk;
-  const frames: string[] = [];
-  while (true) {
-    const split = /\r?\n\r?\n/.exec(rest);
-    if (!split || split.index === undefined) break;
-    const raw = rest.slice(0, split.index);
-    if (new TextEncoder().encode(raw).byteLength > MAX_SSE_FRAME_BYTES) {
-      throw new Error(OVERSIZED_SSE_FRAME);
-    }
-    rest = rest.slice(split.index + split[0].length);
-    const data = raw
-      .split(/\r?\n/)
-      .filter((line) => !line.startsWith(":"))
-      .filter((line) => line === "data" || line.startsWith("data:"))
-      .map((line) => line.slice(5).replace(/^ /, ""));
-    if (data.length > 0) frames.push(data.join("\n"));
-  }
-  if (new TextEncoder().encode(rest).byteLength > MAX_SSE_FRAME_BYTES) {
-    throw new Error(OVERSIZED_SSE_FRAME);
-  }
-  return { frames, rest };
-}
-
-async function readErrorBody(
-  response: Response,
-  controller: AbortController,
-): Promise<string> {
-  if (!response.body) return "";
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  type ReadResult =
-    | { kind: "read"; done: boolean; value?: Uint8Array }
-    | { kind: "timeout" };
-  const timeout = new Promise<ReadResult>((resolve) => {
-    timer = setTimeout(
-      () => resolve({ kind: "timeout" }),
-      CHAT_ERROR_BODY_TIMEOUT_MS,
-    );
-  });
-  try {
-    while (size < CHAT_ERROR_BODY_MAX_BYTES) {
-      const read: Promise<ReadResult> = reader.read().then((result) => ({
-        kind: "read",
-        done: result.done,
-        value: result.value,
-      }));
-      const result = await Promise.race([read, timeout]);
-      if (result.kind === "timeout") {
-        controller.abort(new Error("engine error body timed out"));
-        return "";
-      }
-      if (result.done || !result.value) break;
-      const remaining = CHAT_ERROR_BODY_MAX_BYTES - size;
-      const chunk = result.value.subarray(0, remaining);
-      chunks.push(chunk);
-      size += chunk.byteLength;
-    }
-    const body = new Uint8Array(size);
-    let offset = 0;
-    for (const chunk of chunks) {
-      body.set(chunk, offset);
-      offset += chunk.byteLength;
-    }
-    return new TextDecoder().decode(body);
-  } catch {
-    return "";
-  } finally {
-    if (timer) clearTimeout(timer);
-    void reader.cancel().catch(() => {});
-    reader.releaseLock();
-  }
-}
-
 export function chatEvents(json: string): ChatEvent[] {
-  if (json.trim() === "[DONE]") return [];
-  let body: any;
+  const events = openAiChatEvents(json);
+  let timings: any;
   try {
-    body = JSON.parse(json);
+    const body = JSON.parse(json);
+    if (body?.timings && typeof body.timings === "object") {
+      timings = body.timings;
+    }
   } catch {
-    return [{ kind: "error", message: "invalid JSON in engine stream" }];
+    return events;
   }
-  if (body?.error) {
-    const message =
-      typeof body.error.message === "string"
-        ? body.error.message
-        : typeof body.error === "string"
-          ? body.error
-          : "engine generation failed";
-    return [{ kind: "error", message }];
-  }
-  const events: ChatEvent[] = [];
-  const choice = Array.isArray(body?.choices) ? body.choices[0] : undefined;
-  const delta = choice?.delta;
-  if (typeof delta?.reasoning_content === "string" && delta.reasoning_content) {
-    events.push({ kind: "reasoning", text: delta.reasoning_content });
-  }
-  if (typeof delta?.content === "string" && delta.content) {
-    events.push({ kind: "content", text: delta.content });
-  }
-  if (typeof choice?.finish_reason === "string") {
-    events.push({
-      kind: "finish",
-      reason: choice.finish_reason,
-      details:
-        typeof choice.finish_details?.type === "string"
-          ? choice.finish_details.type
-          : null,
-    });
-  }
-  if (
-    body?.usage &&
-    Array.isArray(body?.choices) &&
-    body.choices.length === 0
-  ) {
-    const usage = body.usage;
-    const timings = body.timings ?? {};
-    events.push({
-      kind: "usage",
+  if (!timings) return events;
+  return events.map((event) => {
+    if (event.kind !== "usage") return event;
+    return {
+      ...event,
       stats: {
-        promptTokens: num(usage.prompt_tokens),
+        ...event.stats,
         cachedTokens:
-          typeof usage.prompt_tokens_details?.cached_tokens === "number"
-            ? usage.prompt_tokens_details.cached_tokens
-            : num(timings.cached_n),
+          typeof timings.cached_n === "number"
+            ? timings.cached_n
+            : event.stats.cachedTokens,
         generated:
           typeof timings.predicted_n === "number"
             ? timings.predicted_n
-            : num(usage.completion_tokens),
-        prefillMs: num(timings.prompt_ms),
-        decodeMs: num(timings.predicted_ms),
+            : event.stats.generated,
+        prefillMs:
+          typeof timings.prompt_ms === "number" ? timings.prompt_ms : null,
+        decodeMs:
+          typeof timings.predicted_ms === "number"
+            ? timings.predicted_ms
+            : null,
         tokenizeMs:
           typeof timings.tokenize_ms === "number" ? timings.tokenize_ms : null,
       },
-    });
-  }
-  return events;
+    };
+  });
 }
 
 export class MlxServe implements Engine {
@@ -329,87 +213,12 @@ export class MlxServe implements Engine {
   }
 
   async *chat(req: ChatRequest, signal: AbortSignal): AsyncIterable<ChatEvent> {
-    const controller = new AbortController();
-    const combined = AbortSignal.any([signal, controller.signal]);
-    const headersTimer = setTimeout(
-      () => controller.abort(new Error("engine response headers timed out")),
-      CHAT_HEADERS_TIMEOUT_MS,
+    yield* streamChat(
+      `${this.url}/v1/chat/completions`,
+      buildChatBody(req),
+      signal,
+      chatEvents,
     );
-    let response: Response;
-    try {
-      response = await fetch(`${this.url}/v1/chat/completions`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(buildChatBody(req)),
-        signal: combined,
-      });
-    } finally {
-      clearTimeout(headersTimer);
-    }
-    if (!response.ok) {
-      const text = await readErrorBody(response, controller);
-      yield {
-        kind: "error",
-        message: `HTTP ${response.status}${text ? `: ${text}` : ""}`,
-      };
-      return;
-    }
-    if (!response.body) {
-      yield { kind: "error", message: "engine response has no stream" };
-      return;
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let rest = "";
-    try {
-      while (true) {
-        let timer: ReturnType<typeof setTimeout> | undefined;
-        const read = reader.read().then(
-          (value) => ({ value }),
-          (error) => ({ error }),
-        );
-        const silence = new Promise<{ silent: true }>((resolve) => {
-          timer = setTimeout(
-            () => resolve({ silent: true }),
-            CHAT_SILENCE_TIMEOUT_MS,
-          );
-        });
-        const result = await Promise.race([read, silence]);
-        if (timer) clearTimeout(timer);
-        if ("silent" in result) {
-          controller.abort(new Error("engine silent for 5 min"));
-          yield { kind: "error", message: "engine silent for 5 min" };
-          return;
-        }
-        if ("error" in result) throw result.error;
-        if (result.value.done) break;
-        let parsed: ReturnType<typeof parseSse>;
-        try {
-          parsed = parseSse(
-            rest,
-            decoder.decode(result.value.value, {
-              stream: true,
-            }),
-          );
-        } catch (err) {
-          if (!(err instanceof Error) || err.message !== OVERSIZED_SSE_FRAME) {
-            throw err;
-          }
-          controller.abort(err);
-          yield { kind: "error", message: OVERSIZED_SSE_FRAME };
-          return;
-        }
-        rest = parsed.rest;
-        for (const frame of parsed.frames) {
-          if (frame.trim() === "[DONE]") return;
-          for (const event of chatEvents(frame)) yield event;
-        }
-      }
-    } finally {
-      await reader.cancel().catch(() => {});
-      reader.releaseLock();
-    }
   }
 
   // Model ids are "<org>/<name>" in serve mode; callers pass the full id.

@@ -1,0 +1,10 @@
+data: {"id":"chatcmpl-1788882601702","object":"chat.completion.chunk","created":1788882601,"model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","system_fingerprint":"mlx-serve","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-1788882601702","object":"chat.completion.chunk","created":1788882602,"model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","system_fingerprint":"mlx-serve","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_1788882601702_0","type":"function","function":{"name":"get_current_time","arguments":"{\"timezone\":\"Asia/Tokyo\"}"}}]},"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-1788882601702","object":"chat.completion.chunk","created":1788882602,"model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","system_fingerprint":"mlx-serve","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}],"usage":null}
+
+data: {"id":"chatcmpl-1788882601702","object":"chat.completion.chunk","created":1788882602,"model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","system_fingerprint":"mlx-serve","choices":[],"usage":{"prompt_tokens":328,"completion_tokens":29,"total_tokens":357,"prompt_tokens_details":{"cached_tokens":0}},"timings":{"prompt_n":328,"cached_n":0,"prompt_ms":725.171,"prompt_per_second":452.307,"predicted_n":29,"predicted_ms":247.761,"predicted_per_second":117.048,"tokenize_ms":3.373}}
+
+data: [DONE]
+

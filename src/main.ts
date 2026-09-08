@@ -25,6 +25,7 @@ import { hostInfo } from "./host/info.ts";
 import { isLocalUrl } from "./host/local.ts";
 import { takeSample } from "./sample.ts";
 import { Sampler } from "./sampler.ts";
+import { TOOLS } from "./tools.ts";
 import page from "./ui/index.html";
 import { DEFAULT_PORT, serve, tailscaleAddress } from "./web.ts";
 
@@ -63,6 +64,7 @@ const HELP = `\x1b[1mmlx-spy\x1b[0m - monitor and control an LLM inference serve
   GET|PATCH|DELETE /api/chats/<id>
                                read, update or delete a chat
   POST /api/chats/<id>/<name>  messages, regenerate, edit or stop
+  GET /api/tools                available chat tools
   GET /api/snapshot            latest sample and model list
   GET /api/history?range=1h    series for 1h, 6h, 24h or 7d
   WS  /ws                      snapshot on connect, then one sample per second
@@ -183,7 +185,12 @@ const log = (line: string) =>
 
 if (dbPath !== ":memory:") mkdirSync(dirname(dbPath), { recursive: true });
 const history = new History(dbPath, retentionDays);
-const chats = new ChatStore(history.db);
+const chats = new ChatStore(
+  history.db,
+  Date.now,
+  () => TOOLS.map((tool) => tool.name),
+  log,
+);
 const repaired = chats.repairInterrupted();
 if (repaired > 0) {
   log(
@@ -197,6 +204,7 @@ const chat = new ChatRunner({
   store: chats,
   models: () => sampler.currentModels(),
   log,
+  version: VERSION,
 });
 const web = serve(
   {
