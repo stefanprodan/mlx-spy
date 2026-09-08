@@ -32,8 +32,9 @@ the bar and the tiles describe the engine as a whole.
 ## Requests
 
 The Requests page moves the live bar over and lists the last 50 finished or
-cancelled requests under it: when it finished, the model (known when
-exactly one was resident), prompt and cached tokens, generated tokens,
+cancelled requests under it: when it finished, the model (the engine does
+not say which one served it, so it is the resident model, the favorite
+when several are resident), prompt and cached tokens, generated tokens,
 prefill and decode time, time to first token and the total. A cancelled
 request shows its finish time in amber. Each row opens on a click (the
 chevron in front of the time) to a panel with every field, including the

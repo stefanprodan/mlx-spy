@@ -278,7 +278,7 @@ describe("Sampler", () => {
     history.close();
   });
 
-  test("a finished request is stored with the only resident model", async () => {
+  test("a finished request is stored with the resident model", async () => {
     const engine = new FakeEngine([
       idle,
       (b) => {
@@ -296,9 +296,8 @@ describe("Sampler", () => {
       },
       idle,
     ]);
-    // the fixture has two models resident: with one, the request is its
-    engine.models = async () =>
-      parseModels(modelsFixture).map((m, i) => ({ ...m, loaded: i === 0 }));
+    // the fixture has two models resident and no favorite: the request
+    // goes to the first by id
     const history = new History(":memory:");
     const c = clock();
     const s = new Sampler(engine, history, { now: c.now });
@@ -324,6 +323,37 @@ describe("Sampler", () => {
     // no second row for the same request on later ticks
     await s.tick();
     expect(history.requests()).toHaveLength(1);
+    history.close();
+  });
+
+  test("among several resident models the favorite gets the request", async () => {
+    const engine = new FakeEngine([
+      idle,
+      (b) => {
+        b.gauges.requests_running = 1;
+      },
+      (b) => {
+        b.counters.generation_tokens_total += 50;
+        b.counters.prompt_tokens_total += 200;
+        b.counters.prefill_tokens_total += 120;
+        b.counters.requests_success_total += 1;
+        b.histograms.decode_time_seconds.count += 1;
+        b.histograms.decode_time_seconds.sum += 2;
+      },
+      idle,
+    ]);
+    const history = new History(":memory:");
+    const c = clock();
+    const s = new Sampler(engine, history, { now: c.now });
+    await s.tick(); // the first tick lists the models, so the favorite sticks
+    const second = "stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp";
+    expect(history.toggleFavorite(second)).toBe(second);
+    s.stampFavorite();
+    for (let i = 0; i < 3; i++) {
+      c.advance(1000);
+      await s.tick();
+    }
+    expect(history.requests()[0]?.model).toBe(second);
     history.close();
   });
 

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { parseMetrics } from "../src/engine/mlxserve.ts";
 import {
+  attributeModel,
   EMPTY_REQUESTS,
   type RequestState,
   trackRequests,
@@ -360,5 +361,28 @@ describe("trackRequests", () => {
     ]);
     expect(t[1].last?.startedAt).toBeNull();
     expect(t[1].last?.generated).toBe(4);
+  });
+});
+
+describe("attributeModel", () => {
+  const m = (id: string, loaded: boolean, favorite = false) => ({
+    id,
+    loaded,
+    favorite,
+  });
+  test("none resident: unknown", () => {
+    expect(attributeModel([])).toBeNull();
+    expect(attributeModel([m("b/x", false, true)])).toBeNull();
+  });
+  test("one resident: that one, favorite or not", () => {
+    expect(attributeModel([m("b/x", true), m("a/y", false, true)])).toBe("b/x");
+  });
+  test("several resident: the favorite, else the first by id", () => {
+    expect(attributeModel([m("b/x", true), m("a/y", true, true)])).toBe("a/y");
+    expect(attributeModel([m("b/x", true), m("a/y", true)])).toBe("a/y");
+    // a favorite that is not resident does not count
+    expect(
+      attributeModel([m("b/x", true), m("c/z", true), m("a/y", false, true)]),
+    ).toBe("b/x");
   });
 });

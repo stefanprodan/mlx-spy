@@ -13,6 +13,7 @@ import { cacheDirSizes } from "./host/disk.ts";
 import { NULL_PROBES } from "./host/index.ts";
 import type { DiskDir, HostProbes, HostSnapshot } from "./host/types.ts";
 import {
+  attributeModel,
   EMPTY_REQUESTS,
   type RequestState,
   trackRequests,
@@ -305,13 +306,12 @@ export class Sampler {
           restored || reset ? null : this.prev,
           reading,
         );
-        // what ended this tick goes to the list, attributed to the model
-        // when it is the only one resident: the list is refreshed first,
+        // what ended this tick goes to the list, attributed to a resident
+        // model (the favorite among several): the list is refreshed first,
         // the periodic one can be 5 s stale (an unload since would blame
         // the wrong model)
         if (this.requests.finished.length) {
-          const loaded = (await this.refreshModels()).filter((m) => m.loaded);
-          const model = loaded.length === 1 ? loaded[0].id : null;
+          const model = attributeModel(await this.refreshModels());
           let last = this.requests.last;
           for (const r of this.requests.finished) {
             last = { ...r, model };

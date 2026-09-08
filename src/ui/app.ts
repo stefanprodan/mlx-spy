@@ -974,7 +974,7 @@ function renderRequests() {
           : r.startedAt != null
             ? r.finishedAt - r.startedAt
             : 0;
-      // the id is known only when one model was resident at the finish
+      // the resident model at the finish, the favorite among several
       const model = el("td", "model", r.model ? r.model.split("/").pop() : "-");
       if (r.model) model.title = r.model;
       tr.append(

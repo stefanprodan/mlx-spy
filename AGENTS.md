@@ -95,8 +95,8 @@ src/history.ts       ring buffer (1 h) plus bun:sqlite: samples table, 7 day
                      range in columnar form for uPlot; models table (ids the
                      engine lists, the user's favorite flag; synced each fetch);
                      requests table (the last 50 finished or cancelled
-                     requests as the tracker saw them, plus the model when
-                     exactly one was resident)
+                     requests as the tracker saw them, plus the resident
+                     model, the favorite among several)
 src/chats.ts         ChatStore over the same bun:sqlite file: chats (settings
                      live on the chat) and messages (status done, streaming,
                      stopped, interrupted, error; the reply's stats from the

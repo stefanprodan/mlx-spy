@@ -29,10 +29,24 @@ export type LastRequest = {
   prefillMs: number; // the engine's own timings
   decodeMs: number;
   ttftMs: number | null;
-  // the engine reports nothing per model: the sampler fills this in when
-  // exactly one model was resident at the finish, else it stays unset
+  // the engine reports nothing per model: the sampler fills this in from
+  // the models resident at the finish (see attributeModel), null when none
   model?: string | null;
 };
+
+// Which resident model served a request. The engine does not say, so the
+// answer is a guess: the only resident one; among several, the user's
+// favorite (the daily driver), else the first by id, so the guess is at
+// least stable across requests.
+export function attributeModel(
+  models: readonly { id: string; loaded: boolean; favorite?: boolean }[],
+): string | null {
+  const loaded = models.filter((m) => m.loaded);
+  if (loaded.length === 0) return null;
+  const fav = loaded.find((m) => m.favorite);
+  if (fav) return fav.id;
+  return loaded.map((m) => m.id).sort()[0];
+}
 
 export type RequestState = {
   starts: number[]; // start times of the open requests, oldest first
