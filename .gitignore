@@ -116,3 +116,6 @@ dist
 bin/
 .*.bun-build
 .idea/
+
+# the Studio host, see scripts/studio.env.example
+scripts/studio.env

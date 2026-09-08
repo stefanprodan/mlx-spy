@@ -13,6 +13,7 @@
     "lint": "bun biome check --write . && bun tsc --noEmit",
     "build": "mkdir -p bin && bun build src/main.ts --compile --outfile bin/mlx-spy && rm -f .*.bun-build",
     "clean": "rm -rf bin .*.bun-build",
+    "deploy-studio": "scripts/deploy-studio.sh",
     "install-bin": "bun run build && mkdir -p \"${PREFIX:-$HOME/.local}/bin\" && install -m 0755 bin/mlx-spy \"${PREFIX:-$HOME/.local}/bin/mlx-spy\"",
     "uninstall-bin": "rm -f \"${PREFIX:-$HOME/.local}/bin/mlx-spy\""
   },

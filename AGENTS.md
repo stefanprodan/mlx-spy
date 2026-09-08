@@ -168,7 +168,9 @@ src/host/types.ts    HostProbes, HostMemory, ProcessMemory, DiskDir, HostSnapsho
 test/                bun test suites; fixtures/ holds /metrics.json and
                      /v1/models bodies recorded from the live engine
 docs/                user docs: monitor, chat, api, development (keep the
-                     API page in step with web.ts)
+                     API page in step with web.ts); internal/ is for us:
+                     the Studio deployment (ssh, launchd agent, paths, db)
+scripts/             deploy-studio.sh (make deploy-studio) and the Studio agent plist
 plans/               the development plan and milestones
 ```
 
@@ -253,9 +255,10 @@ only the deltas whose offset continues the text it has.
   the engine answered, 2 when it did not (`engineUp: false`), 1 on bad
   arguments. From the MacBook the engine is remote: `enginePid` is null,
   `procRss` 0 and `disk` empty by design; host memory is the MacBook's.
-- The full picture needs the binary on the Studio: `make build`, scp it to
-  `/tmp`, run `--once --engine http://127.0.0.1:11234` over ssh, remove it.
-  Read the homelab `studio-ops.md` rules before any ssh command.
+- The Studio runs its own mlx-spy as a launchd agent. `make deploy-studio`
+  builds, installs and restarts it. Read `docs/internal/studio.md` before
+  any ssh command to the Studio: it has the paths, the rules and the
+  manual steps that are known to work.
 - Record new fixtures with `curl <engine>/metrics.json` and
   `curl <engine>/v1/models`, pretty-printed, into `test/fixtures/`. Never
   record `/props`.

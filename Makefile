@@ -11,7 +11,7 @@ export PREFIX
 
 .DEFAULT_GOAL := help
 
-.PHONY: help start dev test build lint clean install-bin uninstall-bin
+.PHONY: help start dev test build lint clean install-bin uninstall-bin deploy-studio
 
 help: ## Show available tasks
 	@grep -hE '^[a-z][a-z-]*:.*## .*$$' $(MAKEFILE_LIST) \
@@ -40,3 +40,6 @@ install-bin: ## Compile and install onto PATH (override PREFIX=...)
 
 uninstall-bin: ## Remove the installed binary (override PREFIX=...)
 	@bun run uninstall-bin
+
+deploy-studio: ## Build, install on the Mac Studio and restart its agent (docs/internal/studio.md)
+	@bun run deploy-studio

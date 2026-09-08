@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.stefanprodan.mlx-spy</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/stefanprodan/.mlx-spy/bin/mlx-spy</string>
+		<string>--engine</string>
+		<string>http://127.0.0.1:11234</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/stefanprodan/.mlx-spy</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>HOME</key>
+		<string>/Users/stefanprodan</string>
+		<key>PATH</key>
+		<string>/usr/bin:/bin</string>
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>5</integer>
+	<key>StandardOutPath</key>
+	<string>/Users/stefanprodan/.mlx-spy/mlx-spy.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/stefanprodan/.mlx-spy/mlx-spy.log</string>
+</dict>
+</plist>
