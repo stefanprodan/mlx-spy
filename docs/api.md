@@ -55,49 +55,68 @@ Errors are `{"error": "<sentence>"}` with 400 (bad input), 403
 
 The chat is server-owned: mlx-spy sends the request to the engine, writes
 the reply into its database as it streams, and the browser only watches.
-One reply streams at a time; a second send anywhere answers 409. Bodies are
-JSON, at most 256 KB.
+One send runs at a time; a second send anywhere answers 409. A send with
+tools on can take several engine rounds. Bodies are JSON, at most 256 KB.
 
 | Route | Body | Answer |
 |---|---|---|
 | `GET /api/chats` | | `[{id, title, model, createdAt, updatedAt, streaming}]`, newest first |
-| `POST /api/chats` | `{model, title?, systemPrompt?, thinking?, reasoningEffort?, temperature?, topP?, maxTokens?}` | 201, the chat; the model must be one the engine lists |
+| `POST /api/chats` | `{model, title?, systemPrompt?, thinking?, reasoningEffort?, temperature?, topP?, maxTokens?, toolsOff?}` | 201, the chat; the model must be one the engine lists |
 | `GET /api/chats/<id>` | | the chat with its settings and messages in order, a streaming reply included with the text so far |
-| `PATCH /api/chats/<id>` | any of `title, model, systemPrompt, thinking, reasoningEffort, temperature, topP, maxTokens` | the updated chat |
+| `PATCH /api/chats/<id>` | any of `title, model, systemPrompt, thinking, reasoningEffort, temperature, topP, maxTokens, toolsOff` | the updated chat; `model` and `toolsOff` answer 409 while the chat has a send running |
 | `DELETE /api/chats/<id>` | | `{ok: true}`; a streaming reply is stopped first |
 | `POST /api/chats/<id>/messages` | `{content}` | 202 `{user, message}`: the user row and the assistant row that starts streaming |
 | `POST /api/chats/<id>/regenerate` | | 202 `{user, message}`; the last reply is dropped and answered again |
 | `POST /api/chats/<id>/edit` | `{messageId, content}` | 202 `{user, message}`; that user message and everything after it are replaced |
-| `POST /api/chats/<id>/stop` | | `{ok: true}`, also when nothing runs |
+| `POST /api/chats/<id>/stop` | | `{ok: true}`, also when nothing runs; stops the engine round or the tool call that is running |
+| `GET /api/tools` | | the tool registry, `[{name, description}]` |
 
 A message is `{id, chatId, role, content, html, reasoning, status, error,
-finishReason, model, createdAt, finishedAt, ttftMs, thinkingMs, stats}`. `html` is the
-server-rendered markdown of an assistant row. `status` is `done`,
-`streaming`, `stopped` (the stop button), `interrupted` (mlx-spy was
-restarted mid-answer) or `error` (the engine's message in `error`). `stats`
-comes from the engine's usage chunk: `{promptTokens, cachedTokens,
-generated, prefillMs, decodeMs, tokenizeMs}`; a stopped or failed reply has
-none. `ttftMs` is measured by mlx-spy from the request to the first token, and
-`thinkingMs` from the first reasoning token to the first content token.
+finishReason, model, createdAt, finishedAt, ttftMs, thinkingMs, stats,
+toolCalls, toolCallId, toolName}`. `role` is `user`, `assistant` or `tool`.
+`html` is the server-rendered markdown of an assistant row. `status` is
+`done`, `streaming`, `stopped` (the stop button), `interrupted` (mlx-spy
+was restarted mid-answer) or `error` (the engine's message in `error`); a
+tool row also passes through `pending` and `running`. `stats` comes from
+the engine's usage chunk: `{promptTokens, cachedTokens, generated,
+prefillMs, decodeMs, tokenizeMs}`; the millisecond fields are null on an
+engine that reports no timings, and a stopped or failed reply has no
+stats. `ttftMs` is measured by mlx-spy from the request to the first token
+of any kind, and `thinkingMs` from the first reasoning token to the first
+content token.
+
+With tools on, a send is a sequence of rows under the user message: an
+assistant row per engine round, with `toolCalls` (`[{id, name,
+arguments}]`, `arguments` the JSON string the model wrote) when the round
+asked for calls and `finishReason` `tool_calls`, then one `tool` row per
+call with `toolCallId`, `toolName` and the result text in `content` (an
+error text when the call failed, `[Tool execution was interrupted]` when a
+stop or a restart cut it), then the next round. The last assistant row is
+the reply. A send that hit a limit ends with `finishReason` `tool_loop`
+(the same call three times in a row) or `tool_limit` (rounds, calls, time
+or result size).
 
 Settings live on the chat and apply to the next message. `thinking` maps to
 the engine's `enable_thinking`; `reasoningEffort` is `low`, `medium`,
 `high`, `none` (an explicit off) or null for the engine default; the sampling fields are null for the
 engine defaults. Reasoning is stored and sent back to the engine on later
-turns as `reasoning_content`.
+turns as `reasoning_content`. `toolsOff` is the list of tool names the
+chat does not offer the model; every tool is on when it is empty, and a
+name outside the registry is a 400.
 
 ## WebSocket
 
 `WS /ws` sends `{type: "snapshot"}` on connect (the same body as
-`/api/snapshot`, plus `chat: {chatId, messageId} | null` naming the reply
-in flight), then `{type: "sample"}` once a second, `{type: "event"}` when
+`/api/snapshot`, plus `chat: {chatId, messageId} | null` naming the row
+the send in flight is writing), then `{type: "sample"}` once a second, `{type: "event"}` when
 an action finishes in any tab, and `{type: "chat"}` for the chat:
 
 | `data.kind` | Fields | When |
 |---|---|---|
-| `started` | `chat, user, message, deletedFrom?` | a reply started; both rows are new. After a regenerate or an edit, `deletedFrom` is the id of the first row that was removed: drop it and every later one |
+| `started` | `chat, user, message, deletedFrom?` | a send started; both rows are new. After a regenerate or an edit, `deletedFrom` is the id of the first row that was removed: drop it and every later one |
+| `row` | `chatId, message, chat` | one row of a send with tools changed: a later round's streaming row, a round finished with its calls, or a tool row in any state; insert or replace it by id |
 | `delta` | `chatId, messageId, content?, contentAt, reasoning?, reasoningAt` | text arrived; `*At` is the length of the buffer before it, so a client applies a delta only when it continues the text it has |
 | `html` | `chatId, messageId, html, htmlAt` | at most once a second: the reply rendered up to `htmlAt` characters |
-| `done` | `chat, message` | the reply reached a terminal status, given by `message.status` |
+| `done` | `chat, message` | the send ended; `message` is its last assistant row with the terminal status |
 | `chat` | `chat` | a chat was created or its title or settings changed |
 | `deleted` | `chatId` | a chat was deleted |

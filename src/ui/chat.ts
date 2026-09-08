@@ -13,7 +13,7 @@
 
 import type { ChatWsEvent } from "../chat.ts";
 import type { Chat, ChatSettings, ChatSummary, Message } from "../chats.ts";
-import type { ModelInfo } from "../engine/types.ts";
+import type { ModelInfo, ToolCall } from "../engine/types.ts";
 import type { Sample } from "../sample.ts";
 
 type Running = { chatId: string; messageId: number } | null;
@@ -168,6 +168,7 @@ export function mountChat(): ChatPage {
     temperature: null,
     topP: null,
     maxTokens: null,
+    toolsOff: [],
   };
   const live = new Map<number, Live>();
   // events for the chat being fetched, applied once the rows are in
@@ -410,10 +411,43 @@ export function mountChat(): ChatPage {
   const csTopP = $("cs-top-p") as HTMLInputElement;
   const csMax = $("cs-max-tokens") as HTMLInputElement;
   const csDelete = $("cs-delete") as HTMLButtonElement;
+  const csTools = $("cs-tools");
+  const csToolsHint = $("cs-tools-hint");
   const numOrNull = (v: string) => (v.trim() === "" ? null : Number(v));
+  // the registry, fetched once; the dialog lists it with a checkbox each
+  let toolsList: { name: string; description: string }[] = [];
+  void api<{ name: string; description: string }[]>("/api/tools")
+    .then((list) => {
+      toolsList = list;
+    })
+    .catch(() => {});
+
+  function renderToolsGroup(s: ChatSettings) {
+    csTools.replaceChildren(el("legend", "", "Tools"));
+    csTools.hidden = toolsList.length === 0;
+    const off = s.toolsOff ?? [];
+    for (const t of toolsList) {
+      const l = el("label");
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = t.name;
+      cb.checked = !off.includes(t.name);
+      l.append(cb, el("b", "", t.name), el("span", "", t.description));
+      csTools.append(l);
+    }
+    // a model list with capabilities that leave out tool use is a hint,
+    // not a gate: a plain /v1/models has no capabilities at all
+    const info = s.model ? modelInfo(s.model) : null;
+    const doubtful =
+      info !== null &&
+      info.capabilities.length > 0 &&
+      !info.capabilities.includes("tool_use");
+    csToolsHint.hidden = !doubtful || toolsList.length === 0;
+  }
 
   $("chat-gear").onclick = () => {
     const s = settingsOf();
+    renderToolsGroup(s);
     csSystem.value = s.systemPrompt;
     csEffort.value = s.reasoningEffort ?? "";
     csTemp.value = s.temperature === null ? "" : String(s.temperature);
@@ -431,6 +465,9 @@ export function mountChat(): ChatPage {
       temperature: numOrNull(csTemp.value),
       topP: numOrNull(csTopP.value),
       maxTokens: numOrNull(csMax.value),
+      toolsOff: [...csTools.querySelectorAll<HTMLInputElement>("input")]
+        .filter((cb) => !cb.checked)
+        .map((cb) => cb.value),
     });
   };
   // two clicks, no second dialog: the first arms the button
@@ -524,10 +561,14 @@ export function mountChat(): ChatPage {
     const st = m.stats;
     if (m.ttftMs !== null) s.append(span("TTFT", secs(m.ttftMs)));
     if (st) {
-      s.append(
-        span("prefill", tps(st.promptTokens - st.cachedTokens, st.prefillMs)),
-        span("decode", tps(st.generated, st.decodeMs)),
-      );
+      if (typeof st.prefillMs === "number") {
+        s.append(
+          span("prefill", tps(st.promptTokens - st.cachedTokens, st.prefillMs)),
+        );
+      }
+      if (typeof st.decodeMs === "number") {
+        s.append(span("decode", tps(st.generated, st.decodeMs)));
+      }
       const p = el("span");
       p.append(
         "prompt ",
@@ -549,11 +590,17 @@ export function mountChat(): ChatPage {
       s.append(el("span", "st", "cut at max tokens"));
     } else if (m.finishReason?.includes("repetition_loop")) {
       s.append(el("span", "st", "stopped a repetition loop"));
+    } else if (m.finishReason === "tool_loop") {
+      s.append(el("span", "st", "stopped after repeating the same call"));
+    } else if (m.finishReason === "tool_limit") {
+      s.append(el("span", "st", "tool limit reached"));
     }
     const acts = el("span", "acts");
-    acts.append(
-      button("", "Copy", () => void navigator.clipboard.writeText(m.content)),
-    );
+    if (m.content !== "") {
+      acts.append(
+        button("", "Copy", () => void navigator.clipboard.writeText(m.content)),
+      );
+    }
     if (last) acts.append(button("", "Regenerate", () => void regenerate()));
     s.append(acts);
     return s;
@@ -625,6 +672,74 @@ export function mountChat(): ChatPage {
     };
   }
 
+  // ---------- tool calls ----------
+
+  // the summary line shows one telling argument: the zone, the page
+  function shortArg(name: string, args: string): string {
+    try {
+      const o = JSON.parse(args || "{}") as Record<string, unknown>;
+      if (name === "fetch" && typeof o.url === "string") {
+        const u = new URL(o.url);
+        return u.host + (u.pathname === "/" ? "" : u.pathname);
+      }
+      const v = Object.values(o).find((x) => typeof x === "string");
+      return typeof v === "string" ? v : "";
+    } catch {
+      return "";
+    }
+  }
+
+  function toolBlock(call: ToolCall): HTMLDetailsElement {
+    const d = document.createElement("details");
+    d.className = "tool live";
+    d.dataset.call = call.id;
+    const sum = el("summary");
+    sum.innerHTML = `<i class="spin" aria-hidden="true"></i>${CHEVRON}`;
+    sum.append(
+      el("span", "tn", call.name),
+      el("span", "ta", shortArg(call.name, call.arguments)),
+      el("span", "td", "pending"),
+    );
+    let pretty = call.arguments;
+    try {
+      pretty = JSON.stringify(JSON.parse(call.arguments || "{}"), null, 2);
+    } catch {}
+    d.append(
+      sum,
+      el("div", "lbl", "arguments"),
+      el("div", "args", pretty),
+      el("div", "lbl", "result, untrusted"),
+      el("div", "out"),
+    );
+    return d;
+  }
+
+  // a tool row lands in the block of the call it answers
+  function fillTool(m: Message, root: ParentNode = threadEl) {
+    if (m.toolCallId === null) return;
+    const d = root.querySelector<HTMLDetailsElement>(
+      `details.tool[data-call="${CSS.escape(m.toolCallId)}"]`,
+    );
+    if (!d) return;
+    const busy = m.status === "pending" || m.status === "running";
+    d.classList.toggle("live", busy);
+    const td = d.querySelector(".td")!;
+    td.classList.toggle("err", m.status === "error");
+    td.textContent =
+      m.status === "done" && m.finishedAt !== null
+        ? secs(m.finishedAt - m.createdAt)
+        : m.status;
+    d.querySelector(".out")!.textContent = m.content;
+  }
+
+  function upsertTool(m: Message) {
+    if (!current || m.chatId !== current.id) return;
+    const i = current.messages.findIndex((x) => x.id === m.id);
+    if (i === -1) current.messages.push(m);
+    else current.messages[i] = m;
+    fillTool(m);
+  }
+
   function assistantRow(m: Message, last: boolean): HTMLElement {
     const root = el("div", "msg assistant");
     root.dataset.id = String(m.id);
@@ -633,8 +748,21 @@ export function mountChat(): ChatPage {
     md.innerHTML = m.html ?? "";
     const tail = el("div", "tail");
     tail.hidden = true;
+    const tools = el("div", "tools");
+    if (m.toolCalls) {
+      const ids = new Set<string>();
+      for (const call of m.toolCalls) {
+        tools.append(toolBlock(call));
+        ids.add(call.id);
+      }
+      for (const t of current?.messages ?? []) {
+        if (t.role === "tool" && t.toolCallId && ids.has(t.toolCallId)) {
+          fillTool(t, tools);
+        }
+      }
+    }
     const stats = el("div", "stats");
-    root.append(md, tail, stats);
+    root.append(md, tail, tools, stats);
     const v: Live = {
       root,
       think: null,
@@ -681,9 +809,9 @@ export function mountChat(): ChatPage {
     emptyEl.hidden = true;
     const msgs = current.messages;
     msgs.forEach((m, i) => {
-      threadEl.append(
-        m.role === "user" ? userRow(m) : assistantRow(m, i === msgs.length - 1),
-      );
+      if (m.role === "tool") fillTool(m);
+      else if (m.role === "user") threadEl.append(userRow(m));
+      else threadEl.append(assistantRow(m, i === msgs.length - 1));
     });
     stick = true;
     scrollEl.scrollTop = scrollEl.scrollHeight;
@@ -762,6 +890,10 @@ export function mountChat(): ChatPage {
 
   function appendMessage(m: Message) {
     if (!current || m.chatId !== current.id) return;
+    if (m.role === "tool") {
+      upsertTool(m);
+      return;
+    }
     if (current.messages.some((x) => x.id === m.id)) return;
     current.messages.push(m);
     // the previous reply loses its Regenerate button
@@ -816,7 +948,7 @@ export function mountChat(): ChatPage {
     renderBody(v, ev.html);
   }
 
-  function finish(m: Message) {
+  function finish(m: Message, last = true) {
     const v = live.get(m.id);
     live.delete(m.id);
     if (!current || m.chatId !== current.id) return;
@@ -826,7 +958,7 @@ export function mountChat(): ChatPage {
     if (v) {
       stopTimer(v);
       if (v.thinkEnd === null) v.thinkEnd = Date.now();
-      const row = assistantRow(m, true);
+      const row = assistantRow(m, last);
       // keep the measured thinking time on the finished row
       const nv: Live = {
         ...v,
@@ -839,7 +971,7 @@ export function mountChat(): ChatPage {
     } else {
       threadEl
         .querySelector(`[data-id="${m.id}"]`)
-        ?.replaceWith(assistantRow(m, true));
+        ?.replaceWith(assistantRow(m, last));
     }
     keepBottom();
     renderContext();
@@ -869,11 +1001,23 @@ export function mountChat(): ChatPage {
         applyHtml(ev);
         break;
       case "done":
-        if (running?.messageId === ev.message.id) running = null;
+        // send-level: the reply may be a later round than the row started
+        if (running?.chatId === ev.chat.id) running = null;
         upsert(ev.chat);
         finish(ev.message);
         renderComposer();
         break;
+      case "row": {
+        // one row of a send with tools: a new round's streaming row, a
+        // finished round with its calls, or a tool row in any state
+        upsert(ev.chat);
+        const m = ev.message;
+        if (m.role === "tool") upsertTool(m);
+        else if (!current?.messages.some((x) => x.id === m.id)) {
+          appendMessage(m);
+        } else finish(m, false);
+        break;
+      }
       case "chat":
         upsert({ ...ev.chat, streaming: isStreaming(ev.chat.id) });
         if (current && ev.chat.id === current.id) {

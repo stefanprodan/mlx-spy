@@ -243,6 +243,8 @@
           <label>Top p<input id="cs-top-p" type="number" min="0" max="1" step="0.01" placeholder="engine" /></label>
           <label>Max tokens<input id="cs-max-tokens" type="number" min="1" step="1" placeholder="auto" /></label>
         </div>
+        <fieldset class="tools" id="cs-tools" aria-label="Tools"><legend>Tools</legend></fieldset>
+        <p class="hint" id="cs-tools-hint" hidden>The engine does not list tool use for this model; calls may not work.</p>
         <p class="hint">Empty fields use the engine's defaults. Changes apply to the next message.</p>
         <div class="row">
           <button type="button" class="btn danger" id="cs-delete" value="delete">Delete chat</button>

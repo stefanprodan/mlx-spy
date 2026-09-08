@@ -85,7 +85,10 @@ Deploy when asked, then say what is now running there.
    The chat runner is the only other engine caller: it posts to
    `/v1/chat/completions` (always streaming, so the engine cancels the slot
    when mlx-spy aborts) only when a user sends a message, and a message
-   naming a non-resident model cold-loads it on purpose.
+   naming a non-resident model cold-loads it on purpose. The chat tools
+   (`src/tools/`) are the only other network callers: `fetch` reads what
+   the model asks for, the engine included (the user's decision), and
+   refuses only this host's loopback addresses.
 3. **No spawns on the monitor path.** Host numbers come from FFI, directory
    sizes from recursive stat. The only spawns are the two local-only
    actions: `launchctl kickstart -k gui/<uid>/<label>` for "free" and the
@@ -102,10 +105,15 @@ src/main.ts          entry: CLI parsing (--engine, --listen, --db, --retention,
                      --hot-cache-max, --disk-cache-max, --once, -h, -v); wires
                      sampler, history and server; VERSION from package.json
 src/engine/types.ts  the Engine interface and the normalised metric types
+src/engine/openai.ts the OpenAI chat completions wire, shared by every engine:
+                     buildChatBody, parseSse, chatEvents, ToolCallTracker,
+                     streamChat (pure parts tested on recorded and hand-made
+                     frames)
 src/engine/mlxserve.ts
                      mlx-serve adapter: parseMetrics/parseModels (pure, tested),
                      the HTTP client, load/unload, cache dir and log paths,
-                     cacheLimits() from the LaunchAgent plist
+                     cacheLimits() from the LaunchAgent plist; its chat layer
+                     adds enable_thinking, reasoning_effort and timings
 src/sample.ts        Sample type; computeRates and buildSample (pure, tested);
                      takeSample does the I/O for --once
 src/requests.ts      trackRequests: the request in flight and the last
@@ -116,9 +124,13 @@ src/history.ts       ring buffer (1 h) plus bun:sqlite: samples (7 day
                      retention, bucketed series() for uPlot), models (ids and
                      the favorite flag), requests (the last 50)
 src/chats.ts         ChatStore: chats and messages over the same sqlite file
-src/chat.ts          ChatRunner: the one generation in flight, partial reply
+src/chat.ts          ChatRunner: the one send in flight, rounds of engine
+                     requests with tool calls between them, partial reply
                      written every 250 ms or 2 KB, deltas and rendered HTML
                      on /ws, stop from any tab, regenerate, edit
+src/tools.ts, src/tools/
+                     the tool registry the runner executes: get_current_time,
+                     fetch (with the network guard); pure parts tested
 src/markdown.ts      renderMarkdown(): the safety boundary for model output
 src/actions.ts       load, unload, default, free, diskClear (local-only),
                      historyClear, favorite; one at a time, logged, last 50
