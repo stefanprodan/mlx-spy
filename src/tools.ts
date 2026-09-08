@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { ChatTool, ToolCall } from "./engine/types.ts";
-import { fetchTool } from "./tools/fetch.ts";
+import { webfetchTool } from "./tools/webfetch.ts";
 
 const TOOL_TIMEOUT_MS = 20_000;
 const MAX_RESULT_CHARS = 50_000;
@@ -100,7 +100,7 @@ export const TOOLS: ToolDef[] = [
       return JSON.stringify(formatCurrentTime(ctx.now(), timezone(args)));
     },
   },
-  fetchTool,
+  webfetchTool,
 ];
 
 export function toolSchemas(names?: string[]): ChatTool[] {

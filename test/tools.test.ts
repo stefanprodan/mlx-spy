@@ -51,10 +51,10 @@ describe("tool registry", () => {
   test("returns schemas for all or selected enabled tools", () => {
     expect(toolSchemas().map((tool) => tool.name)).toEqual([
       "get_current_time",
-      "fetch",
+      "webfetch",
     ]);
     expect(toolSchemas([])).toEqual([]);
-    const fetch = toolSchemas(["fetch"])[0];
+    const fetch = toolSchemas(["webfetch"])[0];
     expect(fetch.parameters).toMatchObject({
       required: ["url"],
       properties: {

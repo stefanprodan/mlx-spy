@@ -1404,14 +1404,14 @@ fieldset.seg {
   opacity: 1;
 }
 .msg.user .uacts button,
-.stats .acts button {
+.after .acts button {
   color: var(--faint);
   padding: 1px 6px;
   border-radius: 5px;
   font-size: 11.5px;
 }
 .msg.user .uacts button:hover,
-.stats .acts button:hover {
+.after .acts button:hover {
   color: var(--fg);
   background: #26282b;
 }
@@ -1464,33 +1464,20 @@ details.think .r {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-details.think.live summary {
-  color: var(--brand);
-}
-details.think.live summary svg {
-  display: none;
-}
-details.think:not(.live) .spin {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid var(--line);
-  border-top-color: var(--brand);
-  animation: turn 0.8s linear infinite;
-  flex: 0 0 auto;
-}
 
 /* a tool call under an assistant round: the summary names the tool and its
    argument, the body shows the arguments and the untrusted result */
 /* empty parts of a row must not take a flex gap: a round that only
-   called tools has no body, and its stats line stays empty */
+   called tools has no body */
 .msg.assistant .tools:empty,
-.msg.assistant .md:empty,
-.msg.assistant .stats:empty {
+.msg.assistant .md:empty {
   display: none;
 }
 .msg.assistant .tools > details.tool:first-child {
   margin-top: 0;
+}
+.msg.assistant .tools > details.tool:last-child {
+  margin-bottom: 0;
 }
 
 /* the work before a reply: the rounds with their reasoning and calls,
@@ -1535,22 +1522,6 @@ details.work .wb > details.think {
 }
 details.work .wb > details.think:last-child {
   margin-bottom: 0;
-}
-details.work.live summary {
-  color: var(--brand);
-}
-details.work.live summary svg {
-  display: none;
-}
-details.work.live .spin {
-  display: block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid var(--line);
-  border-top-color: var(--brand);
-  animation: turn 0.8s linear infinite;
-  flex: 0 0 auto;
 }
 details.tool {
   padding-left: 0;
@@ -1619,13 +1590,21 @@ details.tool .lbl {
   text-transform: uppercase;
   color: var(--faint);
 }
-details.tool.live summary {
+/* a fold at work: its own line turns brand and swaps the chevron for a
+   spinner; the folds inside an open group keep their look */
+details.think.live > summary,
+details.work.live > summary,
+details.tool.live > summary {
   color: var(--brand);
 }
-details.tool.live summary svg {
+details.think.live > summary svg,
+details.work.live > summary svg,
+details.tool.live > summary svg {
   display: none;
 }
-details.tool.live .spin {
+details.think.live > summary .spin,
+details.work.live > summary .spin,
+details.tool.live > summary .spin {
   display: block;
   width: 12px;
   height: 12px;
@@ -1786,11 +1765,11 @@ details.tool.live .spin {
   vertical-align: -2px;
   background: var(--brand);
   border-radius: 1px;
-  animation: blink 1s steps(2) infinite;
+  animation: caret 1s steps(2) infinite;
 }
 
-/* the numbers under a reply */
-.stats {
+/* under a reply: why it was cut, and the actions on hover */
+.after {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1798,29 +1777,24 @@ details.tool.live .spin {
   font-family: var(--mono);
   font-size: 11.5px;
   color: var(--faint);
-  font-variant-numeric: tabular-nums;
 }
-.stats b {
-  font-weight: 600;
-  color: var(--dim);
+.after:empty {
+  display: none;
 }
-.stats .who {
-  color: var(--dim);
-}
-.stats .st {
+.after .st {
   color: var(--amber);
 }
-.stats .st.err {
+.after .st.err {
   color: #ff95a8;
 }
-.stats .acts {
+.after .acts {
   margin-left: auto;
   display: flex;
   gap: 2px;
   opacity: 0;
   transition: opacity 0.12s;
 }
-.stats .acts button {
+.after .acts button {
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 .msg.assistant:hover .acts,
@@ -1839,6 +1813,32 @@ details.tool.live .spin {
   font-size: 12.5px;
   color: #ff95a8;
 }
+/* the last reply's numbers, one dimmed line above the box */
+.composer .stats {
+  max-width: var(--col);
+  margin: 0 auto 6px;
+  padding: 0 14px;
+  display: flex;
+  gap: 14px;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+.composer .stats span {
+  flex: 0 0 auto;
+}
+.composer .stats b {
+  font-weight: 600;
+  color: var(--dim);
+}
+/* a display rule beats the hidden attribute */
+.composer .stats[hidden] {
+  display: none;
+}
 .box {
   max-width: var(--col);
   margin: 0 auto;
@@ -1848,7 +1848,7 @@ details.tool.live .spin {
   padding: 10px 10px 8px 14px;
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 6px 10px;
+  gap: 4px 10px;
 }
 .box:focus-within {
   border-color: #3d4350;
@@ -1872,8 +1872,8 @@ details.tool.live .spin {
 }
 .box .send {
   grid-column: 2;
-  grid-row: 1 / 3;
-  align-self: end;
+  grid-row: 2;
+  align-self: center;
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -1905,32 +1905,38 @@ details.tool.live .spin {
   opacity: 0.35;
   cursor: default;
 }
+/* one row, everything centred on the send button's axis: the hint, the
+   context readout (its number over its bar) and the button itself, so
+   the row has the same height with or without the readout */
 .box .foot {
   grid-column: 1;
   display: flex;
   align-items: center;
   gap: 12px;
+  min-height: 34px;
   font-size: 11px;
   color: var(--faint);
   min-width: 0;
 }
 .box .foot .ctx {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
   margin-left: auto;
   white-space: nowrap;
 }
-.box .foot .bar {
-  width: 64px;
+.box .foot .ctx[hidden] {
+  display: none;
+}
+.box .foot .track {
   height: 3px;
   border-radius: 2px;
   background: var(--line);
   overflow: hidden;
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 6px;
 }
-.box .foot .bar i {
+.box .foot .track i {
   display: block;
   height: 100%;
   width: 0;
@@ -1952,10 +1958,16 @@ details.tool.live .spin {
   z-index: 2;
 }
 
-/* the rounds inside a work group carry no numbers; the reply's line
-   covers the whole send */
-details.work .wb .stats {
+/* the rounds inside a work group have no actions of their own, and
+   their text is the model talking to itself: dim, like its reasoning */
+details.work .wb .after {
   display: none;
+}
+details.work .wb .md {
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--dim);
 }
 
 /* settings dialog */
@@ -2019,10 +2031,11 @@ dialog.settings .tools legend {
   color: var(--faint);
 }
 dialog.settings .tools label {
+  display: inline-flex;
   flex-direction: row;
-  align-items: baseline;
-  gap: 10px;
-  margin: 0 0 6px;
+  align-items: center;
+  gap: 7px;
+  margin: 0 18px 4px 0;
   text-transform: none;
   letter-spacing: 0;
   font-size: 13.5px;
@@ -2039,10 +2052,6 @@ dialog.settings .tools input {
 dialog.settings .tools b {
   font-family: var(--mono);
   font-weight: 500;
-}
-dialog.settings .tools span {
-  color: var(--dim);
-  font-size: 12.5px;
 }
 
 .msg.user.editing textarea {
@@ -2074,7 +2083,7 @@ dialog.settings .tools span {
     opacity: 0.35;
   }
 }
-@keyframes blink {
+@keyframes caret {
   to {
     visibility: hidden;
   }
@@ -2160,13 +2169,21 @@ dialog.settings .tools span {
   .box .foot #chat-hint {
     display: none;
   }
-  .stats .acts,
+  .after .acts,
   .msg.user .uacts {
     opacity: 1;
   }
-  .stats .acts {
+  .after .acts {
     width: 100%;
     margin-left: 0;
+  }
+  /* one line on a phone: the rates and the cache share stay */
+  .composer .stats {
+    gap: 10px;
+    padding: 0 6px;
+  }
+  .composer .stats .x {
+    display: none;
   }
   dialog.settings .fields {
     grid-template-columns: 1fr;

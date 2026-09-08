@@ -595,9 +595,10 @@ export class ChatRunner {
       temperature: send.policy.temperature,
       topP: send.policy.topP,
       maxTokens: send.policy.maxTokens,
-      ...(!lastRound && send.policy.tools.length > 0
-        ? { tools: send.policy.tools }
-        : {}),
+      // the tools stay in the last round too: a model that calls anyway
+      // must be parsed by the engine, so the runner can end the send with
+      // tool_limit instead of the raw call text becoming the answer
+      ...(send.policy.tools.length > 0 ? { tools: send.policy.tools } : {}),
     };
   }
 

@@ -6,7 +6,7 @@ import {
   fetchText,
   parseFetchUrl,
   sliceContent,
-} from "../src/tools/fetch.ts";
+} from "../src/tools/webfetch.ts";
 import { runTool, type SendBudget, type ToolContext } from "../src/tools.ts";
 
 const PUBLIC_IP = "93.184.216.34";
@@ -362,7 +362,7 @@ describe("fetch extraction and slicing", () => {
 
   test("slices in UTF-16 code units and appends the exact continuation hint", () => {
     expect(sliceContent("a😀bcdef", 1, 3)).toBe(
-      "😀b\n\n<error>Content truncated. Call the fetch tool with a start_index of 4 to get more content.</error>",
+      "😀b\n\n<error>Content truncated. Call the webfetch tool with a start_index of 4 to get more content.</error>",
     );
     expect(sliceContent("abcd", 0, 4)).toBe("abcd");
     expect(sliceContent("abcd", 4, 4)).toBe(
@@ -388,7 +388,7 @@ describe("fetch loopback canary", () => {
       const result = await runTool(
         {
           id: host,
-          name: "fetch",
+          name: "webfetch",
           arguments: JSON.stringify({
             url: `http://${host}:${server.port}/props`,
           }),

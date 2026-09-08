@@ -328,7 +328,7 @@ describe("chat API", () => {
         description: expect.any(String),
       },
       {
-        name: "fetch",
+        name: "webfetch",
         description: expect.any(String),
       },
     ]);

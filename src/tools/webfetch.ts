@@ -471,7 +471,7 @@ export function sliceContent(
   const end = startIndex + maxLength;
   const result = text.slice(startIndex, end);
   if (end < text.length) {
-    return `${result}\n\n<error>Content truncated. Call the fetch tool with a start_index of ${end} to get more content.</error>`;
+    return `${result}\n\n<error>Content truncated. Call the webfetch tool with a start_index of ${end} to get more content.</error>`;
   }
   return result;
 }
@@ -620,10 +620,10 @@ export async function fetchText(
   }
 }
 
-export const fetchTool: ToolDef = {
-  name: "fetch",
+export const webfetchTool: ToolDef = {
+  name: "webfetch",
   description:
-    "Fetch a URL and return its text. Long pages are returned in slices; call fetch again with start_index set to the next index named in the truncation message.",
+    "Fetch a URL and return its text. Long pages are returned in slices; call webfetch again with start_index set to the next index named in the truncation message.",
   parameters: {
     type: "object",
     properties: {

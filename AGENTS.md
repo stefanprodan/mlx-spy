@@ -86,7 +86,7 @@ Deploy when asked, then say what is now running there.
    `/v1/chat/completions` (always streaming, so the engine cancels the slot
    when mlx-spy aborts) only when a user sends a message, and a message
    naming a non-resident model cold-loads it on purpose. The chat tools
-   (`src/tools/`) are the only other network callers: `fetch` reads what
+   (`src/tools/`) are the only other network callers: `webfetch` reads what
    the model asks for, the engine included (the user's decision), and
    refuses only this host's loopback addresses.
 3. **No spawns on the monitor path.** Host numbers come from FFI, directory
@@ -130,7 +130,7 @@ src/chat.ts          ChatRunner: the one send in flight, rounds of engine
                      on /ws, stop from any tab, regenerate, edit
 src/tools.ts, src/tools/
                      the tool registry the runner executes: get_current_time,
-                     fetch (with the network guard); pure parts tested
+                     webfetch (with the network guard); pure parts tested
 src/markdown.ts      renderMarkdown(): the safety boundary for model output
 src/actions.ts       load, unload, default, free, diskClear (local-only),
                      historyClear, favorite; one at a time, logged, last 50

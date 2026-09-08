@@ -844,7 +844,7 @@ describe("ChatRunner", () => {
     s.db.close();
   });
 
-  test("omits tools and adds the exhausted prompt on round eight", async () => {
+  test("keeps the tools and adds the exhausted prompt on round eight", async () => {
     const s = setup();
     s.runner.update(s.chat.id, { toolsOff: [] });
     s.runner.send(s.chat.id, "keep going");
@@ -855,7 +855,8 @@ describe("ChatRunner", () => {
       ]);
     }
     expect(s.engine.requests).toHaveLength(8);
-    expect(s.engine.requests[7]).not.toHaveProperty("tools");
+    // the tools stay so the engine parses a call the model makes anyway
+    expect(s.engine.requests[7].tools).toHaveLength(2);
     expect(s.engine.requests[7].messages[0]).toMatchObject({
       role: "system",
       content: expect.stringContaining(
@@ -887,7 +888,7 @@ describe("ChatRunner", () => {
     await turn();
     expect(on.engine.requests[0].tools?.map((tool) => tool.name)).toEqual([
       "get_current_time",
-      "fetch",
+      "webfetch",
     ]);
     expect(on.engine.requests[0].messages[0]).toMatchObject({
       role: "system",

@@ -1,7 +1,7 @@
 # Chat
 
 The Chat page is a chat on the engine mlx-spy monitors, with the numbers
-the engine reports shown under every reply.
+the engine reports shown in the composer.
 
 ## What makes it different
 
@@ -14,21 +14,30 @@ the engine reports shown under every reply.
   cancels the request at once and the text written so far is kept. A stop
   during a model load takes effect when the load finishes; the model stays
   loaded.
-- **The engine's own timings.** Under a reply: time to first token,
-  prefill and decode tok/s, prompt and cached tokens, generated tokens and
-  the duration, from the engine's usage chunk. While the reply streams the
-  line shows the live rate the monitor sees.
+- **The engine's own timings.** One line above the message box: the last
+  reply's prefill and decode tok/s, the cached share of its prompt, the
+  tokens it generated and the duration, from the engine's usage chunk;
+  under it, the context the last reply used against the model's window.
+  While a reply streams the line shows the live rate the monitor sees. A
+  phone keeps the two rates and the cache share.
 - **Reasoning is kept.** Thinking models show their reasoning in a
   collapsed block with the time it took; it is stored and sent back on
   later turns.
 - **Tools.** The model can call a small set of tools that run inside
-  mlx-spy: `get_current_time` (the clock in any zone) and `fetch` (a web
-  page as text). The work before a reply (the reasoning, the calls and
-  their results) folds into one line, "Worked for 5.6 s, 2 tool calls",
-  open while it runs and shut once the reply starts; opened, each call
-  shows its argument, the time it took and its result. Tools run without
-  asking; every tool is on for a new chat and the gear lists them with a
-  checkbox each.
+  mlx-spy: `get_current_time` (the clock in any zone) and `webfetch` (a web
+  page as text). While a send works, one line with a spinner says
+  "Working", with the calls finished so far once there are any; a click
+  opens it on the steps so far. When the send ends,
+  that line becomes the fold of the work
+  (the reasoning, what the model said between calls, the calls and their
+  results), "Worked for 5.6 s, 2 tool calls"; opened, each call shows its
+  argument, the time it took and its result. A send that ended on a call
+  (the tool limit, a stop) has no answer: its calls are in the fold and
+  the reason stands where the answer would be. Text streams below the line
+  as it arrives; with tools on it may still turn out to be a step rather
+  than the answer, and then it folds in. Tools run without asking; every tool is on for a new chat and
+  the gear lists them with a checkbox each (hover a name for what it
+  does).
 - **Nothing extra runs.** Markdown is rendered by Bun on the server; the
   page loads no library and the engine is only called when you send.
 
@@ -61,10 +70,9 @@ A reply that was cut shows why under it: `stopped`, `cut at max tokens`,
 
 With any tool on, every send can take several rounds: the model asks for
 a call, mlx-spy runs it and sends the result back, and the model answers
-or calls again. The calls of a round run at once. The numbers under the
-reply cover the whole send: time to the first token of the first round,
-the tokens every round generated, the time from the first round, and the
-round count. A send stops after 8 rounds (the last
+or calls again. The calls of a round run at once. The numbers in the composer cover the
+whole send: the tokens every round generated and the time from the first
+round. A send stops after 8 rounds (the last
 one tells the model to answer with text), after 24 calls, after 60 s
 spent in tools, or when the model repeats the same call three times in a
 row; the row then says so. Stop works during a call as it does during a
@@ -77,7 +85,7 @@ the system prompt also carries today's date; the time itself needs the
 tool. Some engines hold the reply while a call forms and send it at once,
 so a reply can pause for a few seconds with tools on.
 
-`fetch` reads web pages over http and https, on the internet or on your
+`webfetch` reads web pages over http and https, on the internet or on your
 own networks (the tailnet and the LAN included). It refuses this host
 (`localhost` and loopback addresses) and anything that is not text;
 redirects are checked hop by hop, and a page is cut at 2 MB. The engine
@@ -85,7 +93,7 @@ is reachable, so a model asked to read it can hit any of its routes. The result 
 page can carry instructions the model may follow, and its only way out is
 another fetch whose URL it composes: mlx-spy sends no credentials, caps
 the calls per send, and shows results under an "untrusted" label. There
-is no approval step; turn `fetch` off in the gear for a chat that should
+is no approval step; turn `webfetch` off in the gear for a chat that should
 not read the web.
 
 ## Where it lives

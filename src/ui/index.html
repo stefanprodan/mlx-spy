@@ -42,10 +42,11 @@
           <button type="button" class="jump" id="chat-jump" hidden>Jump to latest</button>
           <div class="composer">
             <div class="note" id="chat-note" hidden></div>
+            <div class="stats" id="chat-stats" hidden></div>
             <div class="box">
               <textarea id="chat-input" rows="2" placeholder="Message" aria-label="Message"></textarea>
               <button type="button" class="send" id="chat-send" aria-label="Send"><svg class="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg><svg class="i-stop" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
-              <div class="foot"><span id="chat-hint">Enter to send, Shift+Enter for a new line</span><span class="ctx" id="chat-ctx" hidden><span class="bar"><i></i></span><span class="n"></span></span></div>
+              <div class="foot"><span id="chat-hint">Enter to send, Shift+Enter for a new line</span><span class="ctx" id="chat-ctx" hidden><span class="n"></span><span class="track"><i></i></span></span></div>
             </div>
           </div>
         </section>
