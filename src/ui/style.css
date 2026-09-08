@@ -167,9 +167,11 @@ button {
 }
 .cur-head {
   margin-bottom: 8px;
+  min-height: 1.6em; /* the mono stamp's line, kept when idle */
 }
 .cur-foot {
   margin-top: 6px;
+  min-height: 1.6em; /* one line even when idle, so the card keeps its height */
   font-family: var(--mono);
   font-size: 11px;
   color: var(--faint);
@@ -443,6 +445,13 @@ dialog .row .btn {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+/* no fact: one quiet dash, never a sentence */
+.val .none,
+.chip .v.none,
+.facts dd.none {
+  color: var(--faint);
+  font-weight: 400;
+}
 .unit {
   font-size: 12px;
   font-weight: 400;
@@ -456,7 +465,7 @@ dialog .row .btn {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-height: 1.4em;
+  min-height: 1.6em; /* one text line, reserved while empty */
 }
 .bar {
   height: 5px;
@@ -464,6 +473,11 @@ dialog .row .btn {
   border-radius: 3px;
   margin-top: 10px;
   overflow: hidden;
+}
+/* a ceiling not known yet: the track keeps its place so the tile never
+   changes height when it becomes known */
+.bar.off {
+  visibility: hidden;
 }
 .fill {
   height: 100%;
@@ -583,6 +597,11 @@ dialog .row .btn {
 .card.models,
 .card.requests {
   padding: 4px 16px;
+}
+/* one row tall before the first snapshot, so the card does not grow from
+   a sliver when the list arrives */
+.card.models {
+  min-height: 61px;
 }
 table {
   width: 100%;
@@ -858,10 +877,9 @@ footer {
   }
 }
 
-/* requests: the live bar alone in its card, then the list */
+/* requests: the live bar alone in its card, then the list under its own head */
 #requests-live {
   padding: 16px;
-  margin-bottom: 14px;
 }
 #requests-live .request {
   margin-bottom: 0;
@@ -980,7 +998,7 @@ tr.detail td {
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
-.empty {
+.blank {
   margin: 14px 0;
   color: var(--faint);
   font-size: 13px;
@@ -1046,17 +1064,17 @@ tr.detail td {
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  max-width: 1240px;
-  padding: 22px 24px 18px;
+  padding-bottom: 18px; /* width, side and top padding: the shared .page,
+                           so the header sits where the other pages put it */
 }
 .page.chat footer {
   display: none;
 }
 .page.chat .top {
-  margin-bottom: 18px;
   flex: 0 0 auto;
 }
 .frame {
+  --col: 720px; /* the transcript and composer column */
   flex: 1;
   min-height: 0;
   display: grid;
@@ -1271,7 +1289,7 @@ fieldset.seg {
   pointer-events: none;
 }
 .listbtn {
-  display: none;
+  display: inline-flex;
 }
 
 /* the model picker under its button */
@@ -1334,14 +1352,14 @@ fieldset.seg {
   padding: 22px 18px 8px;
 }
 .thread {
-  max-width: 720px;
+  max-width: var(--col);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 22px;
 }
 .empty {
-  max-width: 720px;
+  max-width: var(--col);
   margin: 12vh auto 0;
   text-align: center;
   color: var(--dim);
@@ -1664,13 +1682,13 @@ details.think:not(.live) .spin {
   padding: 10px 18px 14px;
 }
 .note {
-  max-width: 720px;
+  max-width: var(--col);
   margin: 0 auto 8px;
   font-size: 12.5px;
   color: #ff95a8;
 }
 .box {
-  max-width: 720px;
+  max-width: var(--col);
   margin: 0 auto;
   background: var(--inset);
   border: 1px solid var(--line);
@@ -1876,14 +1894,22 @@ dialog.settings .hint {
   }
 }
 
+/* the list button folds the chat list away on desktop; the conversation
+   takes the frame and the column widens for it */
+@media (min-width: 761px) {
+  .frame.nolist {
+    --col: 920px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .frame.nolist .list {
+    display: none;
+  }
+}
+
 /* phone: the list becomes a drawer, controls shed their labels */
 @media (max-width: 760px) {
   .page.chat {
-    padding: 12px 10px 8px;
-  }
-  .page.chat .top {
-    gap: 16px;
-    margin-bottom: 10px;
+    padding-bottom: 8px;
   }
   .frame {
     grid-template-columns: minmax(0, 1fr);
@@ -1898,9 +1924,6 @@ dialog.settings .hint {
   }
   .list.open {
     display: flex;
-  }
-  .listbtn {
-    display: inline-flex;
   }
   .chead {
     padding: 10px 12px;

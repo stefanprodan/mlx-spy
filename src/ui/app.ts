@@ -45,12 +45,29 @@ const css = (name: string) =>
 // the machine (96 GB, not 103) and the engine's own --prefix-cache-* flags
 // use for their budgets. Only the host disk is decimal, as Finder labels it.
 const GB = 2 ** 30;
+// A value with no fact behind it is one quiet dash, everywhere; put()
+// marks it so the CSS can dim it. Counts stay 0: that is a fact.
+const DASH = "\u2013";
+const put = (id: string, text: string) => {
+  const e = $(id);
+  e.textContent = text;
+  e.classList.toggle("none", text === DASH);
+};
+// a fact with an optional note; the dash carries no note
+const fact = (id: string, text: string, note = "") => {
+  const e = $(id);
+  e.replaceChildren(
+    text,
+    ...(note && text !== DASH ? [el("small", "", note)] : []),
+  );
+  e.classList.toggle("none", text === DASH);
+};
 const gb = (b: number | null | undefined, d = 1) =>
-  b == null ? "-" : (b / GB).toFixed(d);
+  b == null ? DASH : (b / GB).toFixed(d);
 const diskSize = (b: number) =>
   b >= 1e12 ? `${(b / 1e12).toFixed(1)} TB` : `${Math.round(b / 1e9)} GB`;
 const num = (n: number | null | undefined, d = 0) =>
-  n == null ? "-" : n.toFixed(d);
+  n == null ? DASH : n.toFixed(d);
 const count = (n: number) =>
   n >= 1e6
     ? `${(n / 1e6).toFixed(2)}M`
@@ -126,19 +143,17 @@ function renderTiles(s: Sample) {
   lastSample = s;
   const decoding = (s.decodeTps ?? 0) > 0;
   if (decoding) lastDecode = s.decodeTps;
-  $("t-decode").textContent = whole(lastDecode);
-  $("t-decode-sub").textContent = !s.engineUp
-    ? "engine unreachable"
-    : lastDecode == null
-      ? "no request in the last hour"
-      : inView("decodeTps");
+  // idle: the last request's time is the one fact there is
+  const lastAt = s.lastRequest
+    ? `last at ${fmtStamp.format(s.lastRequest.finishedAt)}`
+    : "";
+  put("t-decode", whole(lastDecode));
+  $("t-decode-sub").textContent =
+    lastDecode == null ? lastAt : inView("decodeTps");
   if ((s.prefillTps ?? 0) > 0) lastPrefill = s.prefillTps;
-  $("t-prefill").textContent = whole(lastPrefill);
-  $("t-prefill-sub").textContent = !s.engineUp
-    ? "engine unreachable"
-    : lastPrefill == null
-      ? "no request in the last hour"
-      : inView("prefillTps");
+  put("t-prefill", whole(lastPrefill));
+  $("t-prefill-sub").textContent =
+    lastPrefill == null ? lastAt : inView("prefillTps");
   // requests over the loaded range, the counterpart of the Generated tile
   const served = rangeTotal("requestsTotal");
   const cancelled = rangeTotal("requestsCancelled");
@@ -148,9 +163,9 @@ function renderTiles(s: Sample) {
     ...(cancelled > 0
       ? [el("span", "warn", `${count(cancelled)} cancelled`), " · "]
       : []),
-    served + cancelled > 0
-      ? `TTFT avg ${ttft == null ? "-" : `${(ttft / 1000).toFixed(1)} s`}`
-      : "no request in view",
+    served + cancelled > 0 && ttft != null
+      ? `TTFT avg ${(ttft / 1000).toFixed(1)} s`
+      : "",
   );
   if (s.cacheHitPct != null) lastCacheHit = s.cacheHitPct;
   if (s.cacheTokenPct != null) lastCacheTok = s.cacheTokenPct;
@@ -170,44 +185,53 @@ function renderTiles(s: Sample) {
   prevTok = s.engineUp
     ? { epoch: s.epoch, prompt: s.promptTokens, cached: s.cachedPromptTokens }
     : null;
-  $("t-cache").textContent = s.engineUp ? gb(s.mem.hotCacheEst, 0) : "-";
-  // the budget is per resident model, so the tile's ceiling scales with them
+  put("t-cache", s.engineUp ? gb(s.mem.hotCacheEst, 0) : DASH);
+  // the budget is per resident model, so the tile's ceiling scales with
+  // them; with nothing resident the bar sits at zero against one budget
   const loaded = s.models.filter((m) => m.loaded).length;
-  const hotMax = limits && limits.hotBytes > 0 ? limits.hotBytes * loaded : 0;
+  const hotMax =
+    limits && limits.hotBytes > 0 ? limits.hotBytes * Math.max(1, loaded) : 0;
   setBar("t-cache-bar", hotMax ? (s.mem.hotCacheEst / hotMax) * 100 : 0);
-  $("t-cache-track").hidden = !hotMax || !s.engineUp;
+  $("t-cache-track").classList.toggle("off", !hotMax || !s.engineUp);
   $("t-cache-sub").textContent =
-    lastCacheHit == null
-      ? "no lookup in the last hour"
-      : `${num(lastCacheHit)}% of lookups hit`;
+    lastCacheHit != null
+      ? `${num(lastCacheHit)}% of lookups hit`
+      : hotMax
+        ? loaded > 1
+          ? `of ${gb(hotMax, 0)} GB for ${loaded} models`
+          : `of ${gb(hotMax, 0)} GB per model`
+        : "";
   const ssd = s.disk.reduce((n, d) => n + d.bytes, 0);
   const dirs = s.disk.length;
-  const ssdMax = limits && limits.diskBytes > 0 ? limits.diskBytes * dirs : 0;
-  $("t-ssd").textContent = engineLocal ? gb(ssd, 0) : "-";
+  const ssdMax =
+    limits && limits.diskBytes > 0 ? limits.diskBytes * Math.max(1, dirs) : 0;
+  put("t-ssd", engineLocal ? gb(ssd, 0) : DASH);
   setBar("t-ssd-bar", ssdMax ? (ssd / ssdMax) * 100 : 0);
-  $("t-ssd-track").hidden = !engineLocal || !ssdMax;
+  $("t-ssd-track").classList.toggle("off", !engineLocal || !ssdMax);
   $("t-ssd-sub").textContent = !engineLocal
-    ? "not probed for a remote engine"
-    : !dirs
-      ? "tier is empty"
-      : ssdMax
-        ? `of ${gb(ssdMax, 0)} GB for ${dirs} model dir${dirs === 1 ? "" : "s"}`
-        : `${dirs} model dir${dirs === 1 ? "" : "s"} on disk`;
+    ? ""
+    : ssdMax
+      ? dirs > 1
+        ? `of ${gb(ssdMax, 0)} GB for ${dirs} model dirs`
+        : `of ${gb(ssdMax, 0)} GB per model`
+      : dirs
+        ? `${dirs} model dir${dirs === 1 ? "" : "s"} on disk`
+        : "";
   // prompt tokens served from the cache instead of being prefilled; the
   // number worth watching, GPU busy sits at 100% under MLX regardless
-  $("t-eff").textContent = num(lastCacheTok);
+  put("t-eff", num(lastCacheTok));
   setBar("t-eff-bar", lastCacheTok ?? 0, 101, 101);
   $("t-eff-sub").textContent = lastReq
     ? `${count(lastReq.cached)} of ${count(lastReq.prompt)} prompt tokens`
-    : "no request in the last hour";
-  $("t-mem").textContent = gb(s.mem.procFootprint, 0);
+    : "";
+  put("t-mem", gb(s.mem.procFootprint, 0));
   const total = s.mem.hostTotal;
   const avail = s.mem.hostFree + s.mem.hostInactive;
   if (total > 0) {
     setBar("t-mem-bar", (s.mem.procFootprint / total) * 100);
     $("t-mem-sub").textContent = `${gb(avail, 0)} GB free of ${gb(total, 0)}`;
   } else {
-    $("t-mem-sub").textContent = "engine footprint";
+    $("t-mem-sub").textContent = "";
   }
   // tokens over the loaded range, not the engine's lifetime
   const gen = rangeTotal("generationTokens");
@@ -216,7 +240,7 @@ function renderTiles(s: Sample) {
   $("t-generated-sub").textContent =
     allTok > 0
       ? `${Math.round((gen / allTok) * 100)}% of ${count(allTok)} total`
-      : "no request in view";
+      : "";
   renderServer(s);
   renderActivity(s);
   renderRequest(s);
@@ -225,27 +249,19 @@ function renderTiles(s: Sample) {
 // The live half of the Runtime section: the engine's residency and process.
 function renderServer(s: Sample) {
   const loaded = s.models.filter((m) => m.loaded).length;
-  const weights = $("engine-weights");
-  weights.replaceChildren(
-    s.engineUp ? `${gb(s.mem.weights, 0)} GB` : "-",
-    el(
-      "small",
-      "",
-      !s.engineUp
-        ? "unreachable"
-        : loaded
-          ? `${loaded} model${loaded === 1 ? "" : "s"} resident`
-          : "nothing loaded",
-    ),
+  fact(
+    "engine-weights",
+    s.engineUp ? `${gb(s.mem.weights, 0)} GB` : DASH,
+    loaded
+      ? `${loaded} model${loaded === 1 ? "" : "s"} resident`
+      : "nothing loaded",
   );
   // Memory and CPU come from the process table, so they need a local
-  // engine; GPU busy is the engine's own gauge and works anywhere.
+  // engine; GPU busy is the engine's own gauge and works anywhere. A
+  // remote engine gets the dash (the section head says why); a local one
+  // that answers but has no process is worth a note.
   const pid = s.enginePid;
-  const why = !engineLocal
-    ? "runs on another host"
-    : s.engineUp
-      ? "no mlx-serve process found"
-      : "not running";
+  const why = engineLocal && s.engineUp ? "no mlx-serve process found" : "";
   $("engine-proc").textContent = pid == null ? "" : `pid ${pid}`;
   // the pill in the section head: uptime while online, else offline
   const es = $("engine-state");
@@ -255,19 +271,23 @@ function renderServer(s: Sample) {
       ? "online"
       : `up ${duration(s.t - s.engineStartedAt)}`;
   es.className = s.engineUp ? "pill live" : "pill err";
-  $("engine-mem").replaceChildren(
-    pid == null ? "-" : `${gb(s.mem.procFootprint, 0)} GB`,
-    el("small", "", pid == null ? why : `RSS ${gb(s.mem.procRss, 0)} GB`),
+  fact(
+    "engine-mem",
+    pid == null ? DASH : `${gb(s.mem.procFootprint, 0)} GB`,
+    `RSS ${gb(s.mem.procRss, 0)} GB`,
   );
-  $("engine-cpu").replaceChildren(
-    pid == null || s.engineCpuPct == null ? "-" : `${num(s.engineCpuPct)}%`,
-    el("small", "", pid == null ? why : "of one core"),
+  if (pid == null && why) $("engine-mem").append(el("small", "", why));
+  fact(
+    "engine-cpu",
+    pid == null || s.engineCpuPct == null ? DASH : `${num(s.engineCpuPct)}%`,
+    "of one core",
   );
-  $("engine-gpu").textContent = s.engineUp ? `${num(s.gpuPct)}%` : "-";
+  put("engine-gpu", s.engineUp ? `${num(s.gpuPct)}%` : DASH);
   if (s.mem.hostTotal > 0) {
-    $("host-mem").replaceChildren(
+    fact(
+      "host-mem",
       `${gb(s.mem.hostTotal, 0)} GB`,
-      el("small", "", `${gb(s.mem.hostFree + s.mem.hostInactive, 0)} GB free`),
+      `${gb(s.mem.hostFree + s.mem.hostInactive, 0)} GB free`,
     );
   }
 }
@@ -301,22 +321,22 @@ function renderHost(snap: Snapshot) {
       "host-mem",
       "host-disk",
     ]) {
-      $(id).textContent = "-";
+      put(id, DASH);
     }
     return;
   }
-  $("host-name").textContent = h.hostname;
-  $("host-os").textContent = h.os;
+  put("host-name", h.hostname);
+  put("host-os", h.os);
   const cores =
     h.perfCores != null && h.effCores != null
       ? `${h.cpuCores} cores (${h.perfCores}P + ${h.effCores}E)`
       : `${h.cpuCores} cores`;
-  $("host-chip").replaceChildren(h.chip ?? "unknown", el("small", "", cores));
-  $("host-gpu").textContent =
-    h.gpuCores != null ? `${h.gpuCores} cores` : "not detected";
-  $("host-disk").replaceChildren(
-    h.disk ? diskSize(h.disk.total) : "-",
-    el("small", "", h.disk ? `${diskSize(h.disk.free)} free` : "not probed"),
+  fact("host-chip", h.chip ?? DASH, cores);
+  put("host-gpu", h.gpuCores != null ? `${h.gpuCores} cores` : DASH);
+  fact(
+    "host-disk",
+    h.disk ? diskSize(h.disk.total) : DASH,
+    h.disk ? `${diskSize(h.disk.free)} free` : "",
   );
 }
 
@@ -457,7 +477,7 @@ function renderRequest(s: Sample) {
     return;
   }
   if (!last) {
-    $("req-state").textContent = "no request yet";
+    $("req-state").textContent = "idle";
     $("req-state").className = "cur-state";
     $("req-when").textContent = "";
     $("req-tokens").textContent = "";
@@ -466,7 +486,7 @@ function renderRequest(s: Sample) {
     $("req-dc").style.width = "0";
     label("req-prefill", "");
     label("req-decode", "");
-    $("req-total").textContent = "";
+    $("req-total").textContent = "No inflight requests";
     return;
   }
   const known = last.prefillMs + last.decodeMs || 1;
@@ -546,6 +566,14 @@ function el<K extends keyof HTMLElementTagNameMap>(
 // Activity is engine-wide (the engine does not say which model is busy)
 // and lives in the section head, see renderActivity.
 function renderModels(snap: Snapshot) {
+  // the list is empty while the engine is unreachable (the sampler drops
+  // it) or when it really lists nothing; one sentence either way
+  const none = $("models-empty");
+  none.hidden = snap.models.length > 0;
+  none.textContent =
+    snap.sample && !snap.sample.engineUp
+      ? "Engine unreachable."
+      : "No models found.";
   const tbody = $("models").querySelector("tbody")!;
   tbody.replaceChildren(
     ...snap.models.map((m) => {
@@ -696,6 +724,7 @@ const ACTION_LABEL: Record<ActionName, string> = {
   free: "restart engine",
   diskClear: "clear disk cache",
   historyClear: "clear history",
+  requestsClear: "clear requests",
   favorite: "daily driver",
 };
 
@@ -742,6 +771,10 @@ function confirmText(
     case "historyClear":
       return [
         "Delete the stored history? Every sample of the last 7 days is removed from mlx-spy's database and the graphs start over.",
+      ];
+    case "requestsClear":
+      return [
+        "Delete the stored requests? The list and the last request shown in the bar are removed from mlx-spy's database.",
       ];
     case "favorite":
       return []; // a toggle, no dialog
@@ -877,6 +910,7 @@ const dur = (ms: number) =>
 function renderRequests() {
   const tbody = $("requests").querySelector("tbody")!;
   $("requests-empty").hidden = reqs.length > 0;
+  $("requests").hidden = reqs.length === 0;
   // rows that aged out or were wiped take their open state with them
   const keys = new Set(reqs.map(reqKey));
   for (const k of openReqs) if (!keys.has(k)) openReqs.delete(k);
@@ -906,12 +940,15 @@ function renderRequests() {
         "Started",
         r.startedAt != null ? fmtStamp.format(r.startedAt) : "not seen",
       ),
-      cell("Prompt", r.promptTokens > 0 ? `${count(r.promptTokens)} tok` : "-"),
+      cell(
+        "Prompt",
+        r.promptTokens > 0 ? `${count(r.promptTokens)} tok` : DASH,
+      ),
       cell(
         "Cached",
         r.promptTokens > 0 && cached > 0
           ? `${count(cached)} tok · ${whole((cached / r.promptTokens) * 100)}%`
-          : "-",
+          : DASH,
       ),
       cell("Generated", `${count(r.generated)} tok`),
       cell(
@@ -920,7 +957,7 @@ function renderRequests() {
           ? [dur(r.prefillMs), tps(r.prefillTokens, r.prefillMs)]
               .filter(Boolean)
               .join(" · ")
-          : "-",
+          : DASH,
       ),
       cell(
         "Decode",
@@ -928,16 +965,16 @@ function renderRequests() {
           ? [dur(r.decodeMs), tps(r.generated, r.decodeMs)]
               .filter(Boolean)
               .join(" · ")
-          : "-",
+          : DASH,
       ),
-      cell("TTFT", r.ttftMs != null ? dur(r.ttftMs) : "-"),
+      cell("TTFT", r.ttftMs != null ? dur(r.ttftMs) : DASH),
       cell(
         "Total",
         engineMs
           ? dur(engineMs)
           : r.startedAt != null
             ? dur(r.finishedAt - r.startedAt)
-            : "-",
+            : DASH,
       ),
       cell(
         "Outcome",
@@ -975,25 +1012,29 @@ function renderRequests() {
             ? r.finishedAt - r.startedAt
             : 0;
       // the resident model at the finish, the favorite among several
-      const model = el("td", "model", r.model ? r.model.split("/").pop() : "-");
+      const model = el(
+        "td",
+        "model",
+        r.model ? r.model.split("/").pop() : DASH,
+      );
       if (r.model) model.title = r.model;
       tr.append(
         when,
         model,
-        num(r.promptTokens > 0 ? count(r.promptTokens) : "-"),
+        num(r.promptTokens > 0 ? count(r.promptTokens) : DASH),
         num(
           r.promptTokens > 0 && cached > 0
             ? `${whole((cached / r.promptTokens) * 100)}%`
-            : "-",
+            : DASH,
         ),
         num(count(r.generated)),
         num(
-          r.prefillMs ? dur(r.prefillMs) : "-",
+          r.prefillMs ? dur(r.prefillMs) : DASH,
           tps(r.prefillTokens, r.prefillMs),
         ),
-        num(r.decodeMs ? dur(r.decodeMs) : "-", tps(r.generated, r.decodeMs)),
-        num(r.ttftMs != null ? dur(r.ttftMs) : "-"),
-        num(total ? dur(total) : "-"),
+        num(r.decodeMs ? dur(r.decodeMs) : DASH, tps(r.generated, r.decodeMs)),
+        num(r.ttftMs != null ? dur(r.ttftMs) : DASH),
+        num(total ? dur(total) : DASH),
       );
       const wide = tr.querySelectorAll("td.num");
       wide[3].classList.add("wide");
@@ -1132,7 +1173,7 @@ function mkChart(
   const chips = defs.map((d) => {
     const chip = el("span", "chip");
     chip.style.setProperty("--c", d.color);
-    chip.append(el("i"), el("span", "v", "-"), el("small", "", d.label));
+    chip.append(el("i"), el("span", "v none", DASH), el("small", "", d.label));
     chipsEl.append(chip);
     return chip.querySelector<HTMLElement>(".v")!;
   });
@@ -1201,14 +1242,16 @@ function showValues(c: Chart, idx: number | null) {
       idle = true;
       while (at >= 0 && !((arr[at] ?? 0) > 0)) at--;
     }
-    c.chips[i].textContent = c.defs[i].fmt(at >= 0 ? (arr[at] ?? null) : null);
+    const text = c.defs[i].fmt(at >= 0 ? (arr[at] ?? null) : null);
+    c.chips[i].textContent = text;
     c.chips[i].classList.toggle("idle", idle);
+    c.chips[i].classList.toggle("none", text === DASH);
   }
 }
 
 // whole tok/s; anything under one that is not zero reads as 1
 const whole = (v: number | null | undefined) =>
-  v == null ? "-" : v > 0 ? `${Math.max(1, Math.round(v))}` : "0";
+  v == null ? DASH : v > 0 ? `${Math.max(1, Math.round(v))}` : "0";
 const tps = whole;
 
 function setupCharts() {
@@ -1387,6 +1430,10 @@ function connect() {
       connected = true;
     } else if (msg.type === "event") {
       showEvent(msg.data);
+      if (msg.data.action === "requestsClear" && msg.data.ok) {
+        reqs = [];
+        renderRequests();
+      }
       if (msg.data.action === "historyClear" && msg.data.ok) {
         // every tab forgets what it learned from the wiped series
         lastDecode = lastPrefill = null;
@@ -1450,6 +1497,9 @@ if (view === "requests") {
   $("view-requests").hidden = false;
   $("requests-head").append($("ws-state"));
   $("requests-live").append($("req"));
+  // the action outcome line sits under the models table on the monitor;
+  // here it goes under the list, for the clear button
+  $("view-requests").append($("event"));
 } else if (view === "chat") {
   // the frame fills the viewport; the connection pill moves to the header
   $("view-monitor").hidden = true;

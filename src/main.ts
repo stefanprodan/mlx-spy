@@ -69,6 +69,7 @@ const HELP = `\x1b[1mmlx-spy\x1b[0m - monitor and control an LLM inference serve
   POST /api/actions/<name>     load, unload, default (body {"model"}), free,
                                diskClear (the last two only for a local engine),
                                historyClear (wipes the sample database),
+                               requestsClear (wipes the stored requests),
                                favorite (toggles the daily-driver star)
 
 \x1b[1mExamples:\x1b[0m

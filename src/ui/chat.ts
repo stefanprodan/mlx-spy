@@ -1054,7 +1054,25 @@ export function mountChat(): ChatPage {
     listEl.classList.remove("open");
     showDraft(true);
   };
-  $("chat-listbtn").onclick = () => listEl.classList.toggle("open");
+  // phone: the list is a drawer over the conversation; desktop: it folds
+  // away and the choice survives a reload
+  const frameEl = $("view-chat");
+  const phone = matchMedia("(max-width: 760px)");
+  try {
+    if (localStorage.getItem("chat.list") === "closed") {
+      frameEl.classList.add("nolist");
+    }
+  } catch {}
+  $("chat-listbtn").onclick = () => {
+    if (phone.matches) {
+      listEl.classList.toggle("open");
+      return;
+    }
+    const closed = frameEl.classList.toggle("nolist");
+    try {
+      localStorage.setItem("chat.list", closed ? "closed" : "open");
+    } catch {}
+  };
   window.addEventListener("popstate", () => {
     const id = chatIdFromPath();
     if (id) void open(id, false);

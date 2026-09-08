@@ -24,6 +24,7 @@ export const ACTION_NAMES = [
   "free",
   "diskClear",
   "historyClear",
+  "requestsClear",
   "favorite",
 ] as const;
 export type ActionName = (typeof ACTION_NAMES)[number];
@@ -128,6 +129,7 @@ export class Actions {
     const capability = name === "free" ? "restart" : name;
     if (
       capability !== "historyClear" &&
+      capability !== "requestsClear" &&
       capability !== "favorite" &&
       !this.deps.engine.capabilities().has(capability)
     ) {
@@ -185,7 +187,12 @@ export class Actions {
   // The model id comes from the request but must name a model the engine
   // listed; the actions never forward arbitrary strings to the engine.
   private modelFor(name: ActionName, body: unknown): string | null {
-    if (name === "free" || name === "diskClear" || name === "historyClear") {
+    if (
+      name === "free" ||
+      name === "diskClear" ||
+      name === "historyClear" ||
+      name === "requestsClear"
+    ) {
       return null;
     }
     const id = (body as any)?.model;
@@ -246,6 +253,11 @@ export class Actions {
         const n = this.deps.history.clear();
         this.deps.sampler.forgetLastRequest();
         return `removed ${n} sample${n === 1 ? "" : "s"}`;
+      }
+      case "requestsClear": {
+        const n = this.deps.history.clearRequests();
+        this.deps.sampler.forgetLastRequest();
+        return `removed ${n} request${n === 1 ? "" : "s"}`;
       }
     }
   }

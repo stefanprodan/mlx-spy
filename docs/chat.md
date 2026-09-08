@@ -36,7 +36,9 @@ it (evicting the least recently used one when the engine is at its
 residency cap). Thinking on or off and the reasoning effort sit next to it;
 the gear holds the system prompt, temperature, top p and max tokens, all
 empty by default so the engine's own defaults apply. Settings live on the
-chat and apply to the next message.
+chat and apply to the next message. The button at the left of the header
+folds the chat list away so the conversation takes the whole width (the
+page remembers the choice); on a phone it opens the list as a drawer.
 
 Enter sends, Shift+Enter breaks a line. The Send button becomes Stop while
 the reply streams. Hover a reply for Copy and Regenerate, a message of your

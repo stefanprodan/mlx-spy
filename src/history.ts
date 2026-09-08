@@ -489,6 +489,15 @@ export class History {
     return rows.map((r) => ({ ...r, cancelled: r.cancelled === 1 }));
   }
 
+  // Wipe the stored requests only; the samples and the graphs stay.
+  clearRequests(): number {
+    const n = (
+      this.db.query("SELECT count(*) AS n FROM requests").get() as { n: number }
+    ).n;
+    this.db.run("DELETE FROM requests");
+    return n;
+  }
+
   // Wipe the samples and the request list, keeping the sampler state so
   // the epoch stays honest.
   clear(): number {

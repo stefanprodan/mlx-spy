@@ -44,6 +44,7 @@ detail}`.
 | `free` | none | restart the engine service to free its RAM (local engine only) |
 | `diskClear` | none | restart, then delete the SSD cache tier contents (local engine only) |
 | `historyClear` | none | wipe mlx-spy's own sample history; chats are kept |
+| `requestsClear` | none | wipe the stored requests and the last request in the bar; samples are kept |
 | `favorite` | `{"model": "<id>"}` | toggle the daily-driver star |
 
 Errors are `{"error": "<sentence>"}` with 400 (bad input), 403

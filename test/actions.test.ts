@@ -355,6 +355,31 @@ describe("Actions", () => {
     expect(((await snap.json()) as any).events).toHaveLength(2);
     s.history.close();
   });
+
+  test("requestsClear wipes the requests, keeps the samples", async () => {
+    const { actions, history } = await setup(false);
+    history.addRequest({
+      startedAt: 1,
+      finishedAt: 2,
+      count: 1,
+      cancelled: false,
+      generated: 10,
+      promptTokens: 5,
+      prefillTokens: 5,
+      prefillMs: 100,
+      decodeMs: 200,
+      ttftMs: 100,
+      model: "org/model",
+    });
+    expect(history.requests()).toHaveLength(1);
+    const ev = await actions.run("requestsClear", {});
+    expect(ev.ok).toBe(true);
+    expect(ev.detail).toBe("removed 1 request");
+    expect(history.requests()).toEqual([]);
+    expect(history.count()).toBe(1);
+    expect(history.loadSamplerState().lastRequest).toBeNull();
+    history.close();
+  });
 });
 
 describe("clearDirContents", () => {

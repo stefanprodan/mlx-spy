@@ -56,6 +56,15 @@
           <h2>Requests</h2>
         </div>
         <section class="card" id="requests-live"></section>
+        <div class="shead">
+          <h2>History</h2>
+          <span class="grow"></span>
+          <div class="seg">
+            <button type="button" class="trash" id="a-requests" data-action="requestsClear" title="Clear requests" aria-label="Clear requests">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5L18 7M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7"/></svg>
+            </button>
+          </div>
+        </div>
         <section class="card requests">
           <table id="requests">
             <thead>
@@ -73,7 +82,7 @@
             </thead>
             <tbody></tbody>
           </table>
-          <p class="empty" id="requests-empty" hidden>No request has finished yet.</p>
+          <p class="blank" id="requests-empty" hidden>No requests yet.</p>
         </section>
       </div>
 
@@ -96,7 +105,7 @@
       <section class="card">
         <div class="spark request" id="req">
           <div class="cur-head">
-            <span class="cur-state" id="req-state">no request yet</span>
+            <span class="cur-state" id="req-state">idle</span>
             <span class="cur-when" id="req-when"></span>
             <span class="grow"></span>
             <span class="cur-num" id="req-tokens"></span>
@@ -122,36 +131,36 @@
           </div>
           <div class="tile">
             <div class="lbl">Prefill</div>
-            <div class="val"><span id="t-prefill">0</span><span class="unit">tok/s</span></div>
+            <div class="val"><span id="t-prefill" class="none">&ndash;</span><span class="unit">tok/s</span></div>
             <div class="sub" id="t-prefill-sub"></div>
           </div>
           <div class="tile">
             <div class="lbl">Decode</div>
-            <div class="val"><span id="t-decode">0</span><span class="unit">tok/s</span></div>
+            <div class="val"><span id="t-decode" class="none">&ndash;</span><span class="unit">tok/s</span></div>
             <div class="sub" id="t-decode-sub"></div>
           </div>
           <div class="tile">
             <div class="lbl">Cache efficiency</div>
-            <div class="val"><span id="t-eff">-</span><span class="unit">% reused</span></div>
+            <div class="val"><span id="t-eff" class="none">&ndash;</span><span class="unit">% reused</span></div>
             <div class="bar"><div class="fill" id="t-eff-bar"></div></div>
             <div class="sub" id="t-eff-sub"></div>
           </div>
           <div class="tile">
             <div class="lbl">Memory</div>
-            <div class="val"><span id="t-mem">-</span><span class="unit">GB</span></div>
+            <div class="val"><span id="t-mem" class="none">&ndash;</span><span class="unit">GB</span></div>
             <div class="bar"><div class="fill" id="t-mem-bar"></div></div>
             <div class="sub" id="t-mem-sub"></div>
           </div>
           <div class="tile">
             <div class="lbl">RAM cache</div>
-            <div class="val"><span id="t-cache">-</span><span class="unit">GB est.</span></div>
-            <div class="bar" id="t-cache-track" hidden><div class="fill" id="t-cache-bar"></div></div>
+            <div class="val"><span id="t-cache" class="none">&ndash;</span><span class="unit">GB est.</span></div>
+            <div class="bar off" id="t-cache-track"><div class="fill" id="t-cache-bar"></div></div>
             <div class="sub" id="t-cache-sub"></div>
           </div>
           <div class="tile">
             <div class="lbl">SSD cache</div>
-            <div class="val"><span id="t-ssd">-</span><span class="unit">GB</span></div>
-            <div class="bar" id="t-ssd-track" hidden><div class="fill" id="t-ssd-bar"></div></div>
+            <div class="val"><span id="t-ssd" class="none">&ndash;</span><span class="unit">GB</span></div>
+            <div class="bar off" id="t-ssd-track"><div class="fill" id="t-ssd-bar"></div></div>
             <div class="sub" id="t-ssd-sub"></div>
           </div>
         </div>
@@ -167,6 +176,7 @@
       </div>
       <section class="card models">
         <table id="models"><tbody></tbody></table>
+        <p class="blank" id="models-empty" hidden>No models found.</p>
       </section>
       <div class="event" id="event" hidden></div>
 
@@ -187,18 +197,18 @@
           <dl>
             <dt>Engine</dt><dd><span id="engine-name"></span><small id="engine-proc"></small></dd>
             <dt>URL</dt><dd class="mono" id="engine-url"></dd>
-            <dt>Weights</dt><dd id="engine-weights"></dd>
-            <dt>Memory</dt><dd id="engine-mem"></dd>
-            <dt>CPU</dt><dd id="engine-cpu"></dd>
-            <dt>GPU</dt><dd id="engine-gpu"></dd>
+            <dt>Weights</dt><dd id="engine-weights" class="none">&ndash;</dd>
+            <dt>Memory</dt><dd id="engine-mem" class="none">&ndash;</dd>
+            <dt>CPU</dt><dd id="engine-cpu" class="none">&ndash;</dd>
+            <dt>GPU</dt><dd id="engine-gpu" class="none">&ndash;</dd>
           </dl>
           <dl>
-            <dt>Host</dt><dd id="host-name"></dd>
-            <dt>OS</dt><dd id="host-os"></dd>
-            <dt>Chip</dt><dd id="host-chip"></dd>
-            <dt>GPU</dt><dd id="host-gpu"></dd>
-            <dt>Memory</dt><dd id="host-mem"></dd>
-            <dt>Disk</dt><dd id="host-disk"></dd>
+            <dt>Host</dt><dd id="host-name" class="none">&ndash;</dd>
+            <dt>OS</dt><dd id="host-os" class="none">&ndash;</dd>
+            <dt>Chip</dt><dd id="host-chip" class="none">&ndash;</dd>
+            <dt>GPU</dt><dd id="host-gpu" class="none">&ndash;</dd>
+            <dt>Memory</dt><dd id="host-mem" class="none">&ndash;</dd>
+            <dt>Disk</dt><dd id="host-disk" class="none">&ndash;</dd>
           </dl>
         </div>
       </section>
