@@ -119,3 +119,5 @@ bin/
 
 # the Studio host, see scripts/studio.env.example
 scripts/studio.env
+# the local preview's pid, db and log (make preview)
+.preview/

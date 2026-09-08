@@ -17,8 +17,12 @@ instance off the default port, `--db :memory:` to keep nothing, `--once`
 to print one JSON sample and exit (exit code 2 when the engine did not
 answer).
 
-The page is bundled by Bun from `src/ui/index.html` at startup, also into
-the compiled binary, so a UI change needs a restart (`make dev` does that).
+The page is bundled by Bun from `src/ui/index.html`: once at startup in
+the compiled binary, on demand with hot reload when `MLX_SPY_DEV=1` is set,
+which `make dev` and `make preview` do. `make preview` (re)starts a
+detached instance on `127.0.0.1:11236` against the engine named in
+`scripts/studio.env` (`make preview-stop`, `make preview-log`,
+`make preview-clean` to also wipe its db and log).
 
 ## Layout
 

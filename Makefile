@@ -11,7 +11,7 @@ export PREFIX
 
 .DEFAULT_GOAL := help
 
-.PHONY: help start dev test build lint clean install-bin uninstall-bin deploy-studio
+.PHONY: help start dev test build lint clean install-bin uninstall-bin deploy-studio preview preview-stop preview-log preview-clean
 
 help: ## Show available tasks
 	@grep -hE '^[a-z][a-z-]*:.*## .*$$' $(MAKEFILE_LIST) \
@@ -20,7 +20,7 @@ help: ## Show available tasks
 start: ## Run once against an engine (make start ARGS="--engine http://host:11234 --once")
 	@bun run start $(ARGS)
 
-dev: ## Run with live reload (make dev ARGS="...")
+dev: ## Run with hot reload of the page and restart on server changes (make dev ARGS="...")
 	@bun run dev $(ARGS)
 
 test: ## Run tests
@@ -32,7 +32,7 @@ lint: ## Format and lint with Biome, then type-check with tsc
 build: ## Compile a standalone binary into bin/
 	@bun run build
 
-clean: ## Remove build artifacts
+clean: ## Stop the preview, remove its db and log, and the build artifacts
 	@bun run clean
 
 install-bin: ## Compile and install onto PATH (override PREFIX=...)
@@ -43,3 +43,15 @@ uninstall-bin: ## Remove the installed binary (override PREFIX=...)
 
 deploy-studio: ## Build, install on the Mac Studio and restart its agent (docs/internal/studio.md)
 	@bun run deploy-studio
+
+preview: ## (Re)start the local preview on 127.0.0.1:11236 against the Studio engine (hot reload)
+	@bun run preview
+
+preview-stop: ## Stop the local preview
+	@bun run preview-stop
+
+preview-log: ## Tail the local preview's log
+	@bun run preview-log
+
+preview-clean: ## Stop the local preview and remove its db, log and pid
+	@bun run preview-clean

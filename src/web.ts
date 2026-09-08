@@ -406,7 +406,10 @@ export function serve(
   const server = Bun.serve({
     hostname: listen.hostname,
     port: listen.port,
-    development: false,
+    // MLX_SPY_DEV=1 (make preview) turns on Bun's dev server: the page's
+    // CSS and TypeScript are bundled on demand and hot-reloaded in the
+    // browser; off, the bundle is built once at startup
+    development: process.env.MLX_SPY_DEV === "1",
     routes: {
       "/": page,
       "/requests": page,

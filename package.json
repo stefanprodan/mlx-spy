@@ -8,12 +8,16 @@
   },
   "scripts": {
     "start": "bun src/main.ts",
-    "dev": "bun --watch src/main.ts",
+    "dev": "MLX_SPY_DEV=1 bun --watch src/main.ts",
     "test": "bun test",
     "lint": "bun biome check --write . && bun tsc --noEmit",
     "build": "mkdir -p bin && bun build src/main.ts --compile --outfile bin/mlx-spy && rm -f .*.bun-build",
-    "clean": "rm -rf bin .*.bun-build",
+    "clean": "scripts/preview.sh clean && rm -rf bin .*.bun-build",
     "deploy-studio": "scripts/deploy-studio.sh",
+    "preview": "scripts/preview.sh restart",
+    "preview-stop": "scripts/preview.sh stop",
+    "preview-log": "scripts/preview.sh log",
+    "preview-clean": "scripts/preview.sh clean",
     "install-bin": "bun run build && mkdir -p \"${PREFIX:-$HOME/.local}/bin\" && install -m 0755 bin/mlx-spy \"${PREFIX:-$HOME/.local}/bin/mlx-spy\"",
     "uninstall-bin": "rm -f \"${PREFIX:-$HOME/.local}/bin/mlx-spy\""
   },
