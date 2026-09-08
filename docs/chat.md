@@ -26,7 +26,11 @@ the engine reports shown under every reply.
 
 ## Using it
 
-Pick a model in the header. Loaded models come first with their size;
+Pick a model in the header. A new chat starts on a loaded model (the
+favorite if it is loaded, else the newest chat's model if loaded, else any
+loaded one) so it never cold-loads by accident; only with nothing resident
+does it fall back to the favorite or the newest chat's model. Loaded
+models come first with their size;
 picking one that is not loaded shows a note, and the first message loads
 it (evicting the least recently used one when the engine is at its
 residency cap). Thinking on or off and the reasoning effort sit next to it;

@@ -1019,6 +1019,11 @@ tr.detail td {
   grid-template-columns: 260px minmax(0, 1fr);
   gap: 14px;
 }
+/* display: grid above beats the UA's [hidden] rule; the monitor and
+   requests pages ship the frame hidden */
+.frame[hidden] {
+  display: none;
+}
 .list,
 .conv {
   background: var(--card);

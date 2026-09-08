@@ -1027,16 +1027,16 @@ export function mountChat(): ChatPage {
     }
   }
 
-  // the model of the newest chat, else the daily driver, else a loaded one
+  // a resident model first, so a new chat never cold-loads by accident: the
+  // daily driver if loaded, else the newest chat's model if loaded, else any
+  // loaded one; with nothing resident the same order without the constraint
   function defaultModel(): string {
     const last = chats[0]?.model;
-    if (last && modelInfo(last)) return last;
-    return (
-      models.find((m) => m.favorite)?.id ??
-      models.find((m) => m.loaded)?.id ??
-      models[0]?.id ??
-      ""
-    );
+    const pick = (ok: (m: ModelInfo) => boolean) =>
+      models.find((m) => ok(m) && m.favorite)?.id ??
+      (last && models.find((m) => ok(m) && m.id === last)?.id) ??
+      models.find(ok)?.id;
+    return pick((m) => m.loaded) ?? pick(() => true) ?? "";
   }
 
   function showDraft(push: boolean) {
