@@ -170,7 +170,8 @@ test/                bun test suites; fixtures/ holds /metrics.json and
 docs/                user docs: monitor, chat, api, development (keep the
                      API page in step with web.ts); internal/ is for us:
                      the Studio deployment (ssh, launchd agent, paths, db)
-scripts/             deploy-studio.sh (make deploy-studio) and the Studio agent plist
+scripts/             deploy-studio.sh (make deploy-studio) and copies of the two Studio
+                     LaunchAgent plists (mlx-spy and mlx-serve), as installed
 plans/               the development plan and milestones
 ```
 

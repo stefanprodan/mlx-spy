@@ -53,7 +53,7 @@ the host key changed (a reinstall):
 | What | Value |
 |---|---|
 | Version | mlx-serve 26.9.1 from the Homebrew tap `ddalcu/mlx-serve`, binary `/opt/homebrew/bin/mlx-serve` |
-| launchd agent | label `com.ddalcu.mlx-serve`, plist `~/Library/LaunchAgents/com.ddalcu.mlx-serve.plist` (the Studio file is what runs; `RunAtLoad`, `KeepAlive`, 10 s throttle) |
+| launchd agent | label `com.ddalcu.mlx-serve`, plist `~/Library/LaunchAgents/com.ddalcu.mlx-serve.plist`, copy `scripts/com.ddalcu.mlx-serve.plist` in this repo (the Studio file is what runs; `RunAtLoad`, `KeepAlive`, 10 s throttle) |
 | Port | 11234, bound on `0.0.0.0`; from the MacBook `http://$STUDIO_HOST:11234` |
 | Models | checkpoints under `~/models/<org>/<name>` (shared with oMLX through the `~/.omlx/models` symlink); serve mode lists them all and ids are `<org>/<name>` |
 | Per-request log | `~/.mlx-serve/logs/mlx-serve-11234.log` (rotates at 32 MB) |
@@ -127,8 +127,8 @@ ssh -o BatchMode=yes $STUDIO_SSH 'launchctl bootstrap gui/$(id -u) ~/Library/Lau
 ssh -o BatchMode=yes $STUDIO_SSH 'rm -rf ~/.mlx-serve/kv-cache/*'
 ```
 
-To change the engine flags: `scp -q $STUDIO_SSH:~/Library/LaunchAgents/com.ddalcu.mlx-serve.plist .`,
-edit, scp it back, then bootout and bootstrap (kickstart does not reread a
+To change the engine flags: edit `scripts/com.ddalcu.mlx-serve.plist`, scp it
+to `~/Library/LaunchAgents/` on the Studio, then bootout and bootstrap (kickstart does not reread a
 plist). Tell the user what changed; the flags are their policy.
 
 ### Never, on the engine
@@ -159,8 +159,8 @@ plist). Tell the user what changed; the flags are their policy.
 |---|---|
 | Binary | `~/.mlx-spy/bin/mlx-spy` |
 | launchd agent | label `com.stefanprodan.mlx-spy`, plist `~/Library/LaunchAgents/com.stefanprodan.mlx-spy.plist`, reference copy `scripts/com.stefanprodan.mlx-spy.plist` in this repo; `RunAtLoad` and `KeepAlive` (5 s throttle), so it comes back on a crash and at login |
-| Arguments | `--engine http://127.0.0.1:11234` only: the defaults bind the Tailscale address on port 11235 and use the default db |
-| URL | `http://$STUDIO_HOST:11235` (the Tailscale address only; `127.0.0.1:11235` on the box answers nothing) |
+| Arguments | `--engine http://127.0.0.1:11234 --listen 0.0.0.0:11235`, like the engine bound on every interface; the default db |
+| URL | `http://$STUDIO_HOST:11235` from the tailnet; `http://127.0.0.1:11235` on the box |
 | Database | `~/.mlx-spy/history.sqlite` (WAL mode, so `-shm` and `-wal` files sit next to it) |
 | Log | `~/.mlx-spy/mlx-spy.log` (stdout and stderr of the agent, appended) |
 | Working dir | `~/.mlx-spy` |
@@ -211,11 +211,14 @@ ssh -o BatchMode=yes $STUDIO_SSH 'launchctl bootstrap gui/$(id -u) ~/Library/Lau
 
 ### Changing the agent
 
-Edit `scripts/com.stefanprodan.mlx-spy.plist`, then:
+Edit `scripts/com.stefanprodan.mlx-spy.plist`, then scp it and reload the
+agent. The loop waits for the old process to exit: a bootstrap during the
+graceful shutdown fails with "Bootstrap failed: 5" and leaves the agent
+unloaded (seen 2026-09-08), in which case run the bootstrap again.
 
 ```sh
 scp -q scripts/com.stefanprodan.mlx-spy.plist $STUDIO_SSH:~/Library/LaunchAgents/com.stefanprodan.mlx-spy.plist
-ssh -o BatchMode=yes $STUDIO_SSH 'launchctl bootout gui/$(id -u)/com.stefanprodan.mlx-spy; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.stefanprodan.mlx-spy.plist'
+ssh -o BatchMode=yes $STUDIO_SSH 'launchctl bootout gui/$(id -u)/com.stefanprodan.mlx-spy; for i in $(seq 1 30); do pgrep -x mlx-spy >/dev/null || break; sleep 1; done; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.stefanprodan.mlx-spy.plist'
 ```
 
 ### The database
