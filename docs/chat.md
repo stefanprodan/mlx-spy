@@ -23,10 +23,12 @@ the engine reports shown under every reply.
   later turns.
 - **Tools.** The model can call a small set of tools that run inside
   mlx-spy: `get_current_time` (the clock in any zone) and `fetch` (a web
-  page as text). A call shows as a block under the reply with the tool,
-  its argument, the time it took and, opened, the arguments and the
-  result. Tools run without asking; every tool is on for a new chat and
-  the gear lists them with a checkbox each.
+  page as text). The work before a reply (the reasoning, the calls and
+  their results) folds into one line, "Worked for 5.6 s, 2 tool calls",
+  open while it runs and shut once the reply starts; opened, each call
+  shows its argument, the time it took and its result. Tools run without
+  asking; every tool is on for a new chat and the gear lists them with a
+  checkbox each.
 - **Nothing extra runs.** Markdown is rendered by Bun on the server; the
   page loads no library and the engine is only called when you send.
 
@@ -59,8 +61,10 @@ A reply that was cut shows why under it: `stopped`, `cut at max tokens`,
 
 With any tool on, every send can take several rounds: the model asks for
 a call, mlx-spy runs it and sends the result back, and the model answers
-or calls again. Each round is its own reply row with its own numbers, and
-the calls of a round run at once. A send stops after 8 rounds (the last
+or calls again. The calls of a round run at once. The numbers under the
+reply cover the whole send: time to the first token of the first round,
+the tokens every round generated, the time from the first round, and the
+round count. A send stops after 8 rounds (the last
 one tells the model to answer with text), after 24 calls, after 60 s
 spent in tools, or when the model repeats the same call three times in a
 row; the row then says so. Stop works during a call as it does during a

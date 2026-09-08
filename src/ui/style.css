@@ -1433,8 +1433,7 @@ fieldset.seg {
   display: none;
 }
 details.think {
-  border-left: 2px solid var(--line);
-  padding-left: 12px;
+  padding-left: 0;
 }
 details.think summary {
   list-style: none;
@@ -1465,9 +1464,6 @@ details.think .r {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-details.think.live {
-  border-left-color: var(--brand);
-}
 details.think.live summary {
   color: var(--brand);
 }
@@ -1486,12 +1482,78 @@ details.think:not(.live) .spin {
 
 /* a tool call under an assistant round: the summary names the tool and its
    argument, the body shows the arguments and the untrusted result */
-.msg.assistant .tools:empty {
+/* empty parts of a row must not take a flex gap: a round that only
+   called tools has no body, and its stats line stays empty */
+.msg.assistant .tools:empty,
+.msg.assistant .md:empty,
+.msg.assistant .stats:empty {
   display: none;
 }
+.msg.assistant .tools > details.tool:first-child {
+  margin-top: 0;
+}
+
+/* the work before a reply: the rounds with their reasoning and calls,
+   folded into one block that opens while the send works */
+details.work {
+  padding-left: 0;
+}
+details.work summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--dim);
+  user-select: none;
+}
+details.work summary::-webkit-details-marker {
+  display: none;
+}
+details.work summary svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  transition: transform 0.15s;
+}
+details[open].work summary svg {
+  transform: rotate(90deg);
+}
+details.work .wb {
+  margin: 8px 0 2px;
+  padding-left: 20px;
+}
+details.work .wb .msg.assistant {
+  margin-bottom: 6px;
+}
+details.work .wb .msg.assistant:last-child {
+  margin-bottom: 0;
+}
+details.work .wb > details.think {
+  margin-bottom: 6px;
+}
+details.work .wb > details.think:last-child {
+  margin-bottom: 0;
+}
+details.work.live summary {
+  color: var(--brand);
+}
+details.work.live summary svg {
+  display: none;
+}
+details.work.live .spin {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  border-top-color: var(--brand);
+  animation: turn 0.8s linear infinite;
+  flex: 0 0 auto;
+}
 details.tool {
-  border-left: 2px solid var(--line);
-  padding-left: 12px;
+  padding-left: 0;
   margin: 6px 0;
 }
 details.tool summary {
@@ -1556,9 +1618,6 @@ details.tool .lbl {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--faint);
-}
-details.tool.live {
-  border-left-color: var(--brand);
 }
 details.tool.live summary {
   color: var(--brand);
@@ -1893,6 +1952,12 @@ details.tool.live .spin {
   z-index: 2;
 }
 
+/* the rounds inside a work group carry no numbers; the reply's line
+   covers the whole send */
+details.work .wb .stats {
+  display: none;
+}
+
 /* settings dialog */
 dialog.settings {
   max-width: 460px;
@@ -2105,5 +2170,15 @@ dialog.settings .tools span {
   }
   dialog.settings .fields {
     grid-template-columns: 1fr;
+  }
+  /* iOS zooms into any field under 16px; the composer and the other
+     fields keep their desktop size everywhere else */
+  .box textarea,
+  .msg.user.editing textarea,
+  .chead input.title,
+  dialog.settings textarea,
+  dialog.settings select,
+  dialog.settings input {
+    font-size: 16px;
   }
 }
