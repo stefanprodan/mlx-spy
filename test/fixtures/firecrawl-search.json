@@ -1,0 +1,40 @@
+{
+  "success": true,
+  "data": {
+    "web": [
+      {
+        "url": "https://kubernetes.io/releases/",
+        "title": "Releases - Kubernetes",
+        "description": "## Release History [Heading self-link](https://kubernetes.io/releases/#release-history)\n### 1.34\n**Latest Release:** 1.34.11 (released: 2026-08-11)\n\n## End-of-Life Releases [Heading self-link](https://kubernetes.io/releases/#end-of-life-releases)\n#### Note:\n| Minor Version | Final Patch Release | End Of Life Date | Note |\n|-|-|-|-|\n| [1.33](https://kubernetes.io/releases/1.33/) | 1.33.13 | 2026-06-28 |  |\n| [1.32](https://kubernetes.io/releases/1.32/) | 1.32.13 | 2026-02-28 |  |\n| [1.31](https://kubernetes.io/releases/1.31/) | 1.31.14 | 2025-11-11 |  |\n| [1.30](https://kubernetes.io/releases/1.30/) | 1.30.14 | 2025-07-15 |  |\n| [1.29](https://kubernetes.io/releases/1.29/) | 1.29.14 | 2025-02-28 |  |\n| [1.28](https://kubernetes.io/releases/1.28/) | 1.28.15 | 2024-10-22 |  |\n| [1.27](https://kubernetes.io/releases/1.27/) | 1.27.16 | 2024-07-16 |  |\n| [1.26](https://kubernetes.io/releases/1.26/) | 1.26.15 | 2024-02-28 | 1.26.15 was released in March 2024 (after the EOL date) to pick up a new version of Go to [address several Go CVEs](https://groups.google.com/g/golang-dev/c/o1I1Vv8Rfgs/m/Wr8tD1RlAgAJ) |\n| [1.25](https://kubernetes.io/releases/1.25/) | 1.25.16 | 2023-10-28 | 1.25.16 was released in November 2023 (after the EOL date) to fix [CVE-2023-5528](https://groups.google.com/g/kubernetes-announce/c/c3py6Fw0DTI/m/cScFSdk1BwAJ) |\n| [1.24](https://kubernetes.io/releases/1.24/) | 1.24.17 | 2023-07-28 | 1.24.17 was released in August 2023 (after the EOL date) to fix CVE-2023-3676 and CVE-2023-3955 |\n| [1.23](https://kubernetes.io/releases/1.23/) | 1.23.17 | 2023-02-28 |  |\n| [1.22](https://kubernetes.io/releases/1.22/) | 1.22.17 | 2022-12-08 | 1.22.17 was released in December 2022 (after the EOL date) to backport registry changes and fix two critical issues. |\n| [1.21](https://kubernetes.io/releases/1.21/) | 1.21.14 | 2022-06-28 |  |\n| [1.20](https://kubernetes.io/releases/1.20/) | 1.20.15 | 2022-02-28 |  |\n| [1.19](https://kubernetes.io/releases/1.19/) | 1.19.16 | 2021-10-28 |  |\n| [1.18](https://kubernetes.io/releases/1.18/) | 1.18.20 | 2021-06-18 | Created to solve regression introduced in 1.18.19 |\n| [1.17](https://kubernetes.io/releases/1.17/) | 1.17.17 | 2021-01-13 |  |\n| [1.16](https://kubernetes.io/releases/1.16/) | 1.16.15 | 2020-09-02 |  |\n| [1.15](https://kubernetes.io/releases/1.15/) | 1.15.12 | 2020-05-06 |  |\n| [1.14](https://kubernetes.io/releases/1.14/) | 1.14.10 | 2019-12-11 |  |\n| [1.13](https://kubernetes.io/releases/1.13/) | 1.13.12 | 2019-10-15 |  |\n| [1.12](https://kubernetes.io/releases/1.12/) | 1.12.10 | 2019-07-08 |  |\n| [1.11](https://kubernetes.io/releases/1.11/) | 1.11.10 | 2019-05-01 |  |\n| [1.10](https://kubernetes.io/releases/1.10/) | 1.10.13 | 2019-02-13 |  |\n| [1.9](https://kubernetes.io/releases/1.9/) | 1.9.11 | 2018-09-29 |  |",
+        "position": 1
+      },
+      {
+        "url": "https://github.com/kubernetes/kubernetes/releases",
+        "title": "Releases \u00b7 kubernetes/kubernetes - GitHub",
+        "description": "# Releases: kubernetes/kubernetes\n## Release list\n- [v1.37.0](https://github.com/kubernetes/kubernetes/releases#release-v1.37.0)\n- [v1.36.4](https://github.com/kubernetes/kubernetes/releases#release-v1.36.4)\n- [v1.35.8](https://github.com/kubernetes/kubernetes/releases#release-v1.35.8)\n- [v1.34.11](https://github.com/kubernetes/kubernetes/releases#release-v1.34.11)\n- [v1.36.3](https://github.com/kubernetes/kubernetes/releases#release-v1.36.3)\n- [v1.35.7](https://github.com/kubernetes/kubernetes/releases#release-v1.35.7)\n- [v1.34.10](https://github.com/kubernetes/kubernetes/releases#release-v1.34.10)\n\n## v1.37.0\n[v1.37.0](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.0)[Latest](https://github.com/kubernetes/kubernetes/releases/latest)",
+        "position": 2,
+        "category": "github"
+      },
+      {
+        "url": "https://learn.microsoft.com/en-us/azure/aks/supported-kubernetes-versions",
+        "title": "Supported Kubernetes Versions in Azure Kubernetes Service (AKS)",
+        "description": "# Supported Kubernetes versions in Azure Kubernetes Service (AKS)\n## Kubernetes versions\n```\n[major].[minor].[patch]\n```",
+        "position": 3
+      },
+      {
+        "url": "https://kubernetes.io/releases/1.34/",
+        "title": "Kubernetes 1.34",
+        "description": "# Kubernetes 1.34 : Of Wind & Will (O' WaW)\n## Patch Releases\n| Patch Release | Cherry Pick Deadline | Target Date | Note |\n|-|-|-|-|\n| 1.34.11 | 2026-08-07 | 2026-08-11 |  |\n| 1.34.10 | 2026-07-10 | 2026-07-14 |  |\n| 1.34.9 | 2026-06-05 | 2026-06-09 |  |\n| 1.34.8 | 2026-05-08 | 2026-05-12 |  |\n| 1.34.7 | 2026-04-10 | 2026-04-14 |  |\n| 1.34.6 | 2026-03-13 | 2026-03-19 |  |\n| 1.34.5 | 2026-02-26 | 2026-02-26 | Out of band patch release to pick up a new version of Go to [address several Go CVEs](https://groups.google.com/g/golang-dev/c/ytMTMwK7QBk/m/hpcstrxADwAJ). No other changes. |\n| 1.34.4 | 2026-02-06 | 2026-02-10 | January 2026 patches consolidated with February |\n| 1.34.3 | 2025-12-05 | 2025-12-09 |  |\n| 1.34.2 | 2025-11-07 | 2025-11-11 | October 2025 patches consolidated with November |\n| 1.34.1 | 2025-09-05 | 2025-09-09 |  |\n\n## Upcoming Patch\n| Patch Release | Cherry Pick Deadline | Target Date | Note |\n|-|-|-|-|\n| 1.34.12 | 2026-09-11 | 2026-09-15 |  |",
+        "position": 4
+      },
+      {
+        "url": "https://kubernetes.io/blog/",
+        "title": "Kubernetes Blog",
+        "description": "## Posts in 2026\nKubernetes v1.37 promotes the KubeletInUserNamespace feature gate to beta.\n\n- [Kubernetes v1.37: Metrics API graduates to stable](https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/)\n\nKubernetes v1.37 promotes the metrics.k8s.io API to stable (v1).\n\n- [Kubernetes v1.37: Garhwal](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/)",
+        "position": 5
+      }
+    ]
+  },
+  "creditsUsed": 2,
+  "id": "01a082aa-4c58-75fc-bcc3-c0d25564842b"
+}

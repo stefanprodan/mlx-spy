@@ -15,6 +15,7 @@ import { type History, RANGES, type Range } from "./history.ts";
 import { diskSpace, type HostInfo } from "./host/info.ts";
 import type { Sample } from "./sample.ts";
 import type { Sampler } from "./sampler.ts";
+import { isSearchProvider, type SearchProvider } from "./tools/search/types.ts";
 import { TOOLS } from "./tools.ts";
 
 export const DEFAULT_PORT = 11235;
@@ -238,6 +239,17 @@ function toolsField(value: Record<string, unknown>): string[] | undefined {
   return [...new Set(field as string[])];
 }
 
+function searchField(
+  value: Record<string, unknown>,
+): SearchProvider | undefined {
+  const field = value.search;
+  if (field === undefined) return undefined;
+  if (!isSearchProvider(field)) {
+    throw new HttpError(400, "search must be exa or firecrawl");
+  }
+  return field;
+}
+
 function settings(value: Record<string, unknown>): ChatSettings {
   return {
     model: stringField(value, "model", true)!,
@@ -249,6 +261,7 @@ function settings(value: Record<string, unknown>): ChatSettings {
     maxTokens:
       numberField(value, "maxTokens", 1, Number.MAX_SAFE_INTEGER, true) ?? null,
     toolsOff: toolsField(value) ?? [],
+    search: searchField(value) ?? "exa",
   };
 }
 
@@ -269,6 +282,7 @@ function patch(value: Record<string, unknown>): ChatPatch {
     true,
   );
   const toolsOff = toolsField(value);
+  const search = searchField(value);
   if (title !== undefined) result.title = title;
   if (model !== undefined) result.model = model;
   if (systemPrompt !== undefined) result.systemPrompt = systemPrompt;
@@ -278,6 +292,7 @@ function patch(value: Record<string, unknown>): ChatPatch {
   if (topP !== undefined) result.topP = topP;
   if (maxTokens !== undefined) result.maxTokens = maxTokens;
   if (toolsOff !== undefined) result.toolsOff = toolsOff;
+  if (search !== undefined) result.search = search;
   return result;
 }
 

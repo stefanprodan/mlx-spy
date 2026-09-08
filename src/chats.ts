@@ -8,6 +8,7 @@
 import type { Database } from "bun:sqlite";
 import type { ToolCall } from "./engine/types.ts";
 import { renderMarkdown } from "./markdown.ts";
+import { isSearchProvider, type SearchProvider } from "./tools/search/types.ts";
 
 export type ChatSettings = {
   model: string;
@@ -18,6 +19,7 @@ export type ChatSettings = {
   topP: number | null;
   maxTokens: number | null;
   toolsOff?: string[];
+  search: SearchProvider;
 };
 
 export type ChatSummary = {
@@ -121,6 +123,7 @@ type ChatRow = {
   topP: number | null;
   maxTokens: number | null;
   toolsOff: string;
+  search: string;
   createdAt: number;
   updatedAt: number;
   streaming: number;
@@ -155,7 +158,7 @@ const CHAT_SELECT = `SELECT c.id, c.title, c.model,
   c.system_prompt AS systemPrompt, c.thinking,
   c.reasoning_effort AS reasoningEffort, c.temperature,
   c.top_p AS topP, c.max_tokens AS maxTokens, c.tools_off AS toolsOff,
-  c.created_at AS createdAt, c.updated_at AS updatedAt,
+  c.search, c.created_at AS createdAt, c.updated_at AS updatedAt,
   EXISTS(SELECT 1 FROM messages m
     WHERE m.chat_id = c.id AND m.status = 'streaming') AS streaming
   FROM chats c`;
@@ -202,6 +205,7 @@ export class ChatStore {
       top_p REAL,
       max_tokens INTEGER,
       tools_off TEXT NOT NULL DEFAULT '[]',
+      search TEXT NOT NULL DEFAULT 'exa',
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     )`);
@@ -226,6 +230,7 @@ export class ChatStore {
     )`);
     this.migrateColumns("chats", {
       tools_off: "TEXT NOT NULL DEFAULT '[]'",
+      search: "TEXT NOT NULL DEFAULT 'exa'",
     });
     this.migrateColumns("messages", {
       thinking_ms: "REAL",
@@ -276,6 +281,7 @@ export class ChatStore {
       topP: row.topP,
       maxTokens: row.maxTokens,
       toolsOff: this.toolsOff(row.toolsOff),
+      search: isSearchProvider(row.search) ? row.search : "exa",
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       streaming: row.streaming === 1,
@@ -353,10 +359,10 @@ export class ChatStore {
     this.db
       .query(`INSERT INTO chats (id, title, model, system_prompt, thinking,
         reasoning_effort, temperature, top_p, max_tokens, tools_off,
-        created_at, updated_at)
+        search, created_at, updated_at)
         VALUES ($id, $title, $model, $systemPrompt, $thinking,
           $reasoningEffort, $temperature, $topP, $maxTokens, $toolsOff,
-          $now, $now)`)
+          $search, $now, $now)`)
       .run({
         id,
         title,
@@ -368,6 +374,7 @@ export class ChatStore {
         topP: settings.topP,
         maxTokens: settings.maxTokens,
         toolsOff: JSON.stringify(settings.toolsOff ?? []),
+        search: settings.search,
         now,
       });
     return this.get(id)!;
@@ -388,6 +395,7 @@ export class ChatStore {
         topP,
         maxTokens,
         toolsOff,
+        search,
         ...item
       } = this.summary(row);
       void systemPrompt;
@@ -397,6 +405,7 @@ export class ChatStore {
       void topP;
       void maxTokens;
       void toolsOff;
+      void search;
       return item;
     });
   }
@@ -431,6 +440,7 @@ export class ChatStore {
       ["topP", "top_p"],
       ["maxTokens", "max_tokens"],
       ["toolsOff", "tools_off"],
+      ["search", "search"],
     ];
     for (const [name, column] of names) {
       if (!(name in patch)) continue;

@@ -25,6 +25,8 @@ import { hostInfo } from "./host/info.ts";
 import { isLocalUrl } from "./host/local.ts";
 import { takeSample } from "./sample.ts";
 import { Sampler } from "./sampler.ts";
+import type { SearchKeys } from "./tools/search/types.ts";
+import { loadSearchKeys, secretsDir } from "./tools/websearch.ts";
 import { TOOLS } from "./tools.ts";
 import page from "./ui/index.html";
 import { DEFAULT_PORT, serve, tailscaleAddress } from "./web.ts";
@@ -55,6 +57,9 @@ const HELP = `\x1b[1mmlx-spy\x1b[0m - monitor and control an LLM inference serve
   --once               print one JSON sample and exit
   -v, --version        show version
   -h, --help           show this help
+  Search keys: ../secrets/{exa,firecrawl}.key next to the binary
+                       (.preview/secrets/ from source); keyless when absent;
+                       read at start
 
 \x1b[1mAPI:\x1b[0m
   GET /                        the dashboard
@@ -183,6 +188,27 @@ if (listen) {
 const log = (line: string) =>
   console.error(`${new Date().toISOString()} ${line}`);
 
+// a bad key file fails loud and plain, without the help text: the path in
+// the message is what the user needs
+const searchDir = secretsDir();
+let searchKeys: SearchKeys;
+try {
+  searchKeys = loadSearchKeys(searchDir);
+} catch (error) {
+  console.error(
+    `error: ${error instanceof Error ? error.message : String(error)}`,
+  );
+  process.exit(1);
+}
+log(
+  `exa key: ${searchKeys.exa === null ? "none" : join(searchDir, "exa.key")}`,
+);
+log(
+  `firecrawl key: ${
+    searchKeys.firecrawl === null ? "none" : join(searchDir, "firecrawl.key")
+  }`,
+);
+
 if (dbPath !== ":memory:") mkdirSync(dirname(dbPath), { recursive: true });
 const history = new History(dbPath, retentionDays);
 const chats = new ChatStore(
@@ -205,6 +231,7 @@ const chat = new ChatRunner({
   models: () => sampler.currentModels(),
   log,
   version: VERSION,
+  searchKeys,
 });
 const web = serve(
   {

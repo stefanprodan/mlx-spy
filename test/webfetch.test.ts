@@ -17,6 +17,7 @@ function context(engine = "http://engine.example"): ToolContext {
   const budget: SendBudget = {
     toolCalls: 0,
     fetches: 0,
+    searches: 0,
     toolMs: 0,
     resultBytes: 0,
   };
@@ -25,6 +26,7 @@ function context(engine = "http://engine.example"): ToolContext {
     now: () => 0,
     engine: new URL(engine),
     version: "vtest",
+    search: { provider: "exa", key: null },
     budget,
   };
 }

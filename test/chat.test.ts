@@ -139,6 +139,7 @@ function setup(
     log: (line) => logs.push(line),
     now: () => now,
     runTool: executeTool,
+    searchKeys: { exa: "exa-key", firecrawl: "firecrawl-key" },
   });
   runner.onEvent((event) => events.push(event));
   const chat = runner.create({
@@ -150,6 +151,7 @@ function setup(
     topP: 0.9,
     maxTokens: 100,
     toolsOff: TOOLS.map((tool) => tool.name),
+    search: "exa",
   });
   events.length = 0;
   return {
@@ -547,6 +549,7 @@ describe("ChatRunner", () => {
       temperature: null,
       topP: null,
       maxTokens: null,
+      search: "exa",
     });
     const reply = s.runner.send(next.id, "shutdown");
     await turn();
@@ -655,6 +658,32 @@ describe("ChatRunner", () => {
       ["call_1", "result call_1"],
       ["call_2", "result call_2"],
     ]);
+    s.runner.stop(s.chat.id);
+    s.engine.streams[1].end();
+    await turn();
+    s.db.close();
+  });
+
+  test("freezes the search provider and passes its key and budget", async () => {
+    const toolContexts: ToolContext[] = [];
+    const s = setup([model], async (_call, ctx) => {
+      toolContexts.push(ctx);
+      return { text: "result", error: null };
+    });
+    s.runner.update(s.chat.id, { toolsOff: [], search: "firecrawl" });
+    s.runner.send(s.chat.id, "search");
+    await turn();
+    await calls(s.engine.streams[0], [clock("call_1")]);
+    const toolContext = toolContexts[0];
+    expect(toolContext.search).toEqual({
+      provider: "firecrawl",
+      key: "firecrawl-key",
+    });
+    expect(toolContext.budget.searches).toBe(0);
+    expect(() => s.runner.update(s.chat.id, { search: "exa" })).toThrow(
+      "Model, tools and search cannot change during a send",
+    );
+    expect(toolContext.search.provider).toBe("firecrawl");
     s.runner.stop(s.chat.id);
     s.engine.streams[1].end();
     await turn();
@@ -856,7 +885,7 @@ describe("ChatRunner", () => {
     }
     expect(s.engine.requests).toHaveLength(8);
     // the tools stay so the engine parses a call the model makes anyway
-    expect(s.engine.requests[7].tools).toHaveLength(2);
+    expect(s.engine.requests[7].tools).toHaveLength(3);
     expect(s.engine.requests[7].messages[0]).toMatchObject({
       role: "system",
       content: expect.stringContaining(
@@ -889,6 +918,7 @@ describe("ChatRunner", () => {
     expect(on.engine.requests[0].tools?.map((tool) => tool.name)).toEqual([
       "get_current_time",
       "webfetch",
+      "websearch",
     ]);
     expect(on.engine.requests[0].messages[0]).toMatchObject({
       role: "system",

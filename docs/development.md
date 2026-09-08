@@ -24,6 +24,15 @@ detached instance on `127.0.0.1:11236` against the engine named in
 `scripts/studio.env` (`make preview-stop`, `make preview-log`,
 `make preview-clean` to also wipe its db and log).
 
+The chat's `websearch` tool reads its provider keys from
+`../secrets/{exa,firecrawl}.key` relative to the binary's directory
+(`~/.local/secrets/` after `make install-bin`) and, when run from source,
+from `.preview/secrets/` in the repository, which is git-ignored. Each
+file holds the bare key; the start log says `exa key: <path>` or `exa
+key: none`, and the same for firecrawl. The files are read once at start,
+so a change needs a restart, and a keyless check needs the file moved
+away.
+
 ## Layout
 
 `AGENTS.md` at the repository root describes every module, the data flow,

@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { ChatTool, ToolCall } from "./engine/types.ts";
+import type { SearchProvider } from "./tools/search/types.ts";
 import { webfetchTool } from "./tools/webfetch.ts";
+import { websearchTool } from "./tools/websearch.ts";
 
 const TOOL_TIMEOUT_MS = 20_000;
 const MAX_RESULT_CHARS = 50_000;
@@ -10,6 +12,7 @@ const MAX_RESULT_CHARS = 50_000;
 export type SendBudget = {
   toolCalls: number;
   fetches: number;
+  searches: number;
   toolMs: number;
   resultBytes: number;
 };
@@ -19,6 +22,7 @@ export type ToolContext = {
   now(): number;
   engine: URL;
   version: string;
+  search: { provider: SearchProvider; key: string | null };
   budget: SendBudget;
 };
 
@@ -101,6 +105,7 @@ export const TOOLS: ToolDef[] = [
     },
   },
   webfetchTool,
+  websearchTool,
 ];
 
 export function toolSchemas(names?: string[]): ChatTool[] {

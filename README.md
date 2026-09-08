@@ -29,6 +29,12 @@ bun install --ignore-scripts
 make install-bin        # builds a standalone binary into ~/.local/bin
 ```
 
+The chat's `websearch` tool works without keys. To use your Exa or
+Firecrawl key, put the bare key in `~/.local/secrets/exa.key` or
+`~/.local/secrets/firecrawl.key` (next to the binary's directory, mode
+600 recommended). The files are read at start, so a change needs a
+restart.
+
 ## Run
 
 ```sh

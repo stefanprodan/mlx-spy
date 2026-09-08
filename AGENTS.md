@@ -88,7 +88,8 @@ Deploy when asked, then say what is now running there.
    naming a non-resident model cold-loads it on purpose. The chat tools
    (`src/tools/`) are the only other network callers: `webfetch` reads what
    the model asks for, the engine included (the user's decision), and
-   refuses only this host's loopback addresses.
+   refuses only this host's loopback addresses; `websearch` posts the
+   model's query to `mcp.exa.ai` or `api.firecrawl.dev`, the chat's choice.
 3. **No spawns on the monitor path.** Host numbers come from FFI, directory
    sizes from recursive stat. The only spawns are the two local-only
    actions: `launchctl kickstart -k gui/<uid>/<label>` for "free" and the
@@ -130,7 +131,11 @@ src/chat.ts          ChatRunner: the one send in flight, rounds of engine
                      on /ws, stop from any tab, regenerate, edit
 src/tools.ts, src/tools/
                      the tool registry the runner executes: get_current_time,
-                     webfetch (with the network guard); pure parts tested
+                     webfetch (with the network guard), websearch; pure parts
+                     tested
+src/tools/search/    the search providers: types.ts (the names and the key
+                     type, no I/O), exa.ts and firecrawl.ts (build the
+                     request, parse the answer; pure, tested on fixtures)
 src/markdown.ts      renderMarkdown(): the safety boundary for model output
 src/actions.ts       load, unload, default, free, diskClear (local-only),
                      historyClear, favorite; one at a time, logged, last 50

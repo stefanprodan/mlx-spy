@@ -11,6 +11,7 @@ const now = Date.UTC(2026, 8, 8, 14, 42, 10);
 const budget: SendBudget = {
   toolCalls: 0,
   fetches: 0,
+  searches: 0,
   toolMs: 0,
   resultBytes: 0,
 };
@@ -21,6 +22,7 @@ function context() {
     now: () => now,
     engine: new URL("http://engine.invalid"),
     version: "vtest",
+    search: { provider: "exa" as const, key: null },
     budget,
   };
 }
@@ -52,6 +54,7 @@ describe("tool registry", () => {
     expect(toolSchemas().map((tool) => tool.name)).toEqual([
       "get_current_time",
       "webfetch",
+      "websearch",
     ]);
     expect(toolSchemas([])).toEqual([]);
     const fetch = toolSchemas(["webfetch"])[0];
@@ -64,6 +67,14 @@ describe("tool registry", () => {
     });
     expect(toolSchemas(["get_current_time"])[0].parameters).toMatchObject({
       required: ["timezone"],
+    });
+    expect(toolSchemas(["websearch"])[0].parameters).toMatchObject({
+      required: ["query"],
+      additionalProperties: false,
+      properties: {
+        query: { type: "string", minLength: 1, maxLength: 500 },
+        domain: { type: "string" },
+      },
     });
   });
 

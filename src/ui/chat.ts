@@ -171,6 +171,7 @@ export function mountChat(): ChatPage {
     topP: null,
     maxTokens: null,
     toolsOff: [],
+    search: "exa",
   };
   const live = new Map<number, Live>();
   // events for the chat being fetched, applied once the rows are in
@@ -412,6 +413,7 @@ export function mountChat(): ChatPage {
   const csTemp = $("cs-temperature") as HTMLInputElement;
   const csTopP = $("cs-top-p") as HTMLInputElement;
   const csMax = $("cs-max-tokens") as HTMLInputElement;
+  const csSearch = $("cs-search") as HTMLSelectElement;
   const csDelete = $("cs-delete") as HTMLButtonElement;
   const csTools = $("cs-tools");
   const csToolsHint = $("cs-tools-hint");
@@ -456,6 +458,7 @@ export function mountChat(): ChatPage {
     csTemp.value = s.temperature === null ? "" : String(s.temperature);
     csTopP.value = s.topP === null ? "" : String(s.topP);
     csMax.value = s.maxTokens === null ? "" : String(s.maxTokens);
+    csSearch.value = s.search ?? "exa";
     csDelete.hidden = current === null;
     csDelete.textContent = "Delete chat";
     settings.showModal();
@@ -468,6 +471,7 @@ export function mountChat(): ChatPage {
       temperature: numOrNull(csTemp.value),
       topP: numOrNull(csTopP.value),
       maxTokens: numOrNull(csMax.value),
+      search: csSearch.value === "firecrawl" ? "firecrawl" : "exa",
       toolsOff: [...csTools.querySelectorAll<HTMLInputElement>("input")]
         .filter((cb) => !cb.checked)
         .map((cb) => cb.value),
@@ -703,13 +707,17 @@ export function mountChat(): ChatPage {
 
   // ---------- tool calls ----------
 
-  // the summary line shows one telling argument: the zone, the page
+  // the summary line shows one telling argument: the zone, the page, the
+  // query
   function shortArg(name: string, args: string): string {
     try {
       const o = JSON.parse(args || "{}") as Record<string, unknown>;
       if (name === "webfetch" && typeof o.url === "string") {
         const u = new URL(o.url);
         return u.host + (u.pathname === "/" ? "" : u.pathname);
+      }
+      if (name === "websearch" && typeof o.query === "string") {
+        return o.query.replace(/\s+/g, " ").trim();
       }
       const v = Object.values(o).find((x) => typeof x === "string");
       return typeof v === "string" ? v : "";

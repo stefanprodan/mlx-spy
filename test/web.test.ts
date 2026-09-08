@@ -148,6 +148,7 @@ describe("chat API", () => {
       temperature: 0,
       topP: 1,
       maxTokens: 20,
+      search: "firecrawl",
     });
     expect(created.status).toBe(201);
     const chat = (await created.json()) as any;
@@ -160,6 +161,7 @@ describe("chat API", () => {
       temperature: 0,
       topP: 1,
       maxTokens: 20,
+      search: "firecrawl",
       messages: [],
     });
 
@@ -191,6 +193,7 @@ describe("chat API", () => {
       temperature: 2,
       topP: 0,
       maxTokens: null,
+      search: "firecrawl",
     });
 
     const removed = await response(s.deps, `/api/chats/${chat.id}`, "DELETE");
@@ -205,6 +208,7 @@ describe("chat API", () => {
       model: MODEL,
     });
     const chat = (await created.json()) as any;
+    expect(chat.search).toBe("exa");
     const sent = await response(
       s.deps,
       `/api/chats/${chat.id}/messages`,
@@ -318,6 +322,39 @@ describe("chat API", () => {
     s.history.close();
   });
 
+  test("validates the search provider on create and patch", async () => {
+    const s = setup();
+    for (const search of ["bing", null, 1]) {
+      expect(
+        (
+          await response(s.deps, "/api/chats", "POST", {
+            model: MODEL,
+            search,
+          })
+        ).status,
+      ).toBe(400);
+    }
+    const created = await response(s.deps, "/api/chats", "POST", {
+      model: MODEL,
+      search: "exa",
+    });
+    const chat = (await created.json()) as any;
+    const patched = await response(s.deps, `/api/chats/${chat.id}`, "PATCH", {
+      search: "firecrawl",
+    });
+    expect(((await patched.json()) as any).search).toBe("firecrawl");
+    for (const search of ["bing", null, 1]) {
+      expect(
+        (
+          await response(s.deps, `/api/chats/${chat.id}`, "PATCH", {
+            search,
+          })
+        ).status,
+      ).toBe(400);
+    }
+    s.history.close();
+  });
+
   test("lists tools without caching", async () => {
     const s = setup();
     const result = await response(s.deps, "/api/tools");
@@ -329,6 +366,10 @@ describe("chat API", () => {
       },
       {
         name: "webfetch",
+        description: expect.any(String),
+      },
+      {
+        name: "websearch",
         description: expect.any(String),
       },
     ]);
@@ -365,7 +406,7 @@ describe("chat API", () => {
     s.history.close();
   });
 
-  test("rejects model and toolsOff patches during an active send", async () => {
+  test("rejects model, toolsOff and search patches during a send", async () => {
     const s = setup();
     const created = await response(s.deps, "/api/chats", "POST", {
       model: MODEL,
@@ -388,6 +429,16 @@ describe("chat API", () => {
         })
       ).status,
     ).toBe(409);
+    const searchConflict = await response(
+      s.deps,
+      `/api/chats/${chat.id}`,
+      "PATCH",
+      { search: "firecrawl" },
+    );
+    expect(searchConflict.status).toBe(409);
+    expect(await searchConflict.json()).toEqual({
+      error: "Model, tools and search cannot change during a send",
+    });
     expect(
       (
         await response(s.deps, `/api/chats/${chat.id}`, "PATCH", {

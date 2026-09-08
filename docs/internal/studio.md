@@ -164,6 +164,7 @@ plist). Tell the user what changed; the flags are their policy.
 | Database | `~/.mlx-spy/history.sqlite` (WAL mode, so `-shm` and `-wal` files sit next to it) |
 | Log | `~/.mlx-spy/mlx-spy.log` (stdout and stderr of the agent, appended) |
 | Working dir | `~/.mlx-spy` |
+| Secrets | `~/.mlx-spy/secrets/` (mode 700, files mode 600): `exa.key` and `firecrawl.key`, each holding the bare API key; the boot log's `exa key:` and `firecrawl key:` lines name the file found, or `none` |
 
 Checks:
 

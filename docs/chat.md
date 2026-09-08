@@ -24,8 +24,8 @@ the engine reports shown in the composer.
   collapsed block with the time it took; it is stored and sent back on
   later turns.
 - **Tools.** The model can call a small set of tools that run inside
-  mlx-spy: `get_current_time` (the clock in any zone) and `webfetch` (a web
-  page as text). While a send works, one line with a spinner says
+  mlx-spy: `get_current_time` (the clock in any zone), `webfetch` (a web
+  page as text) and `websearch` (a web search). While a send works, one line with a spinner says
   "Working", with the calls finished so far once there are any; a click
   opens it on the steps so far. When the send ends,
   that line becomes the fold of the work
@@ -96,6 +96,25 @@ the calls per send, and shows results under an "untrusted" label. There
 is no approval step; turn `webfetch` off in the gear for a chat that should
 not read the web.
 
+`websearch` sends the model's query to a search provider and returns
+titles, URLs and excerpts; the model can then `webfetch` a result. The
+provider is a chat setting in the gear: **Exa** (the default) answers
+with dated page excerpts the model can often answer from without a
+fetch; **Firecrawl** answers with a list of titles and short
+descriptions to fetch from. The model can limit a search to one site
+(`domain`). A send gets three searches. Both providers are tried without a
+key: Exa keyless is its free plan (rate limited), and Firecrawl refuses
+some networks keyless with a message the model sees and reports. A key
+is a file holding the bare key, read at start: `../secrets/exa.key` and
+`../secrets/firecrawl.key` next to the binary (`~/.local/secrets/` for
+`make install-bin`, `.preview/secrets/` for the preview); the start log
+says which were found. A wrong key shows as "websearch key rejected" on
+the first search; a rate limit as "websearch rate limited". The query
+leaves this host to the chosen provider, keyless or not, and stays in the
+chat's tool rows like any call; search results are page content and are
+shown under the same "untrusted" label as fetched pages. Turn
+`websearch` off in the gear for a chat that should not search.
+
 ## Where it lives
 
 Chats are in the same SQLite file as the history
@@ -104,4 +123,4 @@ There is no retention cap; delete chats by hand.
 
 ## Not in this version
 
-Attachments and images, search, branching, several replies at once.
+Attachments and images, branching, several replies at once.

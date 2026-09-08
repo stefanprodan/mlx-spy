@@ -61,9 +61,9 @@ tools on can take several engine rounds. Bodies are JSON, at most 256 KB.
 | Route | Body | Answer |
 |---|---|---|
 | `GET /api/chats` | | `[{id, title, model, createdAt, updatedAt, streaming}]`, newest first |
-| `POST /api/chats` | `{model, title?, systemPrompt?, thinking?, reasoningEffort?, temperature?, topP?, maxTokens?, toolsOff?}` | 201, the chat; the model must be one the engine lists |
+| `POST /api/chats` | `{model, title?, systemPrompt?, thinking?, reasoningEffort?, temperature?, topP?, maxTokens?, toolsOff?, search?}` | 201, the chat; the model must be one the engine lists |
 | `GET /api/chats/<id>` | | the chat with its settings and messages in order, a streaming reply included with the text so far |
-| `PATCH /api/chats/<id>` | any of `title, model, systemPrompt, thinking, reasoningEffort, temperature, topP, maxTokens, toolsOff` | the updated chat; `model` and `toolsOff` answer 409 while the chat has a send running |
+| `PATCH /api/chats/<id>` | any of `title, model, systemPrompt, thinking, reasoningEffort, temperature, topP, maxTokens, toolsOff, search` | the updated chat; `model`, `toolsOff` and `search` answer 409 while the chat has a send running |
 | `DELETE /api/chats/<id>` | | `{ok: true}`; a streaming reply is stopped first |
 | `POST /api/chats/<id>/messages` | `{content}` | 202 `{user, message}`: the user row and the assistant row that starts streaming |
 | `POST /api/chats/<id>/regenerate` | | 202 `{user, message}`; the last reply is dropped and answered again |
@@ -102,7 +102,9 @@ the engine's `enable_thinking`; `reasoningEffort` is `low`, `medium`,
 engine defaults. Reasoning is stored and sent back to the engine on later
 turns as `reasoning_content`. `toolsOff` is the list of tool names the
 chat does not offer the model; every tool is on when it is empty, and a
-name outside the registry is a 400.
+name outside the registry is a 400. `search` is the provider `websearch`
+uses, `exa` (the default) or `firecrawl`; anything else, null included,
+is a 400.
 
 ## WebSocket
 

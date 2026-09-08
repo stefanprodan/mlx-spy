@@ -15,6 +15,7 @@ const defaults: ChatSettings = {
   topP: null,
   maxTokens: null,
   toolsOff: [],
+  search: "exa",
 };
 
 function setup(
@@ -78,6 +79,7 @@ describe("ChatStore", () => {
         topP: 0.8,
         maxTokens: 50,
         toolsOff: ["clock"],
+        search: "firecrawl",
       },
       "second",
     );
@@ -93,6 +95,7 @@ describe("ChatStore", () => {
       topP: 0.9,
       maxTokens: 99,
       toolsOff: ["fetch"],
+      search: "firecrawl",
     });
     expect(updated).toMatchObject({
       title: "changed",
@@ -104,10 +107,12 @@ describe("ChatStore", () => {
       topP: 0.9,
       maxTokens: 99,
       toolsOff: ["fetch"],
+      search: "firecrawl",
       updatedAt: 3000,
       messages: [],
     });
     expect(store.list()[0].id).toBe(first.id);
+    expect(store.list()[0]).not.toHaveProperty("search");
     expect(store.update("missing", { title: "x" })).toBeNull();
     db.close();
   });
@@ -428,6 +433,10 @@ describe("ChatStore", () => {
       .get({ id: chat.id }) as { toolsOff: string };
     expect(JSON.parse(raw.toolsOff)).toEqual(["clock", "removed"]);
     expect(store.create(defaults).toolsOff).toEqual([]);
+    db.query("UPDATE chats SET search = 'bad' WHERE id = $id").run({
+      id: chat.id,
+    });
+    expect(store.get(chat.id)?.search).toBe("exa");
     db.close();
   });
 
@@ -460,6 +469,7 @@ describe("ChatStore", () => {
       const first = new ChatStore(migrated, Date.now, () => ["clock"]);
       const chat = first.create(defaults);
       expect(chat.toolsOff).toEqual([]);
+      expect(chat.search).toBe("exa");
       expect(
         first.addMessage(chat.id, "tool", {
           toolCallId: "call_1",
@@ -473,7 +483,9 @@ describe("ChatStore", () => {
       const messageColumns = migrated
         .query("PRAGMA table_info(messages)")
         .all() as { name: string }[];
-      expect(chatColumns.map((column) => column.name)).toContain("tools_off");
+      expect(chatColumns.map((column) => column.name)).toEqual(
+        expect.arrayContaining(["tools_off", "search"]),
+      );
       expect(messageColumns.map((column) => column.name)).toEqual(
         expect.arrayContaining(["tool_calls", "tool_call_id", "tool_name"]),
       );

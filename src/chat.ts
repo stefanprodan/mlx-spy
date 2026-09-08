@@ -24,6 +24,7 @@ import type {
   ToolCall,
 } from "./engine/types.ts";
 import { renderMarkdown } from "./markdown.ts";
+import type { SearchKeys, SearchProvider } from "./tools/search/types.ts";
 import {
   formatCurrentTime,
   runTool,
@@ -101,6 +102,7 @@ type FrozenPolicy = {
   topP: number | null;
   maxTokens: number | null;
   tools: ChatTool[];
+  search: SearchProvider;
 };
 
 type RoundState = {
@@ -148,6 +150,7 @@ export type ChatRunnerDeps = {
   now?: () => number;
   version?: string;
   runTool?: ToolExecutor;
+  searchKeys?: SearchKeys;
 };
 
 function chatSummary(chat: Chat): ChatSummary {
@@ -225,9 +228,14 @@ export class ChatRunner {
   update(id: string, patch: ChatPatch): (ChatSummary & ChatSettings) | null {
     if (
       this.active?.chatId === id &&
-      (patch.model !== undefined || patch.toolsOff !== undefined)
+      (patch.model !== undefined ||
+        patch.toolsOff !== undefined ||
+        patch.search !== undefined)
     ) {
-      throw new ChatError(409, "Model and tools cannot change during a send");
+      throw new ChatError(
+        409,
+        "Model, tools and search cannot change during a send",
+      );
     }
     if (patch.model !== undefined) this.validateModel(patch.model);
     const chat = this.deps.store.update(id, patch);
@@ -342,13 +350,20 @@ export class ChatRunner {
       topP: chat.topP,
       maxTokens: chat.maxTokens,
       tools,
+      search: chat.search,
     };
     const send: ActiveSend = {
       chatId: chat.id,
       userId: user.id,
       policy,
       round: 1,
-      budget: { toolCalls: 0, fetches: 0, toolMs: 0, resultBytes: 0 },
+      budget: {
+        toolCalls: 0,
+        fetches: 0,
+        searches: 0,
+        toolMs: 0,
+        resultBytes: 0,
+      },
       controller: new AbortController(),
       terminal: null,
       rows: [],
@@ -620,6 +635,10 @@ export class ChatRunner {
       now: this.now,
       engine: new URL(this.deps.engine.url),
       version: this.deps.version ?? "dev",
+      search: {
+        provider: send.policy.search,
+        key: this.deps.searchKeys?.[send.policy.search] ?? null,
+      },
       budget: send.budget,
     });
     const elapsed = Math.max(0, this.now() - startedAt);
