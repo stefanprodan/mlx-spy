@@ -9,6 +9,8 @@
 		<string>/Users/stefanprodan/.mlx-spy/bin/mlx-spy</string>
 		<string>--engine</string>
 		<string>http://127.0.0.1:11234</string>
+		<string>--listen</string>
+		<string>0.0.0.0:11235</string>
 	</array>
 	<key>WorkingDirectory</key>
 	<string>/Users/stefanprodan/.mlx-spy</string>
@@ -17,7 +19,7 @@
 		<key>HOME</key>
 		<string>/Users/stefanprodan</string>
 		<key>PATH</key>
-		<string>/usr/bin:/bin</string>
+		<string>/Users/stefanprodan/.local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
 	</dict>
 	<key>RunAtLoad</key>
 	<true/>
