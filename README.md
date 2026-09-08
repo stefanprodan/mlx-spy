@@ -2,21 +2,55 @@
 
 Monitoring, control and chat for LLM inference servers on Apple Silicon.
 
-mlx-spy runs next to an inference engine (mlx-serve first), samples it and
-the host once a second, keeps a week of history, and serves three pages:
+mlx-spy runs next to [mlx-serve](https://github.com/ddalcu/mlx-serve)
+and shows what the engine is doing in real time: the request in flight,
+the throughput, the caches and the memory, with a week of history behind
+them and a chat that streams through it. A single Bun binary, no
+dependencies.
 
-- **Monitor**: live tok/s, cache efficiency, memory split, charts with a
-  1h to 7d range, the models table with load, unload and default buttons,
-  restart engine and clear disk cache.
-- **Requests**: the request in flight and the last 50 finished ones with
-  their prompt, cached share, prefill, decode and time to first token.
-- **Chat**: a chat on the engine with the engine's own timings under every
-  reply. Replies stream on the server, so a reload or a second tab picks
-  up where the reply is, and Stop works from anywhere at any point.
+## Features
 
-One Bun binary, no runtime dependencies, nothing loaded from the internet.
+**Monitor**
 
-<!-- screenshots -->
+- Live prefill and decode tok/s, requests served, tokens generated, time
+  to first token, and the cache efficiency the engine reports.
+- The memory split: engine footprint, weights, the RAM prefix cache and
+  the SSD cache tier against their budgets.
+- Charts with a shared cursor and a 1h, 6h, 24h and 7d range.
+- The request in flight as a live bar: prefill, cached share, decode.
+- The models table: load, unload, set the default, favorite; restart the
+  engine and clear its disk cache from the page.
+- The runtime panel: engine pid, RSS, CPU and GPU next to the host's
+  chip, memory and disk.
+
+**Requests**
+
+- The last 50 requests with their prompt and generated tokens, cached
+  share, prefill and decode rates, time to first token and duration.
+
+**Chat**
+
+- Replies stream on the server into mlx-spy's database, so a reload, a
+  second tab or the phone picks a reply up where it is.
+- Stop works from anywhere at any point, and the text so far is kept.
+- The engine's own timings under every reply: prefill and decode tok/s,
+  cached share, tokens, duration, and the context used against the
+  model's window.
+- Thinking on or off and the reasoning effort per chat; reasoning is shown
+  in a fold with its time and sent back on later turns.
+- Tools the model can call: `get_current_time`, `webfetch` (any page as
+  text, sliced so the model can page through it) and `websearch` (Exa or
+  Firecrawl per chat, keyless or with your key, with an optional domain
+  restriction). Every call shows its argument, its time and its result
+  under an "untrusted" label, and each tool can be turned off per chat.
+- System prompt, temperature, top p and max tokens per chat; a new chat
+  starts on a loaded model so it never cold-loads by accident.
+- Markdown rendered on the server, code blocks with a copy button, edit
+  and regenerate, chat list with rename and delete.
+
+![The Monitor page](docs/screens/monitor.png)
+
+![The Chat page](docs/screens/chat.png)
 
 ## Install
 
