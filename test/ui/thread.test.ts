@@ -317,6 +317,26 @@ describe("chat thread recording invariants", () => {
     ).toBe(true);
   });
 
+  test("a tool limit folds the unrun calls and keeps the answer as the reply", async () => {
+    const tree = treeOf(await drive("tool-limit.ndjson"));
+    expect(works(tree)).toHaveLength(1);
+    const tools = toolNodes(tree);
+    expect(tools).toHaveLength(9);
+    expect(tools.every((tool) => tool.result?.status === "stopped")).toBe(true);
+    const reply = replies(tree).at(-1)!;
+    expect(reply.message.finishReason).toBe("stop");
+    expect(reply.message.content).not.toBe("");
+    expect(reply.tools).toHaveLength(0);
+    const limited = works(tree)[0].items.find(
+      (item) =>
+        item.kind === "round" && item.message.finishReason === "tool_limit",
+    );
+    expect(limited).toBeDefined();
+    expect(works(tree)[0].label).toMatch(
+      /^Worked for .* · 9 tool calls, tool limit$/,
+    );
+  });
+
   test("a thinking stop leaves reasoning on the reply", async () => {
     const tree = treeOf(await drive("think-stop.ndjson"));
     expect(works(tree)).toHaveLength(0);

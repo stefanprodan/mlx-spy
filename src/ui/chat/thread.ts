@@ -82,9 +82,13 @@ function workLabel(
     );
   }
   const failed = tools.filter((x) => x.status === "error").length;
+  // the calls a limit stopped show as stopped in the fold; the label says
+  // why, since the round that hit it has no text of its own
+  const limited = rounds.some((x) => x.finishReason === "tool_limit");
   let text = `Worked for ${secs(end - start)}`;
   if (tools.length > 0) text += ` · ${count(tools.length)}`;
   if (failed > 0) text += `, ${failed} failed`;
+  if (limited) text += ", tool limit";
   return text;
 }
 
