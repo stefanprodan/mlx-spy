@@ -7,7 +7,6 @@ import type { LastRequest } from "../../requests.ts";
 import { api } from "../api.ts";
 import { Trash } from "../icons.tsx";
 import { runAction } from "../monitor/actions.ts";
-import { Event } from "../monitor/Event.tsx";
 import { RequestBar } from "../monitor/RequestBar.tsx";
 import { Confirm } from "../shell/Confirm.tsx";
 import { Pill } from "../shell/Pill.tsx";
@@ -143,7 +142,6 @@ export function Requests() {
           No requests yet.
         </p>
       </section>
-      <Event />
       <Confirm />
     </>
   );

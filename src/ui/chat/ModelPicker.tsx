@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useEffect } from "preact/hooks";
+import { orderModels } from "../format.ts";
 import { models } from "../store.ts";
 import { gbOf, pickModel, settings } from "./store.ts";
 
@@ -14,9 +15,7 @@ export function ModelPicker({
   anchor: HTMLElement | null;
 }) {
   const s = settings.value;
-  const sorted = [...models.value].sort(
-    (a, b) => Number(b.loaded) - Number(a.loaded) || a.id.localeCompare(b.id),
-  );
+  const sorted = orderModels(models.value);
   // a click outside or Escape closes it
   useEffect(() => {
     const onClick = (ev: MouseEvent) => {

@@ -8,7 +8,7 @@
 
 import type { ActionName } from "../../actions.ts";
 import type { Capability, ModelInfo } from "../../engine/types.ts";
-import { gb } from "../format.ts";
+import { gb, orderModels } from "../format.ts";
 import { busy, type Snapshot } from "../store.ts";
 import { runAction } from "./actions.ts";
 
@@ -113,7 +113,7 @@ function Buttons({
 }
 
 export function Models({ snap }: { snap: Snapshot | null }) {
-  const models = snap?.models ?? [];
+  const models = orderModels(snap?.models ?? []);
   const can = (c: Capability) => snap?.engine.capabilities.includes(c) ?? false;
   // the list is empty while the engine is unreachable (the sampler drops
   // it) or when it really lists nothing; one sentence either way

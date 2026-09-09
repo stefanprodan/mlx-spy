@@ -75,3 +75,16 @@ export function duration(ms: number): string {
   if (m) return `${m}m`;
   return `${s}s`;
 }
+
+// The order of every model list on the page: the daily driver first, then
+// by id. The engine lists resident models first, which moves a row on
+// every load and unload; residency shows in the dot instead.
+export function orderModels<T extends { id: string; favorite?: boolean }>(
+  list: T[],
+): T[] {
+  return [...list].sort(
+    (a, b) =>
+      Number(b.favorite ?? false) - Number(a.favorite ?? false) ||
+      a.id.localeCompare(b.id),
+  );
+}

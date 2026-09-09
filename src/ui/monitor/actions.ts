@@ -10,7 +10,14 @@ import type { ActionEvent, ActionName } from "../../actions.ts";
 import type { Capability } from "../../engine/types.ts";
 import { gb } from "../format.ts";
 import { confirm } from "../shell/Confirm.tsx";
-import { busy, event, refreshSnapshot, setBusy, snapshot } from "../store.ts";
+import {
+  busy,
+  event,
+  refreshSnapshot,
+  sample,
+  setBusy,
+  snapshot,
+} from "../store.ts";
 
 export const ACTION_LABEL: Record<ActionName, string> = {
   load: "load",
@@ -49,7 +56,16 @@ export type ConfirmContext = {
   engineName: string;
   loadedCount: number;
   diskTotal: number;
+  // the engine's footprint after the load: what it holds now plus the
+  // model's weights, which are mmap'd whole from disk
+  loadBytes: number;
 };
+
+export function loadEstimate(model: string | null): number {
+  const s = sample.value ?? snapshot.value?.sample ?? null;
+  const m = snapshot.value?.models.find((x) => x.id === model);
+  return (s?.mem.procFootprint ?? 0) + (m?.bytesOnDisk ?? 0);
+}
 
 // A part of the dialog text: plain, or the model id shown as code. The id
 // comes from the engine and is never interpreted as HTML.
@@ -71,9 +87,9 @@ export function confirmText(
   switch (action) {
     case "load":
       return [
-        "Load ",
+        "Confirm loading ",
         m,
-        `? Reading the weights takes a few seconds; it becomes the default model.${evict}`,
+        `? Estimated memory usage after load: ${gb(ctx.loadBytes)} GB.${evict}`,
       ];
     case "default":
       return [
@@ -82,11 +98,7 @@ export function confirmText(
         ` the default model? It is loaded if needed and chat requests without a model go to it.${evict}`,
       ];
     case "unload":
-      return [
-        "Unload ",
-        m,
-        "? Its weights and RAM prefix cache are freed; the SSD tier is kept. A model still resident becomes the default.",
-      ];
+      return []; // frees only, no dialog
     case "free":
       return [`Confirm ${ctx.engineName} restart`];
     case "diskClear":
@@ -109,7 +121,14 @@ export function confirmText(
 export async function runAction(action: ActionName, model: string | null) {
   if (busy.value) return;
   const label = ACTION_LABEL[action];
-  if (action !== "favorite") {
+  // a first load costs nothing already there and an unload only frees, so
+  // neither needs a dialog; a second load is a memory decision and gets
+  // the estimate
+  const silent =
+    action === "favorite" ||
+    action === "unload" ||
+    (action === "load" && loadedCount.value === 0);
+  if (!silent) {
     // the restart dialog offers the disk wipe as an option: diskClear is a
     // restart plus the deletion of the SSD tier
     const canDiskClear = can("diskClear") && engineLocal.value;
@@ -118,6 +137,7 @@ export async function runAction(action: ActionName, model: string | null) {
         engineName: engineName.value,
         loadedCount: loadedCount.value,
         diskTotal: diskTotal.value,
+        loadBytes: loadEstimate(model),
       }),
       label[0].toUpperCase() + label.slice(1),
       action === "free" && canDiskClear

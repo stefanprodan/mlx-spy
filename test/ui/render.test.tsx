@@ -5,6 +5,7 @@ import { describe, expect, test } from "bun:test";
 import { render } from "preact-render-to-string";
 import type { LastRequest } from "../../src/requests.ts";
 import type { Sample } from "../../src/sample.ts";
+import { Event } from "../../src/ui/monitor/Event.tsx";
 import { Models } from "../../src/ui/monitor/Models.tsx";
 import { RequestBar } from "../../src/ui/monitor/RequestBar.tsx";
 import { Tiles } from "../../src/ui/monitor/Tiles.tsx";
@@ -60,7 +61,7 @@ describe("request components", () => {
     expect(html).toContain('<span class="cur-total">3s · decoding</span>');
   });
 
-  test("requests renders its table, row details, blank line, and event", () => {
+  test("requests renders its table, row details and blank line", () => {
     connection.value = "live";
     busy.value = null;
     event.value = {
@@ -80,7 +81,8 @@ describe("request components", () => {
     expect(empty).toContain('<th class="model">Model</th>');
     expect(empty).toContain('<th class="num wide">Prefill</th>');
     expect(empty).toContain('<p class="blank">No requests yet.</p>');
-    expect(empty).toContain('<div class="event"><span class="when">');
+    // the action line belongs to the monitor
+    expect(empty).not.toContain('class="event');
 
     requests.value = [last];
     const filled = render(<Requests />);
@@ -175,5 +177,24 @@ describe("request components", () => {
       />,
     );
     expect(empty).toContain('<p class="blank">Engine unreachable.</p>');
+  });
+});
+
+describe("event line", () => {
+  const base = { t: startedAt, model: "org/model", ms: 120, detail: "x" };
+  test("a success shows nothing: the list and the uptime already do", () => {
+    event.value = { ...base, action: "load", ok: true };
+    expect(render(<Event />)).toBe('<div class="event" hidden></div>');
+  });
+  test("a failure shows the action and the reason", () => {
+    event.value = { ...base, action: "load", ok: false, detail: "HTTP 409" };
+    const html = render(<Event />);
+    expect(html).toContain('<div class="event err"><span class="when">');
+    expect(html).toContain("load org/model failed: HTTP 409</div>");
+  });
+  test("a later success clears the failure", () => {
+    event.value = { ...base, action: "load", ok: false, detail: "HTTP 409" };
+    event.value = { ...base, t: startedAt + 1, action: "load", ok: true };
+    expect(render(<Event />)).toBe('<div class="event" hidden></div>');
   });
 });

@@ -9,6 +9,7 @@ import {
   gb,
   group,
   num,
+  orderModels,
   secs,
   tps,
   when,
@@ -68,5 +69,21 @@ describe("format", () => {
     expect(group(now - day, now)).toBe("Yesterday");
     expect(group(now - 3 * day, now)).toBe("This week");
     expect(group(now - 10 * day, now)).toBe("Earlier");
+  });
+});
+
+describe("orderModels", () => {
+  test("daily driver first, then by id, residency ignored", () => {
+    const list = [
+      { id: "b/two", loaded: true },
+      { id: "a/one", loaded: false },
+      { id: "c/three", loaded: false, favorite: true },
+    ];
+    expect(orderModels(list).map((m) => m.id)).toEqual([
+      "c/three",
+      "a/one",
+      "b/two",
+    ]);
+    expect(list.map((m) => m.id)).toEqual(["b/two", "a/one", "c/three"]);
   });
 });
