@@ -63,3 +63,15 @@ export function group(t: number, now: number): string {
   if (t >= today - 6 * DAY) return "This week";
   return "Earlier";
 }
+
+// an uptime: "3d 4h", "2h 15m", "40s"
+export function duration(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(s / 86_400);
+  const h = Math.floor((s % 86_400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (d) return `${d}d ${h}h`;
+  if (h) return `${h}h ${m}m`;
+  if (m) return `${m}m`;
+  return `${s}s`;
+}

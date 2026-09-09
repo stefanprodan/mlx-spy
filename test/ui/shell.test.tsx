@@ -35,7 +35,10 @@ describe("shell", () => {
   test("footer shows the version once the snapshot is in", () => {
     snapshot.value = null;
     expect(render(<Footer />)).toContain(">mlx-spy</a>");
-    snapshot.value = { version: "v0.0.0-dev" } as Partial<Snapshot> as Snapshot;
+    snapshot.value = {
+      version: "v0.0.0-dev",
+      events: [],
+    } as Partial<Snapshot> as Snapshot;
     expect(render(<Footer />)).toContain(">mlx-spy v0.0.0-dev</a>");
     expect(render(<Footer />)).toContain('class="footlink"');
   });

@@ -1,19 +1,8 @@
 // Copyright 2026 Stefan Prodan.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ActionName } from "../../actions.ts";
-import { busy, event } from "../store.ts";
-
-const ACTION_LABEL: Record<ActionName, string> = {
-  load: "load",
-  unload: "unload",
-  default: "set default",
-  free: "restart engine",
-  diskClear: "clear disk cache",
-  historyClear: "clear history",
-  requestsClear: "clear requests",
-  favorite: "daily driver",
-};
+import { busy, event, snapshot } from "../store.ts";
+import { ACTION_LABEL } from "./actions.ts";
 
 const fmtWhen = new Intl.DateTimeFormat(undefined, {
   hour: "2-digit",
@@ -24,7 +13,12 @@ const fmtWhen = new Intl.DateTimeFormat(undefined, {
 
 export function Event() {
   const running = busy.value;
-  const outcome = event.value;
+  // the last event this tab saw, or the last one the server logged if
+  // that is newer (a tab that was away during an action)
+  const seen = event.value;
+  const logged = snapshot.value?.events.at(-1) ?? null;
+  const outcome =
+    seen && logged ? (logged.t > seen.t ? logged : seen) : (seen ?? logged);
   if (running) {
     return <div class="event busy">{ACTION_LABEL[running]} running</div>;
   }

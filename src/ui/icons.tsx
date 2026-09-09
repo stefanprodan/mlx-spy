@@ -17,3 +17,17 @@ export const Mark = () => (
     />
   </svg>
 );
+
+// the clear buttons in the section heads
+export const Trash = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5L18 7M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7"
+    />
+  </svg>
+);

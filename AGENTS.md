@@ -157,18 +157,25 @@ src/ui/index.html    one bundle for / (monitor), /requests and /chat;
                      Bun bundles style.css and main.tsx from it. Being
                      moved to Preact page by page
                      (plans/26.09.09-preact-plan.md)
-src/ui/main.tsx      entry: renders the header and footer, opens the store
+src/ui/main.tsx      entry: renders the shell and the page's root, opens
+                     the store
 src/ui/store.ts      the WebSocket client and its signals (connection,
                      snapshot, sample, models, event, busy); listen() for
                      the views still driven by hand
 src/ui/api.ts        api<T>(): one JSON call to this server
 src/ui/format.ts     gb, num, count, secs, tps, when, group (pure, tested)
 src/ui/icons.tsx     the inline SVGs as components
-src/ui/shell/        Header.tsx, Footer.tsx, Pill.tsx
-src/ui/monitor/      request.ts, RequestBar.tsx, Event.tsx
+src/ui/shell/        Header.tsx, Footer.tsx, Pill.tsx, Confirm.tsx (the
+                     dialog with a promise API)
+src/ui/monitor/      Monitor.tsx (the page: range, series and tile memory
+                     signals), Tiles.tsx, Charts.tsx (uPlot in a ref),
+                     Models.tsx, Runtime.tsx, RangePicker.tsx, RequestBar.tsx,
+                     Event.tsx; the pure, tested tiles.ts (seed/apply and
+                     the eight tiles), range.ts, series.ts, request.ts;
+                     actions.ts (runAction, confirmText, engine facts)
 src/ui/requests/     Requests.tsx, Row.tsx
-src/ui/app.ts        the monitor view, still imperative: tiles, uPlot charts,
-                     range picker, actions; mounts the chat view
+src/ui/app.ts        the glue between the store and chat.ts, until the chat
+                     moves to Preact
 src/ui/chat.ts       the Chat view: list, transcript, composer
 src/ui/style.css     follows the engine's own console (its tokens: #131314
                      page, #1e1f20 cards, #0f1216 inset tiles, 10px uppercase

@@ -36,8 +36,14 @@ export const sample = signal<Sample | null>(null);
 // differs triggers the fetch of one.
 export const models = signal<Sample["models"]>([]);
 export const event = signal<ActionEvent | null>(null);
-// the action in flight, started from this tab
+// The action in flight: this tab's, or the one the server reports in a
+// snapshot (another tab's). Every control is disabled while it is set.
 export const busy = signal<ActionName | null>(null);
+let localAction = false;
+export function setBusy(action: ActionName | null) {
+  localAction = action !== null;
+  busy.value = action;
+}
 export const version = computed(() => snapshot.value?.version ?? null);
 
 export const modelsKeyOf = (list: Sample["models"]) =>
@@ -47,6 +53,9 @@ export const modelsKeyOf = (list: Sample["models"]) =>
 let modelsKey = "";
 function setSnapshot(snap: Snapshot) {
   snapshot.value = snap;
+  // a snapshot taken before this tab's own action registered must not
+  // release the buttons early
+  if (snap.running || !localAction) busy.value = snap.running;
   const key = modelsKeyOf(snap.models);
   if (key === modelsKey) return;
   modelsKey = key;

@@ -2,79 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, test } from "bun:test";
-import type { LastRequest } from "../../src/requests.ts";
-import type { Sample } from "../../src/sample.ts";
 import { initialMemory, requestBar } from "../../src/ui/monitor/request.ts";
 
-const startedAt = new Date(2026, 8, 9, 10, 0, 0).getTime();
-const stamp = (time: number) =>
-  new Intl.DateTimeFormat(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).format(time);
-
-const lastRequest = (overrides: Partial<LastRequest> = {}): LastRequest => ({
-  startedAt,
-  finishedAt: startedAt + 5500,
-  count: 1,
-  cancelled: false,
-  generated: 80,
-  promptTokens: 1000,
-  prefillTokens: 250,
-  prefillMs: 1000,
-  decodeMs: 4000,
-  ttftMs: 1200,
-  model: "org/model",
-  ...overrides,
-});
-
-const sample = (overrides: Partial<Sample> = {}): Sample => ({
-  t: startedAt + 1500,
-  engineUp: true,
-  epoch: 0,
-  windowMs: 1000,
-  decodeTps: 0,
-  prefillTps: 0,
-  requestsRunning: 0,
-  requestsWaiting: 0,
-  requestsPrefilling: 0,
-  prefillTokensLive: 0,
-  inflightTokens: 0,
-  phaseSince: null,
-  request: null,
-  lastRequest: null,
-  cacheHitPct: null,
-  cacheTokenPct: null,
-  ttftMs: null,
-  ttftN: 0,
-  gpuPct: 0,
-  generatedTokens: 0,
-  promptTokens: 0,
-  cachedPromptTokens: 0,
-  requestsTotal: 0,
-  requestsCancelled: 0,
-  enginePid: null,
-  engineStartedAt: null,
-  engineCpuPct: null,
-  mem: {
-    hostTotal: 0,
-    hostFree: 0,
-    hostInactive: 0,
-    hostWired: 0,
-    hostCompressed: 0,
-    procFootprint: 0,
-    procRss: 0,
-    weights: 0,
-    hotCacheEst: 0,
-    mlxActive: 0,
-    mlxPool: 0,
-  },
-  disk: [],
-  models: [],
-  ...overrides,
-});
+import { lastRequest, sample, stamp, startedAt } from "./helpers.ts";
 
 describe("request bar", () => {
   test("idle", () => {

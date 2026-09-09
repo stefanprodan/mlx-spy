@@ -5,8 +5,12 @@ import { describe, expect, test } from "bun:test";
 import { render } from "preact-render-to-string";
 import type { LastRequest } from "../../src/requests.ts";
 import type { Sample } from "../../src/sample.ts";
+import { Models } from "../../src/ui/monitor/Models.tsx";
 import { RequestBar } from "../../src/ui/monitor/RequestBar.tsx";
+import { Tiles } from "../../src/ui/monitor/Tiles.tsx";
+import { PLACEHOLDER, type Tile } from "../../src/ui/monitor/tiles.ts";
 import { Requests, requests } from "../../src/ui/requests/Requests.tsx";
+import type { Snapshot } from "../../src/ui/store.ts";
 import { busy, connection, event, sample } from "../../src/ui/store.ts";
 
 const startedAt = new Date(2026, 8, 9, 10, 0, 0).getTime();
@@ -89,5 +93,87 @@ describe("request components", () => {
     expect(filled).toContain('<div class="dgrid">');
     expect(filled).toContain('<span class="k">Outcome</span>');
     expect(filled).toContain('<p class="blank" hidden>No requests yet.</p>');
+  });
+
+  test("tiles keep the CSS structure, the bars and the warn part", () => {
+    const list: Tile[] = [
+      ...PLACEHOLDER.slice(0, 1).map((t) => ({
+        ...t,
+        value: "5",
+        sub: [{ warn: "1 cancelled" }, " · ", "TTFT avg 0.6 s"],
+      })),
+      {
+        key: "mem",
+        label: "Memory",
+        value: "20",
+        unit: "GB",
+        none: false,
+        bar: { pct: 80, level: "warn", off: false },
+        sub: ["72 GB free of 128"],
+      },
+      PLACEHOLDER[6],
+    ];
+    const html = render(<Tiles tiles={list} />);
+    expect(html).toContain(
+      '<div class="tiles"><div class="tile"><div class="lbl">Requests</div><div class="val"><span>5</span><span class="unit">served</span></div><div class="sub"><span class="warn">1 cancelled</span> · TTFT avg 0.6 s</div></div>',
+    );
+    expect(html).toContain(
+      '<div class="bar"><div class="fill warn" style="width:80%;"></div></div>',
+    );
+    expect(html).toContain(
+      '<div class="val"><span class="none">–</span><span class="unit">GB est.</span></div><div class="bar off"><div class="fill" style="width:0%;"></div></div>',
+    );
+  });
+
+  test("models table keeps the row structure and the buttons", () => {
+    const snap = {
+      engine: { capabilities: ["load", "unload"] },
+      sample: { engineUp: true },
+      models: [
+        {
+          id: "org/one",
+          loaded: true,
+          state: "ready",
+          bytesResident: 2 ** 30,
+          bytesOnDisk: 2 ** 30,
+          contextLength: 262144,
+          capabilities: [],
+          favorite: true,
+        },
+        {
+          id: "two",
+          loaded: false,
+          state: "unloaded",
+          bytesResident: 0,
+          bytesOnDisk: 3 * 2 ** 30,
+          contextLength: null,
+          capabilities: [],
+        },
+      ],
+    } as unknown as Snapshot;
+    const html = render(<Models snap={snap} />);
+    expect(html).toContain(
+      '<section class="card models"><table id="models"><tbody><tr class="ready"><td class="name" title="org/one"><div><span class="dot ready"></span><span class="owner">org/</span><a class="model" href="https://huggingface.co/org/one" target="_blank" rel="noopener">one</a></div></td><td class="meta">1.0 GB · 256K ctx</td><td class="state ready">ready</td><td class="act">',
+    );
+    expect(html).toContain('class="ibtn on" title="Daily driver"');
+    expect(html).toContain('class="ibtn danger" title="Unload"');
+    expect(html).toContain(
+      '<tr><td class="name" title="two"><div><span class="dot "></span><span class="owner"></span><a class="model" href="https://huggingface.co/two"',
+    );
+    expect(html).toContain('<td class="meta">3.0 GB</td>');
+    expect(html).toContain('class="ibtn" title="Load"');
+    expect(html).toContain('<p class="blank" hidden>');
+    const empty = render(
+      <Models
+        snap={
+          {
+            ...snap,
+            models: [],
+            sample: { engineUp: false },
+          } as unknown as Snapshot
+        }
+      />,
+    );
+    expect(empty).toContain('<p class="blank">Engine unreachable.</p>');
   });
 });

@@ -5,8 +5,11 @@ import { signal } from "@preact/signals";
 import { useEffect, useState } from "preact/hooks";
 import type { LastRequest } from "../../requests.ts";
 import { api } from "../api.ts";
+import { Trash } from "../icons.tsx";
+import { runAction } from "../monitor/actions.ts";
 import { Event } from "../monitor/Event.tsx";
 import { RequestBar } from "../monitor/RequestBar.tsx";
+import { Confirm } from "../shell/Confirm.tsx";
 import { Pill } from "../shell/Pill.tsx";
 import { busy, listen, snapshot } from "../store.ts";
 import { Row } from "./Row.tsx";
@@ -36,19 +39,6 @@ function noteRequest(last: LastRequest | null) {
     .sort((a, b) => b.finishedAt - a.finishedAt)
     .slice(0, REQUESTS_SHOWN);
 }
-
-const Trash = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path
-      fill="none"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="1.75"
-      d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5L18 7M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7"
-    />
-  </svg>
-);
 
 export function Requests() {
   const list = requests.value;
@@ -114,11 +104,7 @@ export function Requests() {
             title="Clear requests"
             aria-label="Clear requests"
             disabled={action !== null}
-            onClick={() =>
-              void import("../app.ts").then(({ runAction }) =>
-                runAction("requestsClear", null),
-              )
-            }
+            onClick={() => void runAction("requestsClear", null)}
           >
             <Trash />
           </button>
@@ -158,6 +144,7 @@ export function Requests() {
         </p>
       </section>
       <Event />
+      <Confirm />
     </>
   );
 }
