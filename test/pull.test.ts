@@ -5,7 +5,15 @@
 // with Range support, a redirect hop, and faults on demand (a cut stream, a
 // held stream, wrong bytes).
 
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "bun:test";
 import { mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -75,6 +83,18 @@ class FakeHub {
   stop() {
     this.server.stop(true);
     this.cdn.stop(true);
+  }
+
+  // back to the state a test starts from; the servers stay up, see below
+  reset() {
+    this.files = new Map();
+    this.faults = new Map();
+    this.requests = [];
+    this.held?.();
+    this.held = null;
+    this.redirect = false;
+    this.status = null;
+    this.listingDelayMs = 0;
   }
 
   // waits for the held stream to reach its pause
@@ -237,15 +257,30 @@ class RescanEngine implements Engine {
   }
 }
 
+// One Hub for the file. A Hub per test on a fresh random port let a later
+// test land on the port of a stopped one, and fetch's keep-alive pool then
+// handed the runner a dead socket ("socket connection was closed
+// unexpectedly" on the first request, seen under load on 2026-09-09).
 let hub: FakeHub;
 let dir: string;
 let history: History;
 let engine: RescanEngine;
 let refreshed = 0;
 let logs: string[];
+// every runner a test made, stopped after it so none keeps pulling into
+// the next test's Hub
+let runners: PullRunner[];
+
+beforeAll(() => {
+  hub = new FakeHub();
+});
+
+afterAll(() => {
+  hub.stop();
+});
 
 beforeEach(async () => {
-  hub = new FakeHub();
+  hub.reset();
   hub.files.set("config.json", new TextEncoder().encode('{"a":1}'));
   hub.files.set("model.safetensors", bytesOf(50_000, 7));
   hub.files.set("sub/extra.safetensors", bytesOf(3_000, 9));
@@ -254,10 +289,14 @@ beforeEach(async () => {
   engine = new RescanEngine();
   refreshed = 0;
   logs = [];
+  runners = [];
 });
 
 afterEach(async () => {
-  hub.stop();
+  for (const r of runners) r.shutdown();
+  hub.held?.();
+  hub.held = null;
+  await Bun.sleep(10);
   history.close();
   await rm(dir, { recursive: true, force: true });
 });
@@ -281,6 +320,7 @@ function runner(
     ...overrides,
   });
   r.onEvent((pull) => events.push(structuredClone(pull)));
+  runners.push(r);
   return { r, events };
 }
 
