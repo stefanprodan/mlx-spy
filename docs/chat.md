@@ -25,8 +25,13 @@ the engine reports shown in the composer.
   hot cache per workload (mlx-serve 26.9.2 and later) then evicts a
   batch job's own entries before it touches the conversation you are in.
 - **Reasoning is kept.** Thinking models show their reasoning in a
-  collapsed block with the time it took; it is stored and sent back on
-  later turns.
+  collapsed block with the time it took. It is stored and sent back on
+  every assistant message on later turns, so the model rereads its own
+  chain during a tool loop. Past reasoning in the gear turns that off
+  for a chat: a Qwen 3.5 or 3.6 template drops reasoning before the
+  last user message anyway, and sending it changes how earlier turns
+  render from one user turn to the next, so the engine re-prefills from
+  the first tool round of the previous turn on every new message.
 - **Tools.** The model can call a small set of tools that run inside
   mlx-spy: `get_current_time` (the clock in any zone), `webfetch` (a web
   page as text) and `websearch` (a web search). While a send works, one line with a spinner says
@@ -65,8 +70,8 @@ models come first with their size;
 picking one that is not loaded shows a note, and the first message loads
 it (evicting the least recently used one when the engine is at its
 residency cap). Thinking on or off and the reasoning effort sit next to it;
-the gear holds the system prompt, temperature, top p, max tokens and the
-tools, the fields empty by default so the engine's own defaults apply.
+the gear holds the system prompt, past reasoning, temperature, top p, max
+tokens and the tools, the fields empty by default so the engine's own defaults apply.
 Settings live on the chat and apply to the next message. The button at the left of the header
 folds the chat list away so the conversation takes the whole width (the
 page remembers the choice); on a phone it opens the list as a drawer. The

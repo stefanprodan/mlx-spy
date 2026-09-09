@@ -8,6 +8,11 @@ import { current, modelInfo, patch, settings, tools } from "./store.ts";
 
 const numOrNull = (v: string) => (v.trim() === "" ? null : Number(v));
 
+// Preact has no defaultValue for a select (it sets a property the element
+// does not have), so the option carries the selection; the form is read
+// on close and selected is only re-applied when the setting itself moves
+const EFFORTS = ["low", "medium", "high", "none"];
+
 // The settings dialog: filled from the chat (or the draft) when it opens,
 // written back with one PATCH when it closes with Save.
 export function Settings({
@@ -39,6 +44,7 @@ export function Settings({
     return {
       systemPrompt: v("systemPrompt"),
       reasoningEffort: v("reasoningEffort") || null,
+      reasoningHistory: v("reasoningHistory") === "on",
       temperature: numOrNull(v("temperature")),
       topP: numOrNull(v("topP")),
       maxTokens: numOrNull(v("maxTokens")),
@@ -80,15 +86,26 @@ export function Settings({
           <div class="fields">
             <label>
               Reasoning effort
-              <select
-                name="reasoningEffort"
-                defaultValue={s.reasoningEffort ?? ""}
-              >
-                <option value="">engine default</option>
-                <option value="low">low</option>
-                <option value="medium">medium</option>
-                <option value="high">high</option>
-                <option value="none">none</option>
+              <select name="reasoningEffort">
+                <option value="" selected={s.reasoningEffort === null}>
+                  engine default
+                </option>
+                {EFFORTS.map((e) => (
+                  <option key={e} value={e} selected={s.reasoningEffort === e}>
+                    {e}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Past reasoning
+              <select name="reasoningHistory">
+                <option value="on" selected={s.reasoningHistory}>
+                  sent back
+                </option>
+                <option value="off" selected={!s.reasoningHistory}>
+                  not sent back
+                </option>
               </select>
             </label>
             <label>
@@ -130,9 +147,13 @@ export function Settings({
             </label>
             <label>
               Search
-              <select name="search" defaultValue={s.search ?? "exa"}>
-                <option value="exa">Exa</option>
-                <option value="firecrawl">Firecrawl</option>
+              <select name="search">
+                <option value="exa" selected={s.search !== "firecrawl"}>
+                  Exa
+                </option>
+                <option value="firecrawl" selected={s.search === "firecrawl"}>
+                  Firecrawl
+                </option>
               </select>
             </label>
           </div>

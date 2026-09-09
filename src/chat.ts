@@ -98,6 +98,7 @@ type FrozenPolicy = {
   systemPrompt: string;
   thinking: boolean;
   reasoningEffort: string | null;
+  reasoningHistory: boolean;
   temperature: number | null;
   topP: number | null;
   maxTokens: number | null;
@@ -348,6 +349,7 @@ export class ChatRunner {
       systemPrompt: this.systemPrompt(chat.systemPrompt, tools.length > 0),
       thinking: chat.thinking,
       reasoningEffort: chat.reasoningEffort,
+      reasoningHistory: chat.reasoningHistory,
       temperature: chat.temperature,
       topP: chat.topP,
       maxTokens: chat.maxTokens,
@@ -600,6 +602,13 @@ export class ChatRunner {
     const chat = this.requireChat(send.chatId);
     const messages: ChatMessageIn[] = [];
     const systemPrompt = send.policy.systemPrompt;
+    // on by default so the model rereads its own chain in a tool loop; a
+    // Qwen 3.5 or 3.6 template renders reasoning only for the turns after
+    // the last user message, so sending it for earlier turns changes how
+    // they render between one user turn and the next and the engine
+    // re-prefills from the first tool round of the previous turn (19.5 s
+    // at 22k tokens, seen 2026-09-09); a chat opts out to keep the cache
+    const reasoning = send.policy.reasoningHistory;
     if (systemPrompt !== "") {
       messages.push({ role: "system", content: systemPrompt });
     }
@@ -619,7 +628,9 @@ export class ChatRunner {
             message.toolCalls && message.content === ""
               ? null
               : message.content,
-          ...(message.reasoning ? { reasoning: message.reasoning } : {}),
+          ...(reasoning && message.reasoning
+            ? { reasoning: message.reasoning }
+            : {}),
           ...(message.toolCalls ? { toolCalls: message.toolCalls } : {}),
         });
       } else if (message.role === "tool") {
@@ -747,7 +758,7 @@ export class ChatRunner {
         kind: "html",
         chatId: send.chatId,
         messageId: round.messageId,
-        html: renderMarkdown(round.content),
+        html: renderMarkdown(round.content, true),
         htmlAt: round.htmlAt,
       });
     }

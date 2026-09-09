@@ -100,6 +100,7 @@ const fallbackSettings = (toolsOn: boolean): Omit<ChatSettings, "model"> => ({
   systemPrompt: "",
   thinking: true,
   reasoningEffort: null,
+  reasoningHistory: true,
   temperature: null,
   topP: null,
   maxTokens: null,

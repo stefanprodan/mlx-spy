@@ -35,6 +35,7 @@ export const draft = signal<ChatSettings>({
   systemPrompt: "",
   thinking: true,
   reasoningEffort: null,
+  reasoningHistory: true,
   temperature: null,
   topP: null,
   maxTokens: null,

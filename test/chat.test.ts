@@ -147,6 +147,7 @@ function setup(
     systemPrompt: "be concise",
     thinking: true,
     reasoningEffort: "low",
+    reasoningHistory: false,
     temperature: 0.5,
     topP: 0.9,
     maxTokens: 100,
@@ -549,6 +550,7 @@ describe("ChatRunner", () => {
       systemPrompt: "",
       thinking: false,
       reasoningEffort: null,
+      reasoningHistory: false,
       temperature: null,
       topP: null,
       maxTokens: null,
@@ -634,6 +636,33 @@ describe("ChatRunner", () => {
       "assistant",
     ]);
     expect(s.events.filter((event) => event.kind === "done")).toHaveLength(1);
+    s.db.close();
+  });
+
+  test("sends earlier reasoning back only when reasoningHistory is on", async () => {
+    const s = setup();
+    s.runner.send(s.chat.id, "hello");
+    await turn();
+    s.engine.streams[0].push({ kind: "reasoning", text: "hmm" });
+    s.engine.streams[0].push({ kind: "content", text: "hi" });
+    await finish(s.engine.streams[0]);
+    s.runner.send(s.chat.id, "again");
+    await turn();
+    expect(s.engine.requests[1].messages.at(-2)).toEqual({
+      role: "assistant",
+      content: "hi",
+    });
+    s.engine.streams[1].push({ kind: "content", text: "ok" });
+    await finish(s.engine.streams[1]);
+    s.runner.update(s.chat.id, { reasoningHistory: true });
+    s.runner.send(s.chat.id, "once more");
+    await turn();
+    expect(s.engine.requests[2].messages.at(-4)).toEqual({
+      role: "assistant",
+      content: "hi",
+      reasoning: "hmm",
+    });
+    await finish(s.engine.streams[2]);
     s.db.close();
   });
 

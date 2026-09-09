@@ -268,6 +268,7 @@ function settings(value: Record<string, unknown>): ChatSettings {
     systemPrompt: stringField(value, "systemPrompt") ?? "",
     thinking: booleanField(value, "thinking") ?? true,
     reasoningEffort: effortField(value) ?? null,
+    reasoningHistory: booleanField(value, "reasoningHistory") ?? true,
     temperature: numberField(value, "temperature", 0, 2) ?? null,
     topP: numberField(value, "topP", 0, 1) ?? null,
     maxTokens:
@@ -284,6 +285,7 @@ function patch(value: Record<string, unknown>): ChatPatch {
   const systemPrompt = stringField(value, "systemPrompt");
   const thinking = booleanField(value, "thinking");
   const reasoningEffort = effortField(value);
+  const reasoningHistory = booleanField(value, "reasoningHistory");
   const temperature = numberField(value, "temperature", 0, 2);
   const topP = numberField(value, "topP", 0, 1);
   const maxTokens = numberField(
@@ -300,6 +302,9 @@ function patch(value: Record<string, unknown>): ChatPatch {
   if (systemPrompt !== undefined) result.systemPrompt = systemPrompt;
   if (thinking !== undefined) result.thinking = thinking;
   if (reasoningEffort !== undefined) result.reasoningEffort = reasoningEffort;
+  if (reasoningHistory !== undefined) {
+    result.reasoningHistory = reasoningHistory;
+  }
   if (temperature !== undefined) result.temperature = temperature;
   if (topP !== undefined) result.topP = topP;
   if (maxTokens !== undefined) result.maxTokens = maxTokens;

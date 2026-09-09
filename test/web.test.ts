@@ -265,6 +265,7 @@ describe("chat API", () => {
       systemPrompt: "system",
       thinking: false,
       reasoningEffort: "none",
+      reasoningHistory: true,
       temperature: 0,
       topP: 1,
       maxTokens: 20,
@@ -278,6 +279,7 @@ describe("chat API", () => {
       systemPrompt: "system",
       thinking: false,
       reasoningEffort: "none",
+      reasoningHistory: true,
       temperature: 0,
       topP: 1,
       maxTokens: 20,
@@ -285,6 +287,12 @@ describe("chat API", () => {
       messages: [],
     });
 
+    // the defaults of a bare create, then out of the way of the list check
+    const bare = (await (
+      await response(s.deps, "/api/chats", "POST", { model: MODEL })
+    ).json()) as any;
+    expect(bare).toMatchObject({ thinking: true, reasoningHistory: true });
+    await response(s.deps, `/api/chats/${bare.id}`, "DELETE");
     const list = await response(s.deps, "/api/chats");
     expect(await list.json()).toEqual([
       {
@@ -302,6 +310,7 @@ describe("chat API", () => {
       title: "changed",
       thinking: true,
       reasoningEffort: null,
+      reasoningHistory: false,
       temperature: 2,
       topP: 0,
       maxTokens: null,
@@ -310,6 +319,7 @@ describe("chat API", () => {
       title: "changed",
       thinking: true,
       reasoningEffort: null,
+      reasoningHistory: false,
       temperature: 2,
       topP: 0,
       maxTokens: null,
