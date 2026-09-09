@@ -13,8 +13,13 @@
 // by Bun, which is why every callback lives here and nowhere else.
 // Fenced blocks are highlighted here too (src/highlight.ts): the block's
 // text arrives escaped, so it is unescaped for the grammar, which escapes
-// every token again on its way out.
+// every token again on its way out. A mermaid block becomes a diagram
+// (src/diagram.ts) when the caller asks for it: the reads and the finish
+// do, the render every 250 ms of a streaming reply does not, since a
+// layout costs far more than a grammar and a half-written diagram is
+// noise; the source stays in the card, hidden, for the Copy button.
 
+import { renderDiagram } from "./diagram.ts";
 import { highlight } from "./highlight.ts";
 
 const OPTIONS = { noHtmlBlocks: true, noHtmlSpans: true } as const;
@@ -49,20 +54,30 @@ function language(info: string | undefined): string {
 // A fenced block becomes a card with a head (language label, copy button)
 // so the page can wire the copy without knowing the markup; the text to
 // copy is the pre's textContent, which the highlight spans leave as is.
-function codeBlock(text: string, info: string | undefined): string {
+function codeBlock(
+  text: string,
+  info: string | undefined,
+  diagrams: boolean,
+): string {
   const lang = language(info);
   const label = lang ? `<span class="lang">${escapeHtml(lang)}</span>` : "";
+  const head = `<div class="ch">${label}<button type="button" class="copy">Copy</button></div>`;
+  if (lang === "mermaid" && diagrams) {
+    const img = renderDiagram(unescapeHtml(text));
+    if (img !== null) {
+      return `<div class="code" data-lang="mermaid">${head}${img}<pre hidden><code>${text}</code></pre></div>`;
+    }
+  }
   const body = (lang && highlight(unescapeHtml(text), lang)) || text;
   return (
     `<div class="code"${lang ? ` data-lang="${escapeHtml(lang)}"` : ""}>` +
-    `<div class="ch">${label}<button type="button" class="copy">Copy</button></div>` +
-    `<pre><code>${body}</code></pre></div>`
+    `${head}<pre><code>${body}</code></pre></div>`
   );
 }
 
 const align = (a: string | undefined) => (a ? ` style="text-align:${a}"` : "");
 
-const callbacks = {
+const callbacks = (diagrams: boolean) => ({
   text: (c: string) => escapeHtml(c),
   html: (c: string) => escapeHtml(c),
   paragraph: (c: string) => `<p>${c}</p>`,
@@ -74,7 +89,8 @@ const callbacks = {
   emphasis: (c: string) => `<em>${c}</em>`,
   strikethrough: (c: string) => `<del>${c}</del>`,
   codespan: (c: string) => `<code>${c}</code>`,
-  code: (c: string, m?: { language?: string }) => codeBlock(c, m?.language),
+  code: (c: string, m?: { language?: string }) =>
+    codeBlock(c, m?.language, diagrams),
   link: (c: string, m: { href: string; title?: string }) => {
     if (!SAFE_HREF.test(m.href)) return c;
     const title = m.title ? ` title="${escapeHtml(m.title)}"` : "";
@@ -98,14 +114,18 @@ const callbacks = {
   tr: (c: string) => `<tr>${c}</tr>`,
   th: (c: string, m?: { align?: string }) => `<th${align(m?.align)}>${c}</th>`,
   td: (c: string, m?: { align?: string }) => `<td${align(m?.align)}>${c}</td>`,
-};
+});
+
+const FINAL = callbacks(true);
+const STREAMING = callbacks(false);
 
 // Markdown text to safe HTML. Never throws: a parser failure falls back to
-// the escaped text, so a reply is always readable.
-export function renderMarkdown(md: string): string {
+// the escaped text, so a reply is always readable. `streaming` skips the
+// diagrams for the render of a reply in progress.
+export function renderMarkdown(md: string, streaming = false): string {
   if (md === "") return "";
   try {
-    return Bun.markdown.render(md, callbacks, OPTIONS);
+    return Bun.markdown.render(md, streaming ? STREAMING : FINAL, OPTIONS);
   } catch {
     return `<p>${escapeHtml(md)}</p>`;
   }

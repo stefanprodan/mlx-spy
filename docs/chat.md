@@ -49,6 +49,11 @@ the engine reports shown in the composer.
   a fenced code block is highlighted there too (about forty languages;
   one the server does not know stays plain); the page loads no library
   for it and the engine is only called when you send.
+- **Diagrams.** A `mermaid` block is drawn on the server once the reply
+  is finished and shown as an image in place of the code (flowchart,
+  sequence, state, class, ER and XY charts; Copy still copies the
+  source). While the reply streams, and for a diagram the server cannot
+  draw (pie, gantt, mindmap, a syntax error), the block stays code.
 
 ## Using it
 

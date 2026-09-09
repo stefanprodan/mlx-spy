@@ -1747,6 +1747,16 @@ details.tool.live > summary .spin {
   padding: 0;
   font-size: inherit;
 }
+/* a mermaid block drawn on the server (src/diagram.ts): the image sits in
+   the code card in place of the pre, which stays hidden for Copy */
+.md .diagram {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  padding: 8px 12px;
+  box-sizing: border-box;
+}
 /* highlight.js classes (src/highlight.ts) on the palette: four hues plus
    dim, so a block reads as code, not as a rainbow */
 .md .hljs-comment,

@@ -34,8 +34,8 @@ the compiled binary, on demand when `MLX_SPY_DEV=1` is set, which
 to the client's TypeScript reloads the page. The client is Preact with
 signals (`src/ui/main.tsx`, `store.ts`, `shell/`, `monitor/`, `requests/`,
 `chat/`), bundled like uPlot so the binary still has no runtime
-dependencies; highlight.js is bundled the same way on the server side,
-with the languages `src/highlight.ts` registers. Logic lives in plain
+dependencies; highlight.js and beautiful-mermaid are bundled the same way
+on the server side (`src/highlight.ts`, `src/diagram.ts`). Logic lives in plain
 `.ts` modules that take data and return data (the tiles, the chart
 series, the chat's delta reducer and transcript tree) and is tested on
 recorded fixtures; components hold only what the DOM owns (uPlot,

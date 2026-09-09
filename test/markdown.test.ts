@@ -65,6 +65,24 @@ describe("renderMarkdown", () => {
     expect(renderMarkdown("```\nconst a\n```")).not.toContain("hljs-");
   });
 
+  test("a mermaid block is a diagram when the reply is done", () => {
+    const md = "```mermaid\ngraph LR\n  A --> B\n```";
+    const done = renderMarkdown(md);
+    expect(done).toContain('<div class="code" data-lang="mermaid">');
+    expect(done).toContain('<img class="diagram" alt="diagram" src="data:');
+    // the source stays for the Copy button, hidden
+    expect(done).toContain(
+      "<pre hidden><code>graph LR\n  A --&gt; B\n</code></pre>",
+    );
+    // while streaming, and when the library cannot draw it, a code block
+    const live = renderMarkdown(md, true);
+    expect(live).not.toContain("<img");
+    expect(live).toContain("<pre><code>graph LR");
+    const bad = renderMarkdown("```mermaid\npie title x\n  a: 1\n```");
+    expect(bad).not.toContain("<img");
+    expect(bad).toContain("<pre><code>pie title x");
+  });
+
   test("links keep only http, https and mailto", () => {
     const html = renderMarkdown(
       '[ok](https://example.com "ti<tle") [mail](mailto:a@b.c) [bad](javascript:alert(1)) [data](data:text/html,x)',
