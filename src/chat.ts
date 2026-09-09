@@ -25,8 +25,8 @@ import type {
 } from "./engine/types.ts";
 import { renderMarkdown } from "./markdown.ts";
 import type { SearchKeys, SearchProvider } from "./tools/search/types.ts";
+import { dateLine, HOST_TIMEZONE } from "./tools/time.ts";
 import {
-  formatCurrentTime,
   runTool,
   type SendBudget,
   TOOLS,
@@ -343,10 +343,10 @@ export class ChatRunner {
     const enabled = TOOLS.map((tool) => tool.name).filter(
       (name) => !toolsOff.has(name),
     );
-    const tools = toolSchemas(enabled);
+    const tools = toolSchemas(enabled, this.now());
     const policy: FrozenPolicy = {
       model: chat.model,
-      systemPrompt: this.systemPrompt(chat.systemPrompt, tools.length > 0),
+      systemPrompt: this.systemPrompt(chat.systemPrompt),
       thinking: chat.thinking,
       reasoningEffort: chat.reasoningEffort,
       reasoningHistory: chat.reasoningHistory,
@@ -940,11 +940,10 @@ export class ChatRunner {
     );
   }
 
-  private systemPrompt(prompt: string, toolsEnabled: boolean): string {
-    if (!toolsEnabled) return prompt;
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const date = formatCurrentTime(this.now(), timezone);
-    const line = `Today's date: ${date.day_of_week}, ${date.datetime.slice(0, 10)}`;
+  // the date goes under the prompt on every send, tools or not (OpenCode
+  // does the same); a day, not a time, so the prefix holds until midnight
+  private systemPrompt(prompt: string): string {
+    const line = dateLine(this.now(), HOST_TIMEZONE);
     return prompt ? `${prompt}\n\n${line}` : line;
   }
 

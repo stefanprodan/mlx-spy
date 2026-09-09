@@ -160,6 +160,8 @@ src/tools.ts, src/tools/
                      the tool registry the runner executes: get_current_time,
                      webfetch (with the network guard), websearch; pure parts
                      tested
+src/tools/time.ts   the clock in a timezone and the date line of the
+                     system prompt; the page imports it for the placeholder
 src/tools/search/    the search providers: types.ts (the names and the key
                      type, no I/O), exa.ts and firecrawl.ts (build the
                      request, parse the answer; pure, tested on fixtures)

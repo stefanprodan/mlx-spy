@@ -3,8 +3,16 @@
 
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { ChatSettings } from "../../chats.ts";
+import { dateLine } from "../../tools/time.ts";
 import { removeCurrent } from "./nav.ts";
-import { current, modelInfo, patch, settings, tools } from "./store.ts";
+import {
+  current,
+  hostTimezone,
+  modelInfo,
+  patch,
+  settings,
+  tools,
+} from "./store.ts";
 
 const numOrNull = (v: string) => (v.trim() === "" ? null : Number(v));
 
@@ -29,6 +37,12 @@ export function Settings({
   const s = settings.value;
   const list = tools.value;
   const off = s.toolsOff ?? [];
+  // the runner appends today's date in the host's timezone; the empty
+  // field shows what goes out in its place
+  const tz = hostTimezone.value;
+  const placeholder = tz
+    ? dateLine(Date.now(), tz)
+    : "Empty: the model's own default";
   useEffect(() => {
     const d = dlg.current;
     if (!d || !open) return;
@@ -79,7 +93,7 @@ export function Settings({
             <textarea
               name="systemPrompt"
               rows={4}
-              placeholder="Empty: the model's own default"
+              placeholder={placeholder}
               defaultValue={s.systemPrompt}
             />
           </label>

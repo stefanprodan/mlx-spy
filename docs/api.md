@@ -100,7 +100,7 @@ tools on can take several engine rounds. Bodies are JSON, at most 256 KB.
 | `POST /api/chats/<id>/regenerate` | | 202 `{user, message}`; the last reply is dropped and answered again |
 | `POST /api/chats/<id>/edit` | `{messageId, content}` | 202 `{user, message}`; that user message and everything after it are replaced |
 | `POST /api/chats/<id>/stop` | | `{ok: true}`, also when nothing runs; stops the engine round or the tool call that is running |
-| `GET /api/tools` | | the tool registry, `[{name, description}]` |
+| `GET /api/tools` | | `{timezone, tools: [{name, description}]}`, the tool registry and the host timezone of the date line the runner appends to every system prompt |
 
 A message is `{id, chatId, role, content, html, reasoning, status, error,
 finishReason, model, createdAt, finishedAt, ttftMs, thinkingMs, stats,
@@ -129,6 +129,9 @@ time or result size) marks that round `tool_limit`, leaves its unrun calls
 as interrupted tool rows, and runs one answer round in which no call is
 run; the reply is that round, or the `tool_limit` round itself when the
 model called a tool anyway.
+
+The runner appends a line with today's date in the host's timezone to
+the system prompt of every send, after `systemPrompt` or alone.
 
 Settings live on the chat and apply to the next message. `thinking` maps to
 the engine's `enable_thinking`; `reasoningEffort` is `low`, `medium`,

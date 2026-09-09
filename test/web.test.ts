@@ -489,20 +489,23 @@ describe("chat API", () => {
     const s = setup();
     const result = await response(s.deps, "/api/tools");
     expect(result.status).toBe(200);
-    expect(await result.json()).toEqual([
-      {
-        name: "get_current_time",
-        description: expect.any(String),
-      },
-      {
-        name: "webfetch",
-        description: expect.any(String),
-      },
-      {
-        name: "websearch",
-        description: expect.any(String),
-      },
-    ]);
+    expect(await result.json()).toEqual({
+      timezone: expect.any(String),
+      tools: [
+        {
+          name: "get_current_time",
+          description: expect.any(String),
+        },
+        {
+          name: "webfetch",
+          description: expect.any(String),
+        },
+        {
+          name: "websearch",
+          description: expect.any(String),
+        },
+      ],
+    });
     s.history.close();
   });
 

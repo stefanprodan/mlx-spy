@@ -18,7 +18,8 @@ import type { Pull } from "./pulls.ts";
 import type { Sample } from "./sample.ts";
 import type { Sampler } from "./sampler.ts";
 import { isSearchProvider, type SearchProvider } from "./tools/search/types.ts";
-import { TOOLS } from "./tools.ts";
+import { HOST_TIMEZONE } from "./tools/time.ts";
+import { TOOLS, toolSchemas } from "./tools.ts";
 
 export const DEFAULT_PORT = 11235;
 const SAMPLES_TOPIC = "samples";
@@ -462,9 +463,13 @@ export async function handle(
       return json({ error: "method not allowed" }, 405);
     }
     if (url.pathname === "/api/tools") {
-      return json(
-        TOOLS.map(({ name, description }) => ({ name, description })),
-      );
+      return json({
+        timezone: HOST_TIMEZONE,
+        tools: toolSchemas().map(({ name, description }) => ({
+          name,
+          description,
+        })),
+      });
     }
     switch (url.pathname) {
       case "/api/snapshot":

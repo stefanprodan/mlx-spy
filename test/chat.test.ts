@@ -258,7 +258,10 @@ describe("ChatRunner", () => {
       maxTokens: 100,
       cacheKey: s.chat.id,
       messages: [
-        { role: "system", content: "be concise" },
+        {
+          role: "system",
+          content: "be concise\n\nToday's date: Thursday, 1970-01-01",
+        },
         { role: "user", content: "hello" },
       ],
     });
@@ -1051,14 +1054,15 @@ describe("ChatRunner", () => {
     s.db.close();
   });
 
-  test("adds the date only when at least one tool is enabled", async () => {
+  test("adds the date with the tools off and with them on", async () => {
     const off = setup();
+    off.runner.update(off.chat.id, { systemPrompt: "" });
     off.runner.send(off.chat.id, "off");
     await turn();
     expect(off.engine.requests[0]).not.toHaveProperty("tools");
     expect(off.engine.requests[0].messages[0]).toEqual({
       role: "system",
-      content: "be concise",
+      content: "Today's date: Thursday, 1970-01-01",
     });
     off.runner.stop(off.chat.id);
     off.engine.streams[0].end();

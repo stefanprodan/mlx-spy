@@ -72,6 +72,8 @@ it (evicting the least recently used one when the engine is at its
 residency cap). Thinking on or off and the reasoning effort sit next to it;
 the gear holds the system prompt, past reasoning, temperature, top p, max
 tokens and the tools, the fields empty by default so the engine's own defaults apply.
+The system prompt always ends with a line with today's date in the
+host's timezone, under your own text or alone; the empty field shows it.
 Settings live on the chat and apply to the next message. The button at the left of the header
 folds the chat list away so the conversation takes the whole width (the
 page remembers the choice); on a phone it opens the list as a drawer. The
@@ -102,9 +104,8 @@ reply. A call the model got wrong (an unknown tool, bad arguments) goes
 back to it as an error text, so it can correct itself.
 
 The tools go into the prompt, so the first message after a change to the
-set re-prefills and every message carries their tokens. With a tool on,
-the system prompt also carries today's date; the time itself needs the
-tool. Some engines hold the reply while a call forms and send it at once,
+set re-prefills and every message carries their tokens. The time itself
+needs the tool; the date is always in the system prompt. Some engines hold the reply while a call forms and send it at once,
 so a reply can pause for a few seconds with tools on.
 
 `webfetch` reads web pages over http and https, on the internet or on your
