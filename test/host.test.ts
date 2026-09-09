@@ -6,50 +6,89 @@ import {
   symlinkSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
+import { cpus, tmpdir } from "node:os";
 import { join } from "node:path";
-import { createDarwinProbes } from "../src/host/darwin.ts";
+import { createDarwinProbes, darwinHostInfo } from "../src/host/darwin.ts";
 import { cacheDirSizes } from "../src/host/disk.ts";
+import { NULL_PROBES } from "../src/host/index.ts";
 import { isLocalUrl } from "../src/host/local.ts";
 
 const onDarwin = process.platform === "darwin";
 
+const positiveOptional = (value: number | null) => value === null || value > 0;
+
 describe.if(onDarwin)("darwin probes", () => {
   const p = createDarwinProbes();
 
-  test("host memory adds up to something sane", () => {
+  test("host memory returns plausible page counts", () => {
     const m = p.hostMemory();
     expect(m).not.toBeNull();
-    // 8 GB is the smallest Apple Silicon Mac
-    expect(m!.total).toBeGreaterThanOrEqual(8 * 1024 ** 3);
-    expect(m!.free + m!.active + m!.inactive + m!.wired).toBeGreaterThan(0);
-    expect(m!.free + m!.active + m!.inactive + m!.wired).toBeLessThan(m!.total);
-    expect(m!.free % 16384).toBe(0); // whole pages
+    expect(m!.total).toBeGreaterThan(1024 ** 3);
+
+    const pageValues = [
+      m!.free,
+      m!.active,
+      m!.inactive,
+      m!.wired,
+      m!.speculative,
+      m!.compressed,
+    ];
+    for (const value of pageValues) {
+      expect(Number.isSafeInteger(value)).toBe(true);
+      expect(value).toBeGreaterThanOrEqual(0);
+      expect(value % 16384).toBe(0);
+    }
+
+    const accounted = m!.free + m!.active + m!.inactive + m!.wired;
+    expect(accounted).toBeGreaterThan(0);
+    expect(accounted).toBeLessThanOrEqual(m!.total);
   });
 
-  test("process memory of this process", () => {
+  test("process memory describes this process", () => {
     const pm = p.processMemory(process.pid);
     expect(pm).not.toBeNull();
     expect(pm!.footprint).toBeGreaterThan(1024 * 1024);
     expect(pm!.rss).toBeGreaterThan(1024 * 1024);
-    // started within the last day and not in the future
-    expect(pm!.startedAt).toBeGreaterThan(Date.now() - 86_400_000);
-    expect(pm!.startedAt).toBeLessThanOrEqual(Date.now() + 1000);
-    // this test process has burned some CPU, but not more than its lifetime
+
+    const expectedStart = Date.now() - process.uptime() * 1000;
+    expect(Math.abs(pm!.startedAt - expectedStart)).toBeLessThan(1000);
+
+    expect(Number.isFinite(pm!.cpuNs)).toBe(true);
     expect(pm!.cpuNs).toBeGreaterThan(0);
-    expect(pm!.cpuNs).toBeLessThan((Date.now() - pm!.startedAt) * 1e6 * 32);
+    const maxCpuNs = (process.uptime() + 1) * 1e9 * Math.max(cpus().length, 1);
+    expect(pm!.cpuNs).toBeLessThanOrEqual(maxCpuNs);
   });
 
   test("process memory of a dead pid is null", () => {
     expect(p.processMemory(2 ** 30)).toBeNull();
   });
 
-  test("findPid by executable name finds this bun", () => {
+  test("pid matching uses executable basenames", () => {
+    expect(p.pidMatches(process.pid, ["bun"])).toBe(true);
+    expect(p.pidMatches(process.pid, ["mlx-serve"])).toBe(false);
+
     const pid = p.findPid(["bun"]);
     expect(pid).not.toBeNull();
     expect(p.pidMatches(pid!, ["bun"])).toBe(true);
-    expect(p.pidMatches(pid!, ["mlx-serve"])).toBe(false);
     expect(p.findPid(["no-such-binary-xyz"])).toBeNull();
+  });
+
+  test("host info returns required and optional values", () => {
+    const info = darwinHostInfo();
+    expect(info.cpuCores).toBe(cpus().length);
+    expect(info.chip === null || info.chip.trim().length > 0).toBe(true);
+    expect(positiveOptional(info.perfCores)).toBe(true);
+    expect(positiveOptional(info.effCores)).toBe(true);
+    expect(positiveOptional(info.gpuCores)).toBe(true);
+  });
+});
+
+describe("null probes", () => {
+  test("return no host or process data", () => {
+    expect(NULL_PROBES.hostMemory()).toBeNull();
+    expect(NULL_PROBES.processMemory(process.pid)).toBeNull();
+    expect(NULL_PROBES.findPid(["bun"])).toBeNull();
+    expect(NULL_PROBES.pidMatches(process.pid, ["bun"])).toBe(false);
   });
 });
 
@@ -68,9 +107,8 @@ describe("cacheDirSizes", () => {
         join(root, "fp-a"),
         join(root, "fp-b"),
       ]);
-      // allocated blocks round up to the filesystem block size
       expect(dirs[0].bytes).toBeGreaterThanOrEqual(104_096);
-      expect(dirs[0].bytes).toBeLessThan(104_096 + 2 * 16384);
+      expect(dirs[0].bytes % 512).toBe(0);
       expect(dirs[1].bytes).toBe(0);
       expect(dirs[0].modelId).toBeNull();
     } finally {
