@@ -3,6 +3,7 @@
 
 import { describe, expect, test } from "bun:test";
 import { render } from "preact-render-to-string";
+import type { Pull } from "../../src/pulls.ts";
 import type { LastRequest } from "../../src/requests.ts";
 import type { Sample } from "../../src/sample.ts";
 import { Event } from "../../src/ui/monitor/Event.tsx";
@@ -12,7 +13,7 @@ import { Tiles } from "../../src/ui/monitor/Tiles.tsx";
 import { PLACEHOLDER, type Tile } from "../../src/ui/monitor/tiles.ts";
 import { Requests, requests } from "../../src/ui/requests/Requests.tsx";
 import type { Snapshot } from "../../src/ui/store.ts";
-import { busy, connection, event, sample } from "../../src/ui/store.ts";
+import { busy, connection, event, pulls, sample } from "../../src/ui/store.ts";
 
 const startedAt = new Date(2026, 8, 9, 10, 0, 0).getTime();
 const last: LastRequest = {
@@ -180,6 +181,66 @@ describe("request components", () => {
   });
 });
 
+describe("download rows", () => {
+  const base: Pull = {
+    id: 7,
+    repo: "org/new",
+    revision: "abc",
+    dir: "/models/org/new",
+    status: "running",
+    bytesTotal: 4 * 2 ** 30,
+    bytesDone: 2 ** 30,
+    filesTotal: 3,
+    filesDone: 1,
+    file: "model.safetensors",
+    error: null,
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    finishedAt: null,
+    speedBps: 64 * 2 ** 20,
+  };
+  const snap = {
+    engine: { capabilities: ["load"] },
+    sample: { engineUp: true },
+    models: [
+      {
+        id: "org/new",
+        loaded: false,
+        state: "unloaded",
+        bytesResident: 0,
+        bytesOnDisk: 4 * 2 ** 30,
+        contextLength: null,
+        capabilities: [],
+      },
+    ],
+  } as unknown as Snapshot;
+
+  test("a running pull is a row with a bar, the bytes and a cancel", () => {
+    pulls.value = [base];
+    const html = render(<Models snap={snap} />);
+    expect(html).toContain(
+      '<tr class="pull running"><td class="name" title="org/new: model.safetensors"><div><span class="dot loading"></span><span class="owner">org/</span><a class="model" href="https://huggingface.co/org/new" target="_blank" rel="noopener">new</a></div><div class="bar"><span class="fill" style="width:25%;"></span></div></td><td class="meta">1.0 / 4.0 GB · 64 MB/s · 48 s left</td><td class="state running">downloading</td><td class="act">',
+    );
+    expect(html).toContain('class="ibtn trash danger" title="Delete"');
+    expect(html).toContain('class="ibtn" title="Pause"');
+    // the model row follows the download row
+    expect(html).toContain('<tr><td class="name" title="org/new">');
+  });
+
+  test("a stopped pull offers resume and delete; a listed one hides", () => {
+    pulls.value = [{ ...base, status: "failed", error: "sha256 mismatch" }];
+    const html = render(<Models snap={snap} />);
+    expect(html).toContain('<tr class="pull failed" title="sha256 mismatch">');
+    expect(html).toContain('<div class="bar" hidden>');
+    expect(html).toContain('<td class="state failed">failed</td>');
+    expect(html).toContain('class="ibtn" title="Resume"');
+    expect(html).toContain('class="ibtn trash danger" title="Delete"');
+    pulls.value = [{ ...base, status: "done", bytesDone: base.bytesTotal }];
+    expect(render(<Models snap={snap} />)).not.toContain('class="pull');
+    pulls.value = [];
+  });
+});
+
 describe("event line", () => {
   const base = { t: startedAt, model: "org/model", ms: 120, detail: "x" };
   test("a success shows nothing: the list and the uptime already do", () => {
@@ -195,6 +256,33 @@ describe("event line", () => {
   test("a later success clears the failure", () => {
     event.value = { ...base, action: "load", ok: false, detail: "HTTP 409" };
     event.value = { ...base, t: startedAt + 1, action: "load", ok: true };
+    expect(render(<Event />)).toBe('<div class="event" hidden></div>');
+  });
+  test("a failed download shows its error", () => {
+    event.value = null;
+    pulls.value = [
+      {
+        id: 1,
+        repo: "org/new",
+        revision: "abc",
+        dir: "/m",
+        status: "failed",
+        bytesTotal: 1,
+        bytesDone: 0,
+        filesTotal: 1,
+        filesDone: 0,
+        file: null,
+        error: "not enough disk",
+        createdAt: startedAt,
+        updatedAt: startedAt,
+        finishedAt: startedAt,
+        speedBps: null,
+      },
+    ];
+    expect(render(<Event />)).toContain(
+      "download org/new failed: not enough disk</div>",
+    );
+    pulls.value = [];
     expect(render(<Event />)).toBe('<div class="event" hidden></div>');
   });
 });

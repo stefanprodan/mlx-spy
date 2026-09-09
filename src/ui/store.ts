@@ -9,6 +9,7 @@
 
 import { computed, signal } from "@preact/signals";
 import type { ActionEvent, ActionName } from "../actions.ts";
+import type { Pull } from "../pulls.ts";
 import type { Sample } from "../sample.ts";
 import type { snapshot as snapshotOf, WsMessage } from "../web.ts";
 
@@ -45,6 +46,15 @@ export function setBusy(action: ActionName | null) {
   busy.value = action;
 }
 export const version = computed(() => snapshot.value?.version ?? null);
+// The downloads, newest first: the snapshot's list, then every pull
+// message replaces its row (or adds one on top).
+export const pulls = signal<Pull[]>([]);
+export function applyPull(pull: Pull) {
+  const list = pulls.value;
+  const at = list.findIndex((p) => p.id === pull.id);
+  pulls.value =
+    at === -1 ? [pull, ...list] : list.map((p, i) => (i === at ? pull : p));
+}
 
 export const modelsKeyOf = (list: Sample["models"]) =>
   list
@@ -56,6 +66,7 @@ function setSnapshot(snap: Snapshot) {
   // a snapshot taken before this tab's own action registered must not
   // release the buttons early
   if (snap.running || !localAction) busy.value = snap.running;
+  pulls.value = snap.pulls;
   const key = modelsKeyOf(snap.models);
   if (key === modelsKey) return;
   modelsKey = key;
@@ -106,6 +117,8 @@ export function connect() {
       event.value = msg.data;
       // another tab may have run it; the residency changed either way
       void refreshSnapshot();
+    } else if (msg.type === "pull") {
+      applyPull(msg.data);
     }
     emit(msg);
   };

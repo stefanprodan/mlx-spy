@@ -11,6 +11,7 @@ import { signal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import type { Range, Series } from "../../history.ts";
 import type { Sample } from "../../sample.ts";
+import { Download } from "../icons.tsx";
 import { Confirm } from "../shell/Confirm.tsx";
 import { Pill } from "../shell/Pill.tsx";
 import { connection, listen, sample, snapshot } from "../store.ts";
@@ -18,6 +19,7 @@ import { engineLocal, limits } from "./actions.ts";
 import { Charts } from "./Charts.tsx";
 import { Event } from "./Event.tsx";
 import { Models } from "./Models.tsx";
+import { openPull, PullDialog } from "./Pull.tsx";
 import { RangePicker } from "./RangePicker.tsx";
 import { RequestBar } from "./RequestBar.tsx";
 import { Runtime, RuntimeHead } from "./Runtime.tsx";
@@ -146,6 +148,18 @@ export function Monitor() {
       <div class="shead">
         <h2>Models</h2>
         <ActivityPill s={s} />
+        <span class="grow" />
+        <span class="btns">
+          <button
+            type="button"
+            class="btn"
+            title="Download a model from the Hugging Face Hub"
+            onClick={openPull}
+          >
+            <Download />
+            Download
+          </button>
+        </span>
       </div>
       <Models snap={snap} />
       <Event />
@@ -153,6 +167,7 @@ export function Monitor() {
       <RuntimeHead snap={snap} s={s} />
       <Runtime snap={snap} s={s} />
       <Confirm />
+      <PullDialog />
     </>
   );
 }
