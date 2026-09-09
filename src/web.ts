@@ -349,7 +349,7 @@ async function chatsRoute(req: Request, deps: HandleDeps): Promise<Response> {
   }
 
   const match =
-    /^\/api\/chats\/([^/]+)(?:\/(messages|regenerate|edit|stop))?$/.exec(
+    /^\/api\/chats\/([^/]+)(?:\/(messages|regenerate|edit|compact|stop))?$/.exec(
       url.pathname,
     );
   if (!match) return json({ error: "not found" }, 404);
@@ -395,6 +395,10 @@ async function chatsRoute(req: Request, deps: HandleDeps): Promise<Response> {
   if (operation === "regenerate") {
     await body(req, true);
     return json(runner.regenerate(id), 202);
+  }
+  if (operation === "compact") {
+    await body(req, true);
+    return json(runner.compact(id), 202);
   }
   await body(req, true);
   runner.stop(id);

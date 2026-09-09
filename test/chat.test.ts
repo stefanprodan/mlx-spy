@@ -1087,4 +1087,221 @@ describe("ChatRunner", () => {
     await turn();
     on.db.close();
   });
+
+  test("compact runs a summary round and the next request starts from it", async () => {
+    const s = setup();
+    await rejects(
+      () => s.runner.compact(s.chat.id),
+      400,
+      /Nothing to summarize/,
+    );
+    s.runner.send(s.chat.id, "first");
+    await turn();
+    s.engine.streams[0].push({ kind: "content", text: "one" });
+    await finish(s.engine.streams[0]);
+
+    const started = s.runner.compact(s.chat.id);
+    expect(started.message.role).toBe("summary");
+    expect(started.message.status).toBe("streaming");
+    expect(s.runner.running()).toEqual({
+      chatId: s.chat.id,
+      messageId: started.message.id,
+    });
+    await turn();
+    const request = s.engine.requests[1];
+    expect(request).not.toHaveProperty("tools");
+    expect(request.thinking).toBe(false);
+    // a quarter of the test model's window of 1000
+    expect(request.maxTokens).toBe(250);
+    expect(request.messages.map((m) => m.role)).toEqual([
+      "system",
+      "user",
+      "assistant",
+      "user",
+    ]);
+    expect(request.messages.at(-1)?.content).toMatch(
+      /^Summarize the conversation/,
+    );
+    s.engine.streams[1].push({ kind: "content", text: "## Goal\n- one" });
+    await finish(s.engine.streams[1]);
+    const summary = s.store.get(s.chat.id)!.messages.at(-1)!;
+    expect(summary.role).toBe("summary");
+    expect(summary.status).toBe("done");
+    expect(summary.html).toContain("<h2");
+    expect(s.events.filter((e) => e.kind === "started")).toMatchObject([
+      { user: expect.any(Object) },
+      { user: null, message: { id: started.message.id } },
+    ]);
+    expect(s.events.filter((e) => e.kind === "done").at(-1)).toMatchObject({
+      message: { id: summary.id, role: "summary" },
+    });
+    // a second compact right away has nothing new to summarize
+    await rejects(
+      () => s.runner.compact(s.chat.id),
+      400,
+      /Nothing to summarize/,
+    );
+
+    s.runner.send(s.chat.id, "second");
+    await turn();
+    expect(s.engine.requests[2].messages).toEqual([
+      { role: "system", content: expect.stringContaining("be concise") },
+      {
+        role: "user",
+        content: expect.stringContaining(
+          "the earlier messages were dropped:\n\n## Goal\n- one",
+        ),
+      },
+      { role: "user", content: "second" },
+    ]);
+    s.runner.stop(s.chat.id);
+    s.engine.streams[2].end();
+    await turn();
+    s.db.close();
+  });
+
+  test("a failed or stopped summary is skipped by the next request", async () => {
+    const s = setup();
+    s.runner.send(s.chat.id, "first");
+    await turn();
+    s.engine.streams[0].push({ kind: "content", text: "one" });
+    await finish(s.engine.streams[0]);
+
+    s.runner.compact(s.chat.id);
+    await turn();
+    await finish(s.engine.streams[1]);
+    const empty = s.store.get(s.chat.id)!.messages.at(-1)!;
+    expect(empty).toMatchObject({
+      role: "summary",
+      status: "error",
+      error: "the summary came back empty",
+    });
+    expect(s.runner.running()).toBeNull();
+
+    s.runner.compact(s.chat.id);
+    await turn();
+    s.engine.streams[2].push({ kind: "content", text: "half" });
+    await turn();
+    s.runner.stop(s.chat.id);
+    s.engine.streams[2].end();
+    await turn();
+    expect(s.store.get(s.chat.id)!.messages.at(-1)).toMatchObject({
+      role: "summary",
+      status: "stopped",
+      content: "half",
+    });
+
+    s.runner.send(s.chat.id, "second");
+    await turn();
+    expect(s.engine.requests[3].messages.map((m) => m.role)).toEqual([
+      "system",
+      "user",
+      "assistant",
+      "user",
+    ]);
+    s.runner.stop(s.chat.id);
+    s.engine.streams[3].end();
+    await turn();
+    s.db.close();
+  });
+
+  test("a reply that fills the window is followed by a summary round", async () => {
+    const wide: ModelInfo = { ...model, id: "org/wide", contextLength: 30_000 };
+    const s = setup([model, wide]);
+    s.runner.update(s.chat.id, { model: wide.id });
+    s.runner.send(s.chat.id, "big");
+    await turn();
+    s.engine.streams[0].push({ kind: "content", text: "answer" });
+    s.engine.streams[0].push({ kind: "finish", reason: "stop", details: null });
+    s.engine.streams[0].push({
+      kind: "usage",
+      stats: {
+        promptTokens: 22_400,
+        cachedTokens: 0,
+        generated: 100,
+        prefillMs: 1,
+        decodeMs: 1,
+        tokenizeMs: 1,
+      },
+    });
+    s.engine.streams[0].end();
+    await turn();
+    await turn();
+    // the reply is done and published, the send goes on with the summary
+    expect(s.events.filter((e) => e.kind === "done")).toHaveLength(0);
+    const rows = s.store.get(s.chat.id)!.messages;
+    expect(rows.map((row) => [row.role, row.status])).toEqual([
+      ["user", "done"],
+      ["assistant", "done"],
+      ["summary", "streaming"],
+    ]);
+    expect(s.engine.requests[1].messages.map((m) => m.role)).toEqual([
+      "system",
+      "user",
+      "assistant",
+      "user",
+    ]);
+    expect(s.engine.requests[1].thinking).toBe(false);
+    s.engine.streams[1].push({ kind: "content", text: "- big" });
+    await finish(s.engine.streams[1]);
+    expect(s.events.filter((e) => e.kind === "done")).toMatchObject([
+      { message: { role: "summary", status: "done" } },
+    ]);
+    expect(
+      s.logs.some((line) => line.includes("22500 tokens, summarizing")),
+    ).toBe(true);
+    // the default test model has a window of 1000 and the replies use 13
+    const small = setup();
+    small.runner.send(small.chat.id, "big");
+    await turn();
+    small.engine.streams[0].push({ kind: "content", text: "answer" });
+    await finish(small.engine.streams[0]);
+    expect(
+      small.store.get(small.chat.id)!.messages.map((row) => row.role),
+    ).toEqual(["user", "assistant"]);
+    small.db.close();
+    s.db.close();
+
+    // a window under the reserve keeps a quarter of itself: gemma 4 on
+    // the Studio loads with 19,456, so 14,592 is the line and the summary
+    // is capped at what is left
+    const gemma: ModelInfo = {
+      ...model,
+      id: "org/gemma",
+      contextLength: 19_456,
+    };
+    const g = setup([model, gemma]);
+    g.runner.update(g.chat.id, { model: gemma.id });
+    g.runner.send(g.chat.id, "big");
+    await turn();
+    g.engine.streams[0].push({ kind: "content", text: "answer" });
+    g.engine.streams[0].push({ kind: "finish", reason: "stop", details: null });
+    g.engine.streams[0].push({
+      kind: "usage",
+      stats: {
+        promptTokens: 14_500,
+        cachedTokens: 0,
+        generated: 92,
+        prefillMs: 1,
+        decodeMs: 1,
+        tokenizeMs: 1,
+      },
+    });
+    g.engine.streams[0].end();
+    await turn();
+    await turn();
+    expect(g.engine.requests).toHaveLength(2);
+    expect(g.engine.requests[1].maxTokens).toBe(4096);
+    expect(
+      g.store.get(g.chat.id)!.messages.map((row) => [row.role, row.status]),
+    ).toEqual([
+      ["user", "done"],
+      ["assistant", "done"],
+      ["summary", "streaming"],
+    ]);
+    g.runner.stop(g.chat.id);
+    g.engine.streams[1].end();
+    await turn();
+    g.db.close();
+  });
 });

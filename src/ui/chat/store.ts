@@ -179,7 +179,7 @@ export function pickModel(m: ModelInfo) {
 }
 
 export async function command(
-  action: "messages" | "regenerate" | "edit" | "stop",
+  action: "messages" | "regenerate" | "edit" | "compact" | "stop",
   body?: unknown,
 ) {
   const cur = current.value;
@@ -226,6 +226,16 @@ export async function send(content: string): Promise<boolean> {
     fail(err);
     return false;
   }
+}
+
+// "/compact" in the composer: a summary round on its own
+export async function compact() {
+  if (currentStreaming.value) return;
+  if (!current.value) {
+    setNote("Nothing to summarize yet.");
+    return;
+  }
+  await command("compact");
 }
 
 export async function regenerate() {

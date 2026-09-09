@@ -69,7 +69,9 @@ export function applyEvent(
       }
       // a replayed `started` (a reconnect) already has its rows
       for (const m of [ev.user, ev.message]) {
-        if (!messages.some((x) => x.id === m.id)) messages = [...messages, m];
+        if (m && !messages.some((x) => x.id === m.id)) {
+          messages = [...messages, m];
+        }
       }
       if (!live.has(ev.message.id)) {
         live = withLive(live, ev.message.id, liveOf(ev.message));
@@ -84,7 +86,7 @@ export function applyEvent(
       const m = ev.message;
       const messages = upsert(s.chat.messages, m);
       let live = s.live;
-      if (m.role === "assistant") {
+      if (m.role === "assistant" || m.role === "summary") {
         if (m.status === "streaming") {
           if (!live.has(m.id)) live = withLive(live, m.id, liveOf(m));
         } else live = without(live, m.id);

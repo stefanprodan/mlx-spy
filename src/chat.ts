@@ -45,15 +45,42 @@ const MAX_TOOL_MS = 60_000;
 const MAX_RESULT_BYTES = 200 * 1024;
 const TOOL_INTERRUPTED = "[Tool execution was interrupted]";
 const EXHAUSTED = "Tool calls are exhausted for this turn; answer with text.";
+// compaction: a reply that leaves less than the reserve in the model's
+// window is followed by a summary round, and the next request starts from
+// the summary (OpenCode's overflow.ts uses the same 20k); the reserve
+// shrinks to a quarter of a small window (gemma 4 loads with 19,456 on
+// the Studio, seen 2026-09-10), and the summary is capped to the reserve
+// so its round fits the window it was triggered by
+const CONTEXT_RESERVE = 20_000;
+const SUMMARY_MAX_TOKENS = 4096;
+
+function contextReserve(window: number): number {
+  return Math.min(CONTEXT_RESERVE, Math.floor(window / 4));
+}
+const SUMMARIZE = `Summarize the conversation so far so that it can continue from the summary alone: the messages before this point are dropped and only the summary is kept. Write Markdown with these sections, terse bullets, no prose:
+
+## Goal
+What the user is after.
+
+## Established
+The facts, answers and decisions so far, with exact names, numbers, URLs, commands and code identifiers.
+
+## Open
+What is still unanswered or in progress.
+
+Do not mention the summary process.`;
+const SUMMARY_LEAD =
+  "The conversation so far, summarized; the earlier messages were dropped:";
 
 type TerminalStatus = "done" | "stopped" | "interrupted" | "error";
 
 export type ChatWsEvent =
   // deletedFrom: regenerate and edit removed that row and every later one
+  // user is null for a summary round started on its own (compact)
   | {
       kind: "started";
       chat: ChatSummary;
-      user: Message;
+      user: Message | null;
       message: Message;
       deletedFrom?: number;
     }
@@ -126,7 +153,7 @@ type RoundState = {
 
 type ActiveSend = {
   chatId: string;
-  userId: number;
+  userId: number | null;
   policy: FrozenPolicy;
   round: number;
   budget: SendBudget;
@@ -138,6 +165,8 @@ type ActiveSend = {
   signatures: string[];
   // the round after a tool limit: no tools offered, the reply is the answer
   answering: boolean;
+  // the round writes a summary row instead of a reply
+  summarizing: boolean;
 };
 
 type ToolExecutor = (
@@ -180,6 +209,17 @@ function finishReason(event: Extract<ChatEvent, { kind: "finish" }>): string {
   return event.details && event.details !== event.reason
     ? `${event.reason}/${event.details}`
     : event.reason;
+}
+
+function lastSummary(messages: Message[], throughId: number): Message | null {
+  let found: Message | null = null;
+  for (const message of messages) {
+    if (message.id > throughId) break;
+    if (message.role === "summary" && message.status === "done") {
+      found = message;
+    }
+  }
+  return found;
 }
 
 function callSignature(calls: ToolCall[]): string {
@@ -290,6 +330,37 @@ export class ChatRunner {
     return this.startSend(this.requireChat(chatId), user, false, deletedFrom);
   }
 
+  // a summary round on its own, from /compact in the composer: the next
+  // reply starts from the summary the same way an automatic one does
+  compact(chatId: string): { message: Message } {
+    this.ensureIdle();
+    const chat = this.requireChat(chatId);
+    this.validateModel(chat.model);
+    this.truncateMalformedHistory(chat);
+    const current = this.requireChat(chatId);
+    const last = current.messages.at(-1);
+    const since = lastSummary(current.messages, Number.MAX_SAFE_INTEGER);
+    const fresh = current.messages.filter((row) => row.id > (since?.id ?? 0));
+    if (
+      !last ||
+      !fresh.some((row) => row.role === "assistant" && row.status === "done")
+    ) {
+      throw new ChatError(400, "Nothing to summarize yet");
+    }
+    const send = this.newSend(current, null);
+    send.summarizing = true;
+    const message = this.beginRound(send, false);
+    this.publish({
+      kind: "started",
+      chat: chatSummary(this.requireChat(chatId)),
+      user: null,
+      message,
+    });
+    this.deps.log(`chat ${chat.id} compact ${chat.model}`);
+    void this.run(send, last.id);
+    return { message };
+  }
+
   edit(
     chatId: string,
     messageId: number,
@@ -339,44 +410,7 @@ export class ChatRunner {
     titleChanged: boolean,
     deletedFrom?: number,
   ): { user: Message; message: Message } {
-    const toolsOff = new Set(chat.toolsOff ?? []);
-    const enabled = TOOLS.map((tool) => tool.name).filter(
-      (name) => !toolsOff.has(name),
-    );
-    const tools = toolSchemas(enabled, this.now());
-    const policy: FrozenPolicy = {
-      model: chat.model,
-      systemPrompt: this.systemPrompt(chat.systemPrompt),
-      thinking: chat.thinking,
-      reasoningEffort: chat.reasoningEffort,
-      reasoningHistory: chat.reasoningHistory,
-      temperature: chat.temperature,
-      topP: chat.topP,
-      maxTokens: chat.maxTokens,
-      tools,
-      search: chat.search,
-    };
-    const send: ActiveSend = {
-      chatId: chat.id,
-      userId: user.id,
-      policy,
-      round: 1,
-      budget: {
-        toolCalls: 0,
-        fetches: 0,
-        searches: 0,
-        toolMs: 0,
-        resultBytes: 0,
-      },
-      controller: new AbortController(),
-      terminal: null,
-      rows: [],
-      current: null,
-      tools: null,
-      signatures: [],
-      answering: false,
-    };
-    this.active = send;
+    const send = this.newSend(chat, user.id);
     // the started event carries round one's row; a row event before it
     // would land in the page ahead of the user message
     const message = this.beginRound(send, false);
@@ -396,13 +430,60 @@ export class ChatRunner {
     return { user, message };
   }
 
+  private newSend(chat: Chat, userId: number | null): ActiveSend {
+    const toolsOff = new Set(chat.toolsOff ?? []);
+    const enabled = TOOLS.map((tool) => tool.name).filter(
+      (name) => !toolsOff.has(name),
+    );
+    const tools = toolSchemas(enabled, this.now());
+    const policy: FrozenPolicy = {
+      model: chat.model,
+      systemPrompt: this.systemPrompt(chat.systemPrompt),
+      thinking: chat.thinking,
+      reasoningEffort: chat.reasoningEffort,
+      reasoningHistory: chat.reasoningHistory,
+      temperature: chat.temperature,
+      topP: chat.topP,
+      maxTokens: chat.maxTokens,
+      tools,
+      search: chat.search,
+    };
+    const send: ActiveSend = {
+      chatId: chat.id,
+      userId,
+      policy,
+      round: 1,
+      budget: {
+        toolCalls: 0,
+        fetches: 0,
+        searches: 0,
+        toolMs: 0,
+        resultBytes: 0,
+      },
+      controller: new AbortController(),
+      terminal: null,
+      rows: [],
+      current: null,
+      tools: null,
+      signatures: [],
+      answering: false,
+      summarizing: false,
+    };
+    this.active = send;
+    return send;
+  }
+
   private beginRound(send: ActiveSend, announce = true): Message {
     const startedAt = this.now();
-    const message = this.deps.store.addMessage(send.chatId, "assistant", {
-      status: "streaming",
-      model: send.policy.model,
-      createdAt: startedAt,
-    });
+    const message = this.deps.store.addMessage(
+      send.chatId,
+      send.summarizing ? "summary" : "assistant",
+      {
+        status: "streaming",
+        model: send.policy.model,
+        createdAt: startedAt,
+      },
+    );
     send.rows.push(message.id);
     send.current = {
       messageId: message.id,
@@ -430,6 +511,26 @@ export class ChatRunner {
     try {
       while (send.terminal === null) {
         const round = send.current!;
+        if (send.summarizing) {
+          this.deps.log(`chat ${send.chatId} summary round`);
+          await this.consumeRound(
+            send,
+            round,
+            this.summaryRequest(send, lastInputId),
+          );
+          if (send.terminal !== null) return;
+          if (round.finishReason?.startsWith("error")) {
+            this.fail(send, "engine generation failed");
+            return;
+          }
+          if (round.content.trim() === "") {
+            this.fail(send, "the summary came back empty");
+            return;
+          }
+          const message = this.finishRound(send, round, "done", null);
+          if (message) this.complete(send, message);
+          return;
+        }
         this.deps.log(
           send.answering
             ? `chat ${send.chatId} answer round`
@@ -459,7 +560,22 @@ export class ChatRunner {
             return;
           }
           const message = this.finishRound(send, round, "done", null);
-          if (message) this.complete(send, message);
+          if (!message) return;
+          if (this.overflowed(send, message)) {
+            // the summary round shares its prefix with the reply just
+            // made, so the prefill is mostly cached; the next send starts
+            // from the summary and re-prefills, unavoidable
+            const used = message.stats!.promptTokens + message.stats!.generated;
+            this.deps.log(
+              `chat ${send.chatId} context ${used} tokens, summarizing`,
+            );
+            lastInputId = message.id;
+            send.summarizing = true;
+            send.round++;
+            this.beginRound(send);
+            continue;
+          }
+          this.complete(send, message);
           return;
         }
         if (reason === "length" || reason === "error") {
@@ -598,7 +714,40 @@ export class ChatRunner {
     this.beginRound(send);
   }
 
-  private request(send: ActiveSend, throughId: number): ChatRequest {
+  private window(send: ActiveSend): number | null {
+    const info = this.deps.models().find((m) => m.id === send.policy.model);
+    return info?.contextLength || null;
+  }
+
+  private overflowed(send: ActiveSend, message: Message): boolean {
+    const stats = message.stats;
+    const window = this.window(send);
+    if (!stats || window === null) return false;
+    const usable = window - contextReserve(window);
+    return usable > 0 && stats.promptTokens + stats.generated >= usable;
+  }
+
+  // the summary round: the context as the next reply would see it plus
+  // the instruction, no tools and no thinking, a bounded answer
+  private summaryRequest(send: ActiveSend, throughId: number): ChatRequest {
+    const messages = this.history(send, throughId);
+    messages.push({ role: "user", content: SUMMARIZE });
+    return {
+      model: send.policy.model,
+      messages,
+      thinking: false,
+      reasoningEffort: null,
+      temperature: send.policy.temperature,
+      topP: send.policy.topP,
+      maxTokens: Math.min(
+        SUMMARY_MAX_TOKENS,
+        contextReserve(this.window(send) ?? Number.MAX_SAFE_INTEGER),
+      ),
+      cacheKey: send.chatId,
+    };
+  }
+
+  private history(send: ActiveSend, throughId: number): ChatMessageIn[] {
     const chat = this.requireChat(send.chatId);
     const messages: ChatMessageIn[] = [];
     const systemPrompt = send.policy.systemPrompt;
@@ -612,8 +761,21 @@ export class ChatRunner {
     if (systemPrompt !== "") {
       messages.push({ role: "system", content: systemPrompt });
     }
+    // the last summary stands in for everything before it, as a user
+    // message so the turns after it keep their shape; a summary that
+    // failed or was stopped is skipped like the reply it never became
+    const summary = lastSummary(chat.messages, throughId);
+    if (summary) {
+      messages.push({
+        role: "user",
+        content: `${SUMMARY_LEAD}\n\n${summary.content}`,
+      });
+    }
     for (const message of chat.messages) {
       if (message.id > throughId) break;
+      if (message.role === "summary" || message.id <= (summary?.id ?? 0)) {
+        continue;
+      }
       if (
         message.content === "" &&
         message.reasoning === "" &&
@@ -643,6 +805,11 @@ export class ChatRunner {
         messages.push({ role: "user", content: message.content });
       }
     }
+    return messages;
+  }
+
+  private request(send: ActiveSend, throughId: number): ChatRequest {
+    const messages = this.history(send, throughId);
     // the nudge to answer goes at the end of the context, on the last tool
     // result: an edit to the system prompt would change the token stream
     // from the start and the engine would re-prefill the whole

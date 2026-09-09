@@ -53,7 +53,8 @@ the engine reports shown in the composer.
 - **Nothing extra runs.** Markdown is rendered by Bun on the server, and
   a fenced code block is highlighted there too (about forty languages;
   one the server does not know stays plain); the page loads no library
-  for it and the engine is only called when you send.
+  for it and the engine is only called when you send, or to summarize a
+  chat that fills the model's window (see below).
 - **Diagrams.** A `mermaid` block is drawn on the server once the reply
   is finished and shown as an image in place of the code (flowchart,
   sequence, state, class, ER and XY charts; Copy still copies the
@@ -88,6 +89,18 @@ otherwise. Delete is in the gear.
 
 A reply that was cut shows why under it: `stopped`, `cut at max tokens`,
 `interrupted, mlx-spy restarted`, or the engine's error.
+
+A long chat is compacted before it outgrows the model's window. When a
+reply leaves less than 20k tokens of the window (the number in the
+composer; a quarter of the window on a model with a small one), the
+send goes on with one more round that asks the model to
+summarize the conversation, thinking off and no tools, and the summary
+lands in the transcript as a fold, "Summarized 41k tokens". The next
+message is answered from the summary and the turns after it; the rows
+above the fold stay on the page but are no longer sent to the engine, so
+that reply prefills from scratch once. Type `/compact` in the composer
+to summarize a chat on demand. A summary that fails or is stopped is
+skipped, and the next reply that fills the window tries again.
 
 ## Tools
 

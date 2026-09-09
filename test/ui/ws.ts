@@ -24,6 +24,7 @@ export const recordings = [
   "tool-error.ndjson",
   "interrupted.ndjson",
   "tool-limit.ndjson",
+  "compact.ndjson",
 ] as const;
 
 export type RecordingName = (typeof recordings)[number];

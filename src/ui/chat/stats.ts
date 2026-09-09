@@ -41,8 +41,12 @@ const rateOf = (smp: LiveSample): Item | null => {
   return null;
 };
 
-// the send's rows: the assistant rows after the last user row
+// the send's rows: the assistant rows after the last user row, or the
+// summary row alone while one streams (a /compact has no user row, and
+// the numbers of the reply before it are not this send's)
 function currentSend(messages: Message[]): Message[] {
+  const last = messages.at(-1);
+  if (last?.role === "summary" && last.status === "streaming") return [last];
   const lastUser = messages.filter((m) => m.role === "user").at(-1);
   return messages.filter(
     (m) => m.id > (lastUser?.id ?? 0) && m.role === "assistant",

@@ -70,6 +70,9 @@ function assertTree(state: ChatState, tree: Node[], toolsOn: boolean) {
       .map((node) => node.message.id),
     ...replies(tree).map((reply) => reply.message.id),
     ...rounds(tree).map((round) => round.message.id),
+    ...tree
+      .filter((node) => node.kind === "summary")
+      .map((node) => node.message.id),
   ].sort((a, b) => a - b);
   expect(actualRows).toEqual(expectedRows);
   for (const id of expectedRows) expect(count(actualRows, id)).toBe(1);
@@ -197,7 +200,7 @@ describe("chat thread recording invariants", () => {
           step.line.data.chat.id === step.state.chat.id
         ) {
           const last = tree.at(-1);
-          expect(last?.kind).toBe("reply");
+          expect(["reply", "summary"]).toContain(last?.kind ?? "");
           if (last?.kind === "reply") {
             expect(last.message.id).toBe(step.line.data.message.id);
           }
@@ -315,6 +318,48 @@ describe("chat thread recording invariants", () => {
     expect(
       toolNodes(tree).some((tool) => tool.result?.status === "error"),
     ).toBe(true);
+  });
+
+  test("/compact streams into a summary node and the next reply follows it", async () => {
+    const run = await drive("compact.ndjson");
+    const summaries = (tree: Node[]) =>
+      tree.filter((node) => node.kind === "summary");
+    // while the summary round runs the node is live and the send is on
+    const streaming = run.steps.find(
+      (step) =>
+        "type" in step.line &&
+        step.line.type === "chat" &&
+        step.line.data.kind === "delta",
+    )!;
+    const live = summaries(groupRows(streaming.state, run.toolsOn));
+    expect(live).toHaveLength(1);
+    expect(live[0].live).not.toBeNull();
+    expect(live[0].message.role).toBe("summary");
+    expect(streaming.state.running).not.toBeNull();
+    const tree = treeOf(run);
+    const done = summaries(tree);
+    expect(done).toHaveLength(1);
+    expect(done[0].live).toBeNull();
+    expect(done[0].message.status).toBe("done");
+    expect(done[0].message.stats?.promptTokens).toBeGreaterThan(0);
+    expect(done[0].message.content).toMatch(/^## Goal/);
+    // the follow-up sent after it renders as user, then reply
+    const after = tree.slice(tree.indexOf(done[0]) + 1);
+    expect(after.map((node) => node.kind)).toEqual(["user", "reply"]);
+    // a summary after the last reply leaves it its Regenerate: the
+    // recording joined mid-chat, so a second summary is appended by hand
+    const state = run.state!;
+    const reply = replies(after)[0].message;
+    const again = { ...done[0].message, id: reply.id + 1 };
+    const nodes = groupRows(
+      {
+        ...state,
+        chat: { ...state.chat, messages: [...state.chat.messages, again] },
+      },
+      run.toolsOn,
+    );
+    expect(nodes.at(-1)?.kind).toBe("summary");
+    expect(replies(nodes).at(-1)?.last).toBe(true);
   });
 
   test("a tool limit folds the unrun calls and keeps the answer as the reply", async () => {
