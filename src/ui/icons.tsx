@@ -31,3 +31,78 @@ export const Trash = () => (
     />
   </svg>
 );
+
+const stroke = {
+  fill: "none",
+  stroke: "currentColor",
+  "stroke-width": "2",
+  "stroke-linecap": "round",
+} as const;
+
+// the fold marker of think, tool and work blocks; CSS turns it when open
+export const Chevron = () => (
+  <svg
+    viewBox="0 0 24 24"
+    {...stroke}
+    stroke-width="2.5"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M9 6l6 6-6 6" />
+  </svg>
+);
+
+// the model button's "there is a list" mark
+export const Caret = () => (
+  <svg viewBox="0 0 24 24" {...stroke} aria-hidden="true">
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);
+
+export const Plus = () => (
+  <svg viewBox="0 0 24 24" {...stroke} aria-hidden="true">
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
+export const Lines = () => (
+  <svg viewBox="0 0 24 24" {...stroke} aria-hidden="true">
+    <path d="M4 7h16M4 12h16M4 17h10" />
+  </svg>
+);
+
+export const Gear = () => (
+  <svg
+    viewBox="0 0 24 24"
+    {...stroke}
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </svg>
+);
+
+// the send button carries both glyphs; CSS shows one by the "stop" class
+export const SendStop = () => (
+  <>
+    <svg
+      class="i-send"
+      viewBox="0 0 24 24"
+      {...stroke}
+      stroke-width="2.5"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 19V5M6 11l6-6 6 6" />
+    </svg>
+    <svg
+      class="i-stop"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <rect x="6" y="6" width="12" height="12" rx="2" />
+    </svg>
+  </>
+);

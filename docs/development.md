@@ -32,9 +32,15 @@ The page is bundled by Bun from `src/ui/index.html`: once at startup in
 the compiled binary, on demand when `MLX_SPY_DEV=1` is set, which
 `make dev` and `make preview` do; then a CSS edit hot-reloads and an edit
 to the client's TypeScript reloads the page. The client is Preact with
-signals (`src/ui/main.tsx`, `store.ts`, `shell/`), bundled like uPlot so
-the binary still has no runtime dependencies; components render to a
-string in `test/ui/` without a DOM. `make preview` (re)starts a
+signals (`src/ui/main.tsx`, `store.ts`, `shell/`, `monitor/`, `requests/`,
+`chat/`), bundled like uPlot so the binary still has no runtime
+dependencies. Logic lives in plain `.ts` modules that take data and return
+data (the tiles, the chart series, the chat's delta reducer and transcript
+tree) and is tested on recorded fixtures; components hold only what the
+DOM owns (uPlot, dialogs, timers, scroll). A new component gets a
+render-to-string check in `test/ui/` asserting the class names
+`style.css` depends on; a chat behaviour change starts with a recording
+under `test/fixtures/ws/` (see `scripts/record-ws.ts`). `make preview` (re)starts a
 detached instance on `127.0.0.1:11236` against the engine named in
 `scripts/studio.env` (`make preview-stop`, `make preview-log`,
 `make preview-clean` to also wipe its db and log).

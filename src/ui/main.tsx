@@ -1,14 +1,13 @@
 // Copyright 2026 Stefan Prodan.
 // SPDX-License-Identifier: Apache-2.0
 //
-// The page's entry, bundled by Bun from index.html. The header, the footer,
-// the monitor and the requests pages are Preact roots; the chat view is
-// still the static markup chat.ts drives, until its own milestone
-// (plans/26.09.09-preact-plan.md). The socket opens last, once every
+// The page's entry, bundled by Bun from index.html. The header, the footer
+// and the page are Preact roots. The socket opens last, once every
 // subscriber is in place.
 
 import { render } from "preact";
-import { mountChatPage } from "./app.ts";
+import { Chat } from "./chat/Chat.tsx";
+import { boot } from "./chat/nav.ts";
 import { Monitor } from "./monitor/Monitor.tsx";
 import { Requests } from "./requests/Requests.tsx";
 import { Footer } from "./shell/Footer.tsx";
@@ -29,8 +28,10 @@ if (page === "monitor") {
 } else {
   // the frame fills the viewport; the header shows the connection pill
   $("view-monitor").hidden = true;
-  $("view-chat").hidden = false;
+  const frame = $("view-chat");
+  frame.hidden = false;
   document.querySelector(".page")!.classList.add("chat");
-  mountChatPage();
+  render(<Chat frame={frame} />, frame);
+  boot();
 }
 connect();

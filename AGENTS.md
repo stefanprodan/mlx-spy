@@ -153,15 +153,14 @@ src/web.ts           Bun.serve: the page, /api/snapshot, /api/history,
                      /api/requests, POST /api/actions/<name>, /api/chats and
                      sub-routes, /ws; development mode from MLX_SPY_DEV=1;
                      handle() separate from serve() for tests
-src/ui/index.html    one bundle for / (monitor), /requests and /chat;
-                     Bun bundles style.css and main.tsx from it. Being
-                     moved to Preact page by page
-                     (plans/26.09.09-preact-plan.md)
+src/ui/index.html    the shell: head, the header, page and footer roots,
+                     the script tag; Bun bundles style.css and main.tsx
+                     from it
 src/ui/main.tsx      entry: renders the shell and the page's root, opens
                      the store
 src/ui/store.ts      the WebSocket client and its signals (connection,
                      snapshot, sample, models, event, busy); listen() for
-                     the views still driven by hand
+                     the chat's event routing
 src/ui/api.ts        api<T>(): one JSON call to this server
 src/ui/format.ts     gb, num, count, secs, tps, when, group (pure, tested)
 src/ui/icons.tsx     the inline SVGs as components
@@ -174,9 +173,23 @@ src/ui/monitor/      Monitor.tsx (the page: range, series and tile memory
                      the eight tiles), range.ts, series.ts, request.ts;
                      actions.ts (runAction, confirmText, engine facts)
 src/ui/requests/     Requests.tsx, Row.tsx
-src/ui/app.ts        the glue between the store and chat.ts, until the chat
-                     moves to Preact
-src/ui/chat.ts       the Chat view: list, transcript, composer
+src/ui/chat/         the Chat page. Pure and tested on the recordings in
+                     test/fixtures/ws/: stream.ts (one streaming row:
+                     liveOf, applyDelta, applyHtml, finish; offsets and
+                     gaps), events.ts (ChatState and applyEvent, the
+                     reducer over the socket events), thread.ts
+                     (groupRows: the user rows, work groups and replies
+                     the transcript renders, computed from the state so a
+                     reload shows what a live tab shows). store.ts (the
+                     signals: chats, state, draft, running, note, opened
+                     blocks; the commands: send, patch, regenerate),
+                     nav.ts (open() with its token, showDraft, the socket
+                     routing with the pending queue while a fetch is in
+                     flight, boot). Components: Chat.tsx, List.tsx,
+                     Header.tsx, ModelPicker.tsx, Settings.tsx, Thread.tsx
+                     (the scroll stickiness), Reply.tsx, UserRow.tsx,
+                     Think.tsx, Tool.tsx, Work.tsx, Composer.tsx,
+                     Stats.tsx, Context.tsx, Empty.tsx
 src/ui/style.css     follows the engine's own console (its tokens: #131314
                      page, #1e1f20 cards, #0f1216 inset tiles, 10px uppercase
                      labels, bold mono values)
@@ -186,7 +199,8 @@ src/host/            probes: darwin.ts (bun:ffi, offsets verified with
                      (is the engine on this host), index.ts (facade)
 test/                bun test suites; fixtures/ holds recorded engine bodies,
                      fixtures/ws/ recorded /ws chat event sequences (ndjson),
-                     ui/ the client's pure modules and render-to-string
+                     ui/ the client's pure modules (the chat ones driven
+                     over every recording by ui/ws.ts) and render-to-string
                      checks of its components
 docs/                user docs: monitor, chat, api (keep in step with web.ts),
                      development; internal/studio.md is the Studio guide
