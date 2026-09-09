@@ -1,0 +1,126 @@
+{"t":0,"note":"one message, thinking on, tools off, Jundot/Qwen3.8-27B-oQ4e-mtp resident"}
+{"t":2,"type":"snapshot","chat":null}
+{"t":21876,"type":"chat","data":{"kind":"chat","chat":{"id":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","title":"","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","systemPrompt":"","thinking":true,"reasoningEffort":null,"temperature":null,"topP":null,"maxTokens":null,"toolsOff":["get_current_time","webfetch","websearch"],"search":"exa","createdAt":1788949155507,"updatedAt":1788949155507,"streaming":false}}}
+{"t":21886,"type":"chat","data":{"kind":"chat","chat":{"id":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","title":"In two short sentences, what is a prefix cache?","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","systemPrompt":"","thinking":true,"reasoningEffort":null,"temperature":null,"topP":null,"maxTokens":null,"toolsOff":["get_current_time","webfetch","websearch"],"search":"exa","createdAt":1788949155507,"updatedAt":1788949155515,"streaming":true}}}
+{"t":21886,"type":"chat","data":{"kind":"started","chat":{"id":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","title":"In two short sentences, what is a prefix cache?","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949155507,"updatedAt":1788949155515,"streaming":true},"user":{"id":153,"chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","role":"user","content":"In two short sentences, what is a prefix cache?","html":null,"reasoning":"","status":"done","error":null,"finishReason":null,"model":null,"createdAt":1788949155514,"finishedAt":null,"ttftMs":null,"thinkingMs":null,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null},"message":{"id":154,"chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","role":"assistant","content":"","html":"","reasoning":"","status":"streaming","error":null,"finishReason":null,"model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949155515,"finishedAt":null,"ttftMs":null,"thinkingMs":null,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null}}}
+{"t":22895,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":"The user","reasoningAt":0}}
+{"t":22977,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" wants","reasoningAt":8}}
+{"t":22988,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" a","reasoningAt":14}}
+{"t":22988,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" concise","reasoningAt":16}}
+{"t":23073,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" two","reasoningAt":24}}
+{"t":23082,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":"-s","reasoningAt":28}}
+{"t":23082,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":"entence","reasoningAt":30}}
+{"t":23082,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" explanation","reasoningAt":37}}
+{"t":23164,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" of","reasoningAt":49}}
+{"t":23175,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" a","reasoningAt":52}}
+{"t":23175,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" prefix","reasoningAt":54}}
+{"t":23175,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" cache","reasoningAt":61}}
+{"t":23256,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":".","reasoningAt":67}}
+{"t":23348,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" A","reasoningAt":68}}
+{"t":23356,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" prefix","reasoningAt":70}}
+{"t":23356,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" cache","reasoningAt":77}}
+{"t":23356,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" is","reasoningAt":83}}
+{"t":23439,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" a","reasoningAt":86}}
+{"t":23532,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" caching","reasoningAt":88}}
+{"t":23541,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" mechanism","reasoningAt":96}}
+{"t":23625,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" (","reasoningAt":106}}
+{"t":23635,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":"common","reasoningAt":108}}
+{"t":23636,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" in","reasoningAt":114}}
+{"t":23636,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" L","reasoningAt":117}}
+{"t":23757,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":"LM","reasoningAt":119}}
+{"t":23766,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" inference","reasoningAt":121}}
+{"t":23810,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":")","reasoningAt":131}}
+{"t":23817,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" that","reasoningAt":132}}
+{"t":23817,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" stores","reasoningAt":137}}
+{"t":23902,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" the","reasoningAt":144}}
+{"t":23999,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" computed","reasoningAt":148}}
+{"t":24008,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" KV","reasoningAt":157}}
+{"t":24087,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":"-cache","reasoningAt":160}}
+{"t":24179,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" for","reasoningAt":166}}
+{"t":24190,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" shared","reasoningAt":170}}
+{"t":24372,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" prompt","reasoningAt":177}}
+{"t":24381,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" prefixes","reasoningAt":184}}
+{"t":24381,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":",","reasoningAt":193}}
+{"t":24381,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" so","reasoningAt":194}}
+{"t":24381,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" that","reasoningAt":197}}
+{"t":24474,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" when","reasoningAt":202}}
+{"t":24483,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" multiple","reasoningAt":207}}
+{"t":24483,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" requests","reasoningAt":216}}
+{"t":24483,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" share","reasoningAt":225}}
+{"t":24552,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" a","reasoningAt":231}}
+{"t":24562,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" common","reasoningAt":233}}
+{"t":24562,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" prefix","reasoningAt":240}}
+{"t":24562,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":",","reasoningAt":247}}
+{"t":24643,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" the","reasoningAt":248}}
+{"t":24738,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" computation","reasoningAt":252}}
+{"t":24747,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" doesn","reasoningAt":264}}
+{"t":24747,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":"'t","reasoningAt":270}}
+{"t":24747,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" need","reasoningAt":272}}
+{"t":24884,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" to","reasoningAt":277}}
+{"t":24894,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" be","reasoningAt":280}}
+{"t":24922,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" repeated","reasoningAt":283}}
+{"t":24931,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":".","reasoningAt":292}}
+{"t":24931,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" Let","reasoningAt":293}}
+{"t":24931,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" me","reasoningAt":297}}
+{"t":25016,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" keep","reasoningAt":300}}
+{"t":25026,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" it","reasoningAt":305}}
+{"t":25026,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" to","reasoningAt":308}}
+{"t":25107,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" exactly","reasoningAt":311}}
+{"t":25120,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" two","reasoningAt":319}}
+{"t":25214,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" short","reasoningAt":323}}
+{"t":25225,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":" sentences","reasoningAt":329}}
+{"t":25225,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":".","reasoningAt":339}}
+{"t":25225,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"contentAt":0,"reasoning":"\n","reasoningAt":340}}
+{"t":25294,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":"A","contentAt":0,"reasoningAt":341}}
+{"t":25294,"type":"chat","data":{"kind":"html","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"html":"<p>A</p>","htmlAt":1}}
+{"t":25302,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" prefix","contentAt":1,"reasoningAt":341}}
+{"t":25384,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" cache","contentAt":8,"reasoningAt":341}}
+{"t":25477,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" is","contentAt":14,"reasoningAt":341}}
+{"t":25486,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" a","contentAt":17,"reasoningAt":341}}
+{"t":25569,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" technique","contentAt":19,"reasoningAt":341}}
+{"t":25664,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" in","contentAt":29,"reasoningAt":341}}
+{"t":25672,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" L","contentAt":32,"reasoningAt":341}}
+{"t":25672,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":"LM","contentAt":34,"reasoningAt":341}}
+{"t":25672,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" inference","contentAt":36,"reasoningAt":341}}
+{"t":25805,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" that","contentAt":46,"reasoningAt":341}}
+{"t":25814,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" stores","contentAt":51,"reasoningAt":341}}
+{"t":25814,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" the","contentAt":58,"reasoningAt":341}}
+{"t":25848,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" intermediate","contentAt":62,"reasoningAt":341}}
+{"t":25941,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" computations","contentAt":75,"reasoningAt":341}}
+{"t":25950,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" (","contentAt":88,"reasoningAt":341}}
+{"t":26035,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":"KV","contentAt":90,"reasoningAt":341}}
+{"t":26047,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":"-cache","contentAt":92,"reasoningAt":341}}
+{"t":26047,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":")","contentAt":98,"reasoningAt":341}}
+{"t":26047,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" for","contentAt":99,"reasoningAt":341}}
+{"t":26125,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" a","contentAt":103,"reasoningAt":341}}
+{"t":26136,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" shared","contentAt":105,"reasoningAt":341}}
+{"t":26226,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" portion","contentAt":112,"reasoningAt":341}}
+{"t":26235,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" of","contentAt":120,"reasoningAt":341}}
+{"t":26235,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" a","contentAt":123,"reasoningAt":341}}
+{"t":26235,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" prompt","contentAt":125,"reasoningAt":341}}
+{"t":26311,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":".","contentAt":132,"reasoningAt":341}}
+{"t":26311,"type":"chat","data":{"kind":"html","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"html":"<p>A prefix cache is a technique in LLM inference that stores the intermediate computations (KV-cache) for a shared portion of a prompt.</p>","htmlAt":133}}
+{"t":26319,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" When","contentAt":133,"reasoningAt":341}}
+{"t":26403,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" a","contentAt":138,"reasoningAt":341}}
+{"t":26413,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" new","contentAt":140,"reasoningAt":341}}
+{"t":26413,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" request","contentAt":144,"reasoningAt":341}}
+{"t":26496,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" begins","contentAt":152,"reasoningAt":341}}
+{"t":26507,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" with","contentAt":159,"reasoningAt":341}}
+{"t":26507,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" the","contentAt":164,"reasoningAt":341}}
+{"t":26507,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" same","contentAt":168,"reasoningAt":341}}
+{"t":26589,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" prefix","contentAt":173,"reasoningAt":341}}
+{"t":26599,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":",","contentAt":180,"reasoningAt":341}}
+{"t":26683,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" the","contentAt":181,"reasoningAt":341}}
+{"t":26692,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" cached","contentAt":185,"reasoningAt":341}}
+{"t":26693,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" results","contentAt":192,"reasoningAt":341}}
+{"t":26693,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" are","contentAt":200,"reasoningAt":341}}
+{"t":26774,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" reused","contentAt":204,"reasoningAt":341}}
+{"t":26784,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" instead","contentAt":211,"reasoningAt":341}}
+{"t":26784,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" of","contentAt":219,"reasoningAt":341}}
+{"t":26868,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" being","contentAt":222,"reasoningAt":341}}
+{"t":26877,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":" recom","contentAt":228,"reasoningAt":341}}
+{"t":26878,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":"puted","contentAt":234,"reasoningAt":341}}
+{"t":26961,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"content":".","contentAt":239,"reasoningAt":341}}
+{"t":27204,"type":"chat","data":{"kind":"html","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":154,"html":"<p>A prefix cache is a technique in LLM inference that stores the intermediate computations (KV-cache) for a shared portion of a prompt. When a new request begins with the same prefix, the cached results are reused instead of being recomputed.</p>","htmlAt":240}}
+{"t":27204,"type":"chat","data":{"kind":"row","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","message":{"id":154,"chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","role":"assistant","content":"A prefix cache is a technique in LLM inference that stores the intermediate computations (KV-cache) for a shared portion of a prompt. When a new request begins with the same prefix, the cached results are reused instead of being recomputed.","html":"<p>A prefix cache is a technique in LLM inference that stores the intermediate computations (KV-cache) for a shared portion of a prompt. When a new request begins with the same prefix, the cached results are reused instead of being recomputed.</p>","reasoning":"The user wants a concise two-sentence explanation of a prefix cache. A prefix cache is a caching mechanism (common in LLM inference) that stores the computed KV-cache for shared prompt prefixes, so that when multiple requests share a common prefix, the computation doesn't need to be repeated. Let me keep it to exactly two short sentences.\n","status":"done","error":null,"finishReason":"stop","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949155515,"finishedAt":1788949160834,"ttftMs":1011,"thinkingMs":2398,"stats":{"promptTokens":51,"cachedTokens":0,"generated":119,"prefillMs":874.437,"decodeMs":4077.704,"tokenizeMs":3.524},"toolCalls":null,"toolCallId":null,"toolName":null},"chat":{"id":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","title":"In two short sentences, what is a prefix cache?","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949155507,"updatedAt":1788949160834,"streaming":false}}}
+{"t":27204,"type":"chat","data":{"kind":"done","chat":{"id":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","title":"In two short sentences, what is a prefix cache?","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949155507,"updatedAt":1788949160834,"streaming":false},"message":{"id":154,"chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","role":"assistant","content":"A prefix cache is a technique in LLM inference that stores the intermediate computations (KV-cache) for a shared portion of a prompt. When a new request begins with the same prefix, the cached results are reused instead of being recomputed.","html":"<p>A prefix cache is a technique in LLM inference that stores the intermediate computations (KV-cache) for a shared portion of a prompt. When a new request begins with the same prefix, the cached results are reused instead of being recomputed.</p>","reasoning":"The user wants a concise two-sentence explanation of a prefix cache. A prefix cache is a caching mechanism (common in LLM inference) that stores the computed KV-cache for shared prompt prefixes, so that when multiple requests share a common prefix, the computation doesn't need to be repeated. Let me keep it to exactly two short sentences.\n","status":"done","error":null,"finishReason":"stop","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949155515,"finishedAt":1788949160834,"ttftMs":1011,"thinkingMs":2398,"stats":{"promptTokens":51,"cachedTokens":0,"generated":119,"prefillMs":874.437,"decodeMs":4077.704,"tokenizeMs":3.524},"toolCalls":null,"toolCallId":null,"toolName":null}}}
