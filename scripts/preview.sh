@@ -31,7 +31,8 @@ start() {
   . scripts/studio.env
   mkdir -p "$DIR"
   MLX_SPY_DEV=1 nohup bun --watch src/main.ts --engine "http://$STUDIO_HOST:11234" \
-    --listen "127.0.0.1:$PORT" --db "$DIR/history.sqlite" >"$LOG" 2>&1 &
+    --listen "127.0.0.1:$PORT" --db "$DIR/history.sqlite" \
+    --model-dir "$DIR/models" >"$LOG" 2>&1 &
   echo $! >"$PID"
   for _ in $(seq 1 50); do
     if curl -sf -o /dev/null "$URL/api/snapshot"; then

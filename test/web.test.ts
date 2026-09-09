@@ -11,6 +11,7 @@ import type {
   ModelInfo,
 } from "../src/engine/types.ts";
 import { History } from "../src/history.ts";
+import { PullError } from "../src/pull.ts";
 import { TOOLS } from "../src/tools.ts";
 import { handle, snapshot, type WebDeps } from "../src/web.ts";
 
@@ -135,6 +136,125 @@ async function response(
   expect(result.headers.get("cache-control")).toBe("no-store");
   return result;
 }
+
+// A runner with the surface the routes use; the real one is tested in
+// test/pull.test.ts.
+function fakePulls() {
+  const calls: string[] = [];
+  const pull = {
+    id: 3,
+    repo: "org/new",
+    revision: "abc",
+    dir: "/m/org/new",
+    status: "queued" as const,
+    bytesTotal: 10,
+    bytesDone: 0,
+    filesTotal: 1,
+    filesDone: 0,
+    file: null,
+    error: null,
+    createdAt: 1,
+    updatedAt: 1,
+    finishedAt: null,
+    speedBps: null,
+  };
+  return {
+    calls,
+    pull,
+    list: () => [pull],
+    get: (id: number) => (id === 3 ? pull : null),
+    async start(repo: string) {
+      calls.push(`start ${repo}`);
+      if (repo === "bad") throw new PullError(400, "repo must be x");
+      return pull;
+    },
+    async cancel(id: number) {
+      calls.push(`cancel ${id}`);
+      if (id !== 3) throw new PullError(404, "Pull not found");
+      return { ...pull, status: "cancelled" };
+    },
+    async remove(id: number) {
+      calls.push(`remove ${id}`);
+      if (id !== 3) throw new PullError(404, "Pull not found");
+    },
+    onEvent: () => () => {},
+  };
+}
+
+describe("pulls API", () => {
+  test("lists, starts, reads, cancels and forgets downloads", async () => {
+    const s = setup();
+    const runner = fakePulls();
+    const deps = {
+      ...s.deps,
+      pulls: runner,
+      modelDir: "/m",
+    } as unknown as WebDeps;
+    expect(snapshot(deps).pulls).toEqual([runner.pull]);
+    expect(snapshot(deps).modelDir).toBe("/m");
+    expect(snapshot(s.deps).pulls).toEqual([]);
+    expect(snapshot(s.deps).modelDir).toBeNull();
+
+    const list = await response(deps, "/api/pulls");
+    expect(list.status).toBe(200);
+    expect(await list.json()).toEqual([runner.pull]);
+
+    const started = await response(deps, "/api/pulls", "POST", {
+      repo: "org/new",
+    });
+    expect(started.status).toBe(202);
+    expect(await started.json()).toEqual(runner.pull);
+    const refused = await response(deps, "/api/pulls", "POST", {
+      repo: "bad",
+    });
+    expect(refused.status).toBe(400);
+    expect(await refused.json()).toEqual({ error: "repo must be x" });
+    expect(
+      (await response(deps, "/api/pulls", "POST", { repo: 1 })).status,
+    ).toBe(400);
+    expect((await response(deps, "/api/pulls", "POST", {})).status).toBe(400);
+
+    expect((await response(deps, "/api/pulls/3")).status).toBe(200);
+    expect((await response(deps, "/api/pulls/4")).status).toBe(404);
+
+    const cancelled = await response(deps, "/api/pulls/3/cancel", "POST");
+    expect(cancelled.status).toBe(200);
+    expect(((await cancelled.json()) as any).status).toBe("cancelled");
+    expect((await response(deps, "/api/pulls/4/cancel", "POST")).status).toBe(
+      404,
+    );
+    expect((await response(deps, "/api/pulls/3/cancel")).status).toBe(405);
+
+    const removed = await response(deps, "/api/pulls/3", "DELETE");
+    expect(removed.status).toBe(200);
+    expect(await removed.json()).toEqual({ ok: true });
+    expect((await response(deps, "/api/pulls/4", "DELETE")).status).toBe(404);
+    expect((await response(deps, "/api/pulls/x")).status).toBe(404);
+    expect((await response(deps, "/api/pulls/3", "PATCH")).status).toBe(405);
+    expect(
+      (
+        await response(
+          deps,
+          "/api/pulls",
+          "POST",
+          { repo: "a/b" },
+          "http://evil",
+        )
+      ).status,
+    ).toBe(403);
+    // without a runner the routes do not exist
+    expect((await response(s.deps, "/api/pulls")).status).toBe(404);
+    expect(runner.calls).toEqual([
+      "start org/new",
+      "start bad",
+      "cancel 3",
+      "cancel 4",
+      "remove 3",
+      "remove 4",
+    ]);
+    s.history.close();
+  });
+});
 
 describe("chat API", () => {
   test("creates, lists, reads, updates and deletes chats", async () => {

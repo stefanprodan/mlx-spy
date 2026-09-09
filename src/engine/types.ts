@@ -16,7 +16,8 @@ export type Capability =
   | "unload"
   | "default"
   | "restart"
-  | "diskClear";
+  | "diskClear"
+  | "rescan";
 
 export type ModelInfo = {
   id: string;
@@ -144,6 +145,9 @@ export interface Engine {
   chat?(req: ChatRequest, signal: AbortSignal): AsyncIterable<ChatEvent>;
   load(id: string, asDefault: boolean): Promise<void>;
   unload(id: string): Promise<void>;
+  // walk the model directory again for checkpoints added since the engine
+  // started; engines advertise "rescan" only when this is implemented
+  rescan?(): Promise<void>;
   capabilities(): Set<Capability>;
   // disk tier locations, sized by the host probes
   cacheDirs(): string[];

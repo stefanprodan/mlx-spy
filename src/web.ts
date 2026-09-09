@@ -13,6 +13,8 @@ import type { ChatPatch, ChatSettings } from "./chats.ts";
 import type { CacheLimits, Engine } from "./engine/types.ts";
 import { type History, RANGES, type Range } from "./history.ts";
 import { diskSpace, type HostInfo } from "./host/info.ts";
+import { PullError, type PullRunner } from "./pull.ts";
+import type { Pull } from "./pulls.ts";
 import type { Sample } from "./sample.ts";
 import type { Sampler } from "./sampler.ts";
 import { isSearchProvider, type SearchProvider } from "./tools/search/types.ts";
@@ -43,16 +45,23 @@ export type WebDeps = {
   history: History;
   actions: Actions;
   chat: ChatRunner;
+  pulls: PullRunner;
   version: string;
   local: boolean;
   limits: CacheLimits | null;
   host: HostInfo | null;
+  // where downloads land; null when the host cannot say (tests)
+  modelDir: string | null;
   now?: () => number;
 };
 
-// handle() also serves old focused tests that do not exercise chat. Production
-// serve() requires the runner through WebDeps.
-type HandleDeps = Omit<WebDeps, "chat"> & { chat?: ChatRunner };
+// handle() also serves old focused tests that do not exercise chat or
+// downloads. Production serve() requires both runners through WebDeps.
+type HandleDeps = Omit<WebDeps, "chat" | "pulls" | "modelDir"> & {
+  chat?: ChatRunner;
+  pulls?: PullRunner;
+  modelDir?: string | null;
+};
 
 export function snapshot(deps: HandleDeps) {
   return {
@@ -73,6 +82,8 @@ export function snapshot(deps: HandleDeps) {
     events: deps.actions.events,
     running: deps.actions.running(),
     chat: deps.chat?.running() ?? null,
+    pulls: deps.pulls?.list() ?? [],
+    modelDir: deps.modelDir ?? null,
   };
 }
 
@@ -80,7 +91,8 @@ export type WsMessage =
   | { type: "snapshot"; data: ReturnType<typeof snapshot> }
   | { type: "sample"; data: Sample }
   | { type: "event"; data: ActionEvent }
-  | { type: "chat"; data: ChatWsEvent };
+  | { type: "chat"; data: ChatWsEvent }
+  | { type: "pull"; data: Pull };
 
 export function sameOrigin(req: Request): boolean {
   const origin = req.headers.get("origin");
@@ -383,6 +395,41 @@ async function chatsRoute(req: Request, deps: HandleDeps): Promise<Response> {
   return json({ ok: true });
 }
 
+// Downloads: list, start (or resume) one, cancel it, forget it.
+async function pullsRoute(req: Request, deps: HandleDeps): Promise<Response> {
+  const runner = deps.pulls;
+  if (!runner) return json({ error: "not found" }, 404);
+  const url = new URL(req.url);
+  if (url.pathname === "/api/pulls") {
+    if (req.method === "GET") return json(runner.list());
+    if (req.method !== "POST") {
+      return json({ error: "method not allowed" }, 405);
+    }
+    const value = await body(req);
+    const repo = stringField(value, "repo", true)!;
+    return json(await runner.start(repo), 202);
+  }
+  const match = /^\/api\/pulls\/(\d+)(?:\/(cancel))?$/.exec(url.pathname);
+  if (!match) return json({ error: "not found" }, 404);
+  const id = Number(match[1]);
+  if (match[2] === "cancel") {
+    if (req.method !== "POST") {
+      return json({ error: "method not allowed" }, 405);
+    }
+    await body(req, true);
+    return json(await runner.cancel(id));
+  }
+  if (req.method === "GET") {
+    const pull = runner.get(id);
+    return pull ? json(pull) : json({ error: "Pull not found" }, 404);
+  }
+  if (req.method === "DELETE") {
+    await runner.remove(id);
+    return json({ ok: true });
+  }
+  return json({ error: "method not allowed" }, 405);
+}
+
 export async function handle(
   req: Request,
   deps: HandleDeps,
@@ -399,6 +446,12 @@ export async function handle(
       url.pathname.startsWith("/api/chats/")
     ) {
       return await chatsRoute(req, deps);
+    }
+    if (
+      url.pathname === "/api/pulls" ||
+      url.pathname.startsWith("/api/pulls/")
+    ) {
+      return await pullsRoute(req, deps);
     }
     if (req.method !== "GET") {
       return json({ error: "method not allowed" }, 405);
@@ -430,7 +483,11 @@ export async function handle(
         return json({ error: "not found" }, 404);
     }
   } catch (err) {
-    if (err instanceof ChatError || err instanceof HttpError) {
+    if (
+      err instanceof ChatError ||
+      err instanceof PullError ||
+      err instanceof HttpError
+    ) {
       return json({ error: err.message }, err.status);
     }
     throw err;
@@ -489,12 +546,16 @@ export function serve(
   const unsubscribeChat = deps.chat.onEvent((event) =>
     publish({ type: "chat", data: event }),
   );
+  const unsubscribePulls = deps.pulls.onEvent((pull) =>
+    publish({ type: "pull", data: pull }),
+  );
   return {
     server,
     stop() {
       unsubscribe();
       unsubscribeEvents();
       unsubscribeChat();
+      unsubscribePulls();
       server.stop(true);
     },
   };

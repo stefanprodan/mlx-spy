@@ -4,8 +4,8 @@
 // Adapter for mlx-serve (github.com/ddalcu/mlx-serve) in --serve mode.
 //
 // Only endpoints that mlx-serve's dispatch answers before its model-load step
-// are used here: /health, /metrics.json, /v1/models (verified in the engine's
-// src/server.zig). GET /props is NEVER called: it goes through the load path
+// are used here: /health, /metrics.json, /v1/models and, after a download,
+// /v1/models/rescan (verified in the engine's src/server.zig). GET /props is NEVER called: it goes through the load path
 // and cold-loads the default model, which is the bug that motivated mlx-spy.
 // load/unload are explicit user actions, never called from the sampler.
 
@@ -230,6 +230,13 @@ export class MlxServe implements Engine {
     await this.post("/v1/unload-model", { model: id });
   }
 
+  // Discovery walks --model-dir at startup only; the rescan absorbs a
+  // checkpoint added since. Answered before the model-load step, next to
+  // /v1/models in the dispatch (src/server.zig), so it loads nothing.
+  async rescan(): Promise<void> {
+    await this.post("/v1/models/rescan", {});
+  }
+
   capabilities(): Set<Capability> {
     return new Set([
       "chat",
@@ -238,6 +245,7 @@ export class MlxServe implements Engine {
       "default",
       "restart",
       "diskClear",
+      "rescan",
     ]);
   }
 
