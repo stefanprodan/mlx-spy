@@ -45,8 +45,10 @@ the engine reports shown in the composer.
   than the answer, and then it folds in. Tools run without asking; every tool is on for a new chat and
   the gear lists them with a checkbox each (hover a name for what it
   does).
-- **Nothing extra runs.** Markdown is rendered by Bun on the server; the
-  page loads no library and the engine is only called when you send.
+- **Nothing extra runs.** Markdown is rendered by Bun on the server, and
+  a fenced code block is highlighted there too (about forty languages;
+  one the server does not know stays plain); the page loads no library
+  for it and the engine is only called when you send.
 
 ## Using it
 

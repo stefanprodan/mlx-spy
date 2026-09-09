@@ -11,6 +11,11 @@
 // kept only for http, https and mailto; images never become an img (a
 // reply must not make the browser fetch a URL). The API is marked unstable
 // by Bun, which is why every callback lives here and nowhere else.
+// Fenced blocks are highlighted here too (src/highlight.ts): the block's
+// text arrives escaped, so it is unescaped for the grammar, which escapes
+// every token again on its way out.
+
+import { highlight } from "./highlight.ts";
 
 const OPTIONS = { noHtmlBlocks: true, noHtmlSpans: true } as const;
 
@@ -20,6 +25,16 @@ export function escapeHtml(s: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+// The exact inverse of escapeHtml, in the reverse order so an "&amp;lt;"
+// comes back as the "&lt;" the model wrote.
+function unescapeHtml(s: string): string {
+  return s
+    .replace(/&quot;/g, '"')
+    .replace(/&gt;/g, ">")
+    .replace(/&lt;/g, "<")
+    .replace(/&amp;/g, "&");
 }
 
 const SAFE_HREF = /^(https?:|mailto:)/i;
@@ -33,14 +48,15 @@ function language(info: string | undefined): string {
 
 // A fenced block becomes a card with a head (language label, copy button)
 // so the page can wire the copy without knowing the markup; the text to
-// copy is the pre's textContent.
+// copy is the pre's textContent, which the highlight spans leave as is.
 function codeBlock(text: string, info: string | undefined): string {
   const lang = language(info);
   const label = lang ? `<span class="lang">${escapeHtml(lang)}</span>` : "";
+  const body = (lang && highlight(unescapeHtml(text), lang)) || text;
   return (
     `<div class="code"${lang ? ` data-lang="${escapeHtml(lang)}"` : ""}>` +
     `<div class="ch">${label}<button type="button" class="copy">Copy</button></div>` +
-    `<pre><code>${text}</code></pre></div>`
+    `<pre><code>${body}</code></pre></div>`
   );
 }
 

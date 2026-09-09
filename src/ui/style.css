@@ -1747,6 +1747,60 @@ details.tool.live > summary .spin {
   padding: 0;
   font-size: inherit;
 }
+/* highlight.js classes (src/highlight.ts) on the palette: four hues plus
+   dim, so a block reads as code, not as a rainbow */
+.md .hljs-comment,
+.md .hljs-quote,
+.md .hljs-meta {
+  color: var(--faint);
+  font-style: italic;
+}
+.md .hljs-keyword,
+.md .hljs-selector-tag,
+.md .hljs-doctag,
+.md .hljs-name,
+.md .hljs-tag {
+  color: var(--brand);
+}
+.md .hljs-string,
+.md .hljs-char,
+.md .hljs-regexp,
+.md .hljs-addition,
+.md .hljs-template-tag,
+.md .hljs-subst {
+  color: var(--green-2);
+}
+.md .hljs-number,
+.md .hljs-literal,
+.md .hljs-symbol,
+.md .hljs-bullet,
+.md .hljs-link {
+  color: var(--amber);
+}
+.md .hljs-title,
+.md .hljs-section,
+.md .hljs-built_in,
+.md .hljs-type,
+.md .hljs-attr,
+.md .hljs-attribute,
+.md .hljs-property,
+.md .hljs-selector-class,
+.md .hljs-selector-id,
+.md .hljs-selector-attr,
+.md .hljs-selector-pseudo,
+.md .hljs-variable,
+.md .hljs-template-variable {
+  color: var(--accent);
+}
+.md .hljs-deletion {
+  color: var(--red);
+}
+.md .hljs-emphasis {
+  font-style: italic;
+}
+.md .hljs-strong {
+  font-weight: 600;
+}
 .md strong {
   color: var(--val);
 }

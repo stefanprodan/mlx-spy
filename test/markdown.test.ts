@@ -34,7 +34,7 @@ describe("renderMarkdown", () => {
     const html = renderMarkdown('`a<b&c`\n\n```ts\nconst x = "<y>&";\n```');
     expect(html).toContain("<code>a&lt;b&amp;c</code>");
     expect(html).toContain(
-      "<pre><code>const x = &quot;&lt;y&gt;&amp;&quot;;\n</code></pre>",
+      '<span class="hljs-string">&quot;&lt;y&gt;&amp;&quot;</span>;\n</code></pre>',
     );
     expect(html).not.toContain("&amp;lt;");
   });
@@ -47,6 +47,22 @@ describe("renderMarkdown", () => {
     const plain = renderMarkdown("```\nx\n```");
     expect(plain).toContain('<div class="code"><div class="ch"><button');
     expect(plain).not.toContain("data-lang");
+  });
+
+  test("fenced blocks are highlighted in a known language only", () => {
+    const ts = renderMarkdown("```ts\nconst a = 1 // c\n```");
+    expect(ts).toContain('<span class="hljs-keyword">const</span>');
+    expect(ts).toContain('<span class="hljs-comment">// c</span>');
+    // the language name is kept, the text stays as escaped by the renderer
+    const unknown = renderMarkdown("```nope\nlet a = 1 <b>\n```");
+    expect(unknown).toContain('data-lang="nope"');
+    expect(unknown).toContain("<pre><code>let a = 1 &lt;b&gt;\n</code></pre>");
+    // an entity the model wrote survives the unescape before the grammar
+    const ent = renderMarkdown("```html\n<p>a &lt; b</p>\n```");
+    expect(ent.replace(/<[^>]+>/g, "")).toContain("a &amp;lt; b");
+    expect(ent).not.toContain("<p>");
+    // a block with no language is left alone
+    expect(renderMarkdown("```\nconst a\n```")).not.toContain("hljs-");
   });
 
   test("links keep only http, https and mailto", () => {
@@ -98,7 +114,7 @@ describe("renderMarkdown", () => {
   test("a partial reply mid-stream still renders", () => {
     const html = renderMarkdown("Some **unclosed\n\n```ts\nconst x =");
     expect(html).toContain("<p>Some **unclosed</p>");
-    expect(html).toContain("<code>const x =");
+    expect(html.replace(/<[^>]+>/g, "")).toContain("const x =");
   });
 
   test("escapeHtml covers the four characters", () => {
