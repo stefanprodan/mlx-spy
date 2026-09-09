@@ -18,11 +18,13 @@ function cutReason(m: Message): { text: string; err?: boolean } | null {
   if (m.status === "error") {
     return { text: `error: ${m.error ?? "unknown"}`, err: true };
   }
-  if (m.finishReason?.startsWith("length"))
-    return { text: "cut at max tokens" };
+  // the engine reports a loop as length/repetition_loop: the detail
+  // decides before the bare reason does
   if (m.finishReason?.includes("repetition_loop")) {
     return { text: "stopped a repetition loop" };
   }
+  if (m.finishReason?.startsWith("length"))
+    return { text: "cut at max tokens" };
   if (m.finishReason === "tool_loop") {
     return { text: "stopped after repeating the same call" };
   }

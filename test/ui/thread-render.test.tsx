@@ -99,4 +99,31 @@ describe("thread markup", () => {
     expect(reply).toContain('<div class="tail" hidden');
     expect(reply).toContain('<button type="button">Regenerate</button>');
   });
+
+  test("a repetition loop is named before the length it was reported as", () => {
+    const st = run.steps[done].state;
+    const last = st.chat.messages.at(-1)!;
+    const cut = (finishReason: string) =>
+      groupRows(
+        {
+          ...st,
+          chat: {
+            ...st.chat,
+            messages: [
+              ...st.chat.messages.slice(0, -1),
+              { ...last, finishReason },
+            ],
+          },
+        },
+        run.toolsOn,
+      )
+        .map((n) => render(<Row node={n} />))
+        .join("");
+    expect(cut("length/repetition_loop")).toContain(
+      '<span class="st">stopped a repetition loop</span>',
+    );
+    expect(cut("length")).toContain(
+      '<span class="st">cut at max tokens</span>',
+    );
+  });
 });
