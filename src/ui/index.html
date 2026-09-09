@@ -45,40 +45,7 @@
         </section>
       </div>
 
-      <div id="view-requests" hidden>
-        <div class="shead" id="requests-head">
-          <h2>Requests</h2>
-        </div>
-        <section class="card" id="requests-live"></section>
-        <div class="shead">
-          <h2>History</h2>
-          <span class="grow"></span>
-          <div class="seg">
-            <button type="button" class="trash" id="a-requests" data-action="requestsClear" title="Clear requests" aria-label="Clear requests">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5L18 7M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7"/></svg>
-            </button>
-          </div>
-        </div>
-        <section class="card requests">
-          <table id="requests">
-            <thead>
-              <tr>
-                <th class="when">Finished</th>
-                <th class="model">Model</th>
-                <th class="num">Prompt</th>
-                <th class="num cached">Cached</th>
-                <th class="num">Generated</th>
-                <th class="num wide">Prefill</th>
-                <th class="num wide">Decode</th>
-                <th class="num ttft">TTFT</th>
-                <th class="num total">Total</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          <p class="blank" id="requests-empty" hidden>No requests yet.</p>
-        </section>
-      </div>
+      <div id="view-requests" hidden></div>
 
       <div id="view-monitor">
       <div class="shead">
@@ -97,21 +64,7 @@
         </div>
       </div>
       <section class="card">
-        <div class="spark request" id="req">
-          <div class="cur-head">
-            <span class="cur-state" id="req-state">idle</span>
-            <span class="cur-when" id="req-when"></span>
-            <span class="grow"></span>
-            <span class="cur-num" id="req-tokens"></span>
-          </div>
-          <div class="cur-bar" id="req-bar"><span class="pf" id="req-pf"></span><span class="dc" id="req-dc"></span></div>
-          <div class="cur-foot">
-            <span class="cur-pf" id="req-prefill"></span>
-            <span class="cur-dc" id="req-decode"></span>
-            <span class="grow"></span>
-            <span class="cur-total" id="req-total"></span>
-          </div>
-        </div>
+        <div id="request-bar"></div>
         <div class="tiles">
           <div class="tile">
             <div class="lbl">Requests</div>

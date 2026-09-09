@@ -17,7 +17,6 @@ import { effect, untracked } from "@preact/signals";
 import type { ActionEvent, ActionName } from "../actions.ts";
 import type { Capability } from "../engine/types.ts";
 import type { Range, Series } from "../history.ts";
-import type { LastRequest } from "../requests.ts";
 import type { Sample } from "../sample.ts";
 import { type ChatPage, mountChat } from "./chat.ts";
 import { count, DASH, diskSize, gb, num } from "./format.ts";
@@ -45,6 +44,12 @@ const css = (name: string) =>
 
 // ---------- formatting ----------
 
+const fmtStamp = new Intl.DateTimeFormat(undefined, {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
 // put() marks the dash so the CSS can dim it
 const put = (id: string, text: string) => {
   const e = $(id);
@@ -73,12 +78,6 @@ let prevTok: { epoch: number; prompt: number; cached: number } | null = null;
 // request's speeds
 let lastDecode: number | null = null;
 let lastPrefill: number | null = null;
-// the rates seen while the request in flight was prefilling and decoding:
-// they stay on the bar after the phase ends, unlike the tiles' live values
-let reqStart: number | null = null;
-let reqPrefillTps: number | null = null;
-let reqDecodeTps: number | null = null;
-
 // A fresh tab has no "last request" memory, but the history does: take the
 // most recent values from the raw 1h series so a reload does not blank the
 // tiles. Only fills what is still empty; a live value always wins.
@@ -228,7 +227,6 @@ function renderTiles(s: Sample) {
       : "";
   renderServer(s);
   renderActivity(s);
-  renderRequest(s);
 }
 
 // The live half of the Runtime section: the engine's residency and process.
@@ -383,154 +381,6 @@ function inViewMean(k: "ttftMs"): number | null {
     n += w;
   }
   return n ? sum / n : null;
-}
-
-// "1m 12s", "45s"
-function short(ms: number): string {
-  const s = Math.round(ms / 1000);
-  return s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
-}
-
-const fmtStamp = new Intl.DateTimeFormat(undefined, {
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hour12: false,
-});
-
-// The request bar: what the engine is doing now, or the last thing it did.
-// In flight the numbers are engine-wide (the engine reports counts, not
-// requests); finished, they are the request's own from its counter deltas.
-function renderRequest(s: Sample) {
-  const bar = $("req-bar");
-  const cur = s.request;
-  const last = s.lastRequest;
-  const tps = (tokens: number, ms: number) =>
-    ms > 0 ? `${whole((tokens / ms) * 1000)} tok/s` : "";
-  // a phone wraps the foot: only between the parts, never inside one
-  const join = (...parts: string[]) =>
-    parts
-      .filter(Boolean)
-      .map((p) => p.replace(/ /g, "\u00a0"))
-      .join(" · ");
-  const label = (id: string, text: string) => {
-    const e = $(id);
-    e.textContent = text;
-    e.hidden = text === "";
-  };
-  if (cur && s.engineUp) {
-    // a prefilling request is counted as running too
-    const open = Math.max(s.requestsRunning, s.requestsPrefilling);
-    const n = Math.max(1, open);
-    const prefilling = s.requestsPrefilling > 0;
-    const elapsed = Math.max(1, s.t - cur.startedAt);
-    const pf = cur.prefillMs;
-    const dc = cur.decodeMs;
-    const known = pf + dc || 1;
-    $("req-state").textContent = n > 1 ? `${n} in flight` : "in flight";
-    $("req-state").className = "cur-state on";
-    $("req-when").textContent = fmtStamp.format(cur.startedAt);
-    $("req-tokens").textContent = `${count(s.inflightTokens)} tok generating`;
-    bar.className = `cur-bar running${prefilling ? " prefilling" : ""}`;
-    $("req-pf").style.width = `${(pf / known) * 100}%`;
-    $("req-dc").style.width = `${(dc / known) * 100}%`;
-    if (cur.startedAt !== reqStart) {
-      reqStart = cur.startedAt;
-      reqPrefillTps = reqDecodeTps = null;
-    }
-    // a short prefill may publish its only rate on the tick the phase ends
-    if ((s.prefillTps ?? 0) > 0 && (prefilling || reqPrefillTps === null)) {
-      reqPrefillTps = s.prefillTps;
-    }
-    if (!prefilling && (s.decodeTps ?? 0) > 0) reqDecodeTps = s.decodeTps;
-    const rate = (v: number | null) => (v ? `${whole(v)} tok/s` : "");
-    label(
-      "req-prefill",
-      pf ? join(`prefill ${short(pf)}`, rate(reqPrefillTps)) : "",
-    );
-    label(
-      "req-decode",
-      dc ? join(`decode ${short(dc)}`, rate(reqDecodeTps)) : "",
-    );
-    const total = $("req-total");
-    total.replaceChildren(
-      `${short(elapsed)} · ${prefilling ? "prefilling" : "decoding"}`,
-    );
-    if (s.requestsWaiting > 0) {
-      total.append(" · ", el("span", "warn", `${s.requestsWaiting} waiting`));
-    }
-    return;
-  }
-  if (!last) {
-    $("req-state").textContent = "idle";
-    $("req-state").className = "cur-state";
-    $("req-when").textContent = "";
-    $("req-tokens").textContent = "";
-    bar.className = "cur-bar";
-    $("req-pf").style.width = "0";
-    $("req-dc").style.width = "0";
-    label("req-prefill", "");
-    label("req-decode", "");
-    $("req-total").textContent = "No inflight requests";
-    return;
-  }
-  const known = last.prefillMs + last.decodeMs || 1;
-  $("req-state").textContent =
-    last.count > 1 ? `last ${last.count} requests` : "last request";
-  $("req-state").className = "cur-state";
-  $("req-when").textContent = fmtStamp.format(
-    last.startedAt ?? last.finishedAt,
-  );
-  $("req-tokens").textContent = `${count(last.generated)} tok generated`;
-  bar.className = `cur-bar${last.cancelled ? " cancelled" : ""}`;
-  $("req-pf").style.width = `${(last.prefillMs / known) * 100}%`;
-  $("req-dc").style.width = `${(last.decodeMs / known) * 100}%`;
-  // the prompt is the context the request ran with; the part the engine
-  // did not compute came from the prefix cache (unknown for a cancelled
-  // request, whose counters never moved)
-  const prompt = last.promptTokens;
-  const cached = prompt - last.prefillTokens;
-  const pfEl = $("req-prefill");
-  pfEl.replaceChildren(
-    join(
-      last.prefillMs ? `prefill ${short(last.prefillMs)}` : "",
-      prompt > 0 ? `${count(prompt)} tok` : "",
-    ),
-  );
-  // the cached share is dropped on a phone, where the line is at its widest
-  if (cached > 0) {
-    pfEl.append(
-      el(
-        "span",
-        "cur-cached",
-        ` · ${whole((cached / prompt) * 100)}%\u00a0cached`,
-      ),
-    );
-  }
-  // the rate is over the tokens the engine computed, not the cached ones
-  if (last.prefillTokens > 0) {
-    pfEl.append(
-      ` · ${tps(last.prefillTokens, last.prefillMs).replace(" ", "\u00a0")}`,
-    );
-  }
-  pfEl.hidden = pfEl.textContent === "";
-  label(
-    "req-decode",
-    last.decodeMs
-      ? join(
-          `decode ${short(last.decodeMs)}`,
-          tps(last.generated, last.decodeMs),
-        )
-      : "",
-  );
-  // the start is seen up to a gauge publish late: never shorter than the
-  // engine's own phase times
-  const span = Math.max(
-    last.startedAt != null ? last.finishedAt - last.startedAt : 0,
-    known,
-  );
-  $("req-total").textContent =
-    `${short(span)} · ${last.cancelled ? "cancelled" : "done"}`;
 }
 
 // ---------- models ----------
@@ -827,7 +677,9 @@ function showEvent(e: ActionEvent) {
   );
 }
 
-async function runAction(action: ActionName, model: string | null) {
+// Milestone 3 moves this with the rest of the monitor actions into
+// src/ui/monitor/actions.ts.
+export async function runAction(action: ActionName, model: string | null) {
   if (busy.value) return;
   const label = ACTION_LABEL[action];
   if (action !== "favorite") {
@@ -873,198 +725,6 @@ async function runAction(action: ActionName, model: string | null) {
     setBusy(null);
     void refreshSnapshot();
   }
-}
-
-// ---------- the Requests page ----------
-
-// The last finished requests, newest first, as the server keeps them; a
-// sample whose last request is not the head is a new one to prepend.
-let reqs: LastRequest[] = [];
-const REQUESTS_SHOWN = 50;
-// a completion and a cancel can share a finish time: the pair is the key
-const reqKey = (r: LastRequest) => `${r.finishedAt}:${r.cancelled ? 1 : 0}`;
-// rows the user opened: a phone hides most columns and a tap shows them all
-// under the row; the list re-renders on every new request
-const openReqs = new Set<string>();
-
-// "0.3 s", "12.4 s", "1m 12s"
-const dur = (ms: number) =>
-  ms < 60_000 ? `${(ms / 1000).toFixed(1)} s` : short(ms);
-
-function renderRequests() {
-  const tbody = $("requests").querySelector("tbody")!;
-  $("requests-empty").hidden = reqs.length > 0;
-  $("requests").hidden = reqs.length === 0;
-  // rows that aged out or were wiped take their open state with them
-  const keys = new Set(reqs.map(reqKey));
-  for (const k of openReqs) if (!keys.has(k)) openReqs.delete(k);
-  const num = (text: string, rate?: string) => {
-    const td = el("td", "num", text);
-    if (rate) td.append(el("span", "rate", ` · ${rate}`));
-    return td;
-  };
-  const tps = (tokens: number, ms: number) =>
-    tokens > 0 && ms > 0 ? `${whole((tokens / ms) * 1000)} tok/s` : "";
-  const cell = (label: string, value: string) => {
-    const div = el("div", "d");
-    div.append(el("span", "k", label), el("span", "v", value));
-    return div;
-  };
-  // every field, for the row a tap opened
-  const details = (r: LastRequest) => {
-    const tr = el("tr", "detail");
-    const td = el("td");
-    td.colSpan = 10;
-    const grid = el("div", "dgrid");
-    const cached = r.promptTokens - r.prefillTokens;
-    const engineMs = r.prefillMs + r.decodeMs;
-    grid.append(
-      cell("Model", r.model ?? "unknown"),
-      cell(
-        "Started",
-        r.startedAt != null ? fmtStamp.format(r.startedAt) : "not seen",
-      ),
-      cell(
-        "Prompt",
-        r.promptTokens > 0 ? `${count(r.promptTokens)} tok` : DASH,
-      ),
-      cell(
-        "Cached",
-        r.promptTokens > 0 && cached > 0
-          ? `${count(cached)} tok · ${whole((cached / r.promptTokens) * 100)}%`
-          : DASH,
-      ),
-      cell("Generated", `${count(r.generated)} tok`),
-      cell(
-        "Prefill",
-        r.prefillMs
-          ? [dur(r.prefillMs), tps(r.prefillTokens, r.prefillMs)]
-              .filter(Boolean)
-              .join(" · ")
-          : DASH,
-      ),
-      cell(
-        "Decode",
-        r.decodeMs
-          ? [dur(r.decodeMs), tps(r.generated, r.decodeMs)]
-              .filter(Boolean)
-              .join(" · ")
-          : DASH,
-      ),
-      cell("TTFT", r.ttftMs != null ? dur(r.ttftMs) : DASH),
-      cell(
-        "Total",
-        engineMs
-          ? dur(engineMs)
-          : r.startedAt != null
-            ? dur(r.finishedAt - r.startedAt)
-            : DASH,
-      ),
-      cell(
-        "Outcome",
-        r.cancelled
-          ? r.count > 1
-            ? `${r.count} requests cancelled by their clients in the same second`
-            : "cancelled by the client"
-          : r.count > 1
-            ? `${r.count} requests completed in the same second`
-            : "completed",
-      ),
-    );
-    td.append(grid);
-    tr.append(td);
-    return tr;
-  };
-  tbody.replaceChildren(
-    ...reqs.flatMap((r) => {
-      const tr = el("tr", r.cancelled ? "cancelled" : "");
-      // the chevron says the row opens; a cancel turns the time amber
-      const when = el("td", "when");
-      when.append(
-        el("span", "chev"),
-        el("span", "fin", fmtStamp.format(r.finishedAt)),
-      );
-      if (r.count > 1) when.append(el("span", "tag", `×${r.count}`));
-      if (r.cancelled) when.title = "cancelled by the client";
-      // the prompt is unknown for a cancel (its counters never moved)
-      const cached = r.promptTokens - r.prefillTokens;
-      const engineMs = r.prefillMs + r.decodeMs;
-      const total =
-        engineMs > 0
-          ? engineMs
-          : r.startedAt != null
-            ? r.finishedAt - r.startedAt
-            : 0;
-      // the resident model at the finish, the favorite among several
-      const model = el(
-        "td",
-        "model",
-        r.model ? r.model.split("/").pop() : DASH,
-      );
-      if (r.model) model.title = r.model;
-      tr.append(
-        when,
-        model,
-        num(r.promptTokens > 0 ? count(r.promptTokens) : DASH),
-        num(
-          r.promptTokens > 0 && cached > 0
-            ? `${whole((cached / r.promptTokens) * 100)}%`
-            : DASH,
-        ),
-        num(count(r.generated)),
-        num(
-          r.prefillMs ? dur(r.prefillMs) : DASH,
-          tps(r.prefillTokens, r.prefillMs),
-        ),
-        num(r.decodeMs ? dur(r.decodeMs) : DASH, tps(r.generated, r.decodeMs)),
-        num(r.ttftMs != null ? dur(r.ttftMs) : DASH),
-        num(total ? dur(total) : DASH),
-      );
-      const wide = tr.querySelectorAll("td.num");
-      wide[3].classList.add("wide");
-      wide[4].classList.add("wide");
-      wide[5].classList.add("ttft");
-      wide[1].classList.add("cached");
-      wide[6].classList.add("total");
-      const more = details(r);
-      const key = reqKey(r);
-      const open = openReqs.has(key);
-      tr.classList.toggle("open", open);
-      more.hidden = !open;
-      tr.onclick = () => {
-        const now = more.hidden === true;
-        more.hidden = !now;
-        tr.classList.toggle("open", now);
-        if (now) openReqs.add(key);
-        else openReqs.delete(key);
-      };
-      return [tr, more];
-    }),
-  );
-}
-
-function fetchRequests() {
-  return fetch("/api/requests")
-    .then((r) => r.json())
-    .then((list: LastRequest[]) => {
-      reqs = list;
-      renderRequests();
-    })
-    .catch(() => {});
-}
-
-// A sample carrying a request the list does not have: merged in by key
-// and kept in finish order, so a fetch racing a sample cannot duplicate or
-// misplace a row.
-function noteRequest(s: Sample) {
-  const last = s.lastRequest;
-  if (!last) return;
-  const key = reqKey(last);
-  if (reqs.some((r) => reqKey(r) === key)) return;
-  reqs = [last, ...reqs]
-    .sort((a, b) => b.finishedAt - a.finishedAt)
-    .slice(0, REQUESTS_SHOWN);
-  renderRequests();
 }
 
 // ---------- charts ----------
@@ -1379,7 +1039,7 @@ effect(() => {
 effect(() => {
   if (event.value) showEvent(event.value);
 });
-// the monitor and requests pages show the socket's state in their head
+// the static monitor head shows the socket's state
 effect(() => {
   const state = $("ws-state");
   const c = connection.value;
@@ -1397,29 +1057,19 @@ effect(() => {
 let connected = false;
 listen((msg) => {
   if (msg.type === "snapshot") {
-    if (msg.data.sample) renderTiles(msg.data.sample);
+    if (view === "monitor" && msg.data.sample) renderTiles(msg.data.sample);
     // after a reconnect the series has a hole: fetch it again
-    if (view === "requests") void fetchRequests();
-    else if (view === "chat") {
+    if (view === "chat") {
       chat?.onSnapshot(msg.data.models, msg.data.chat, connected);
-    } else if (connected) void loadRange(range);
+    } else if (view === "monitor" && connected) void loadRange(range);
     connected = true;
   } else if (msg.type === "event") {
-    if (msg.data.action === "requestsClear" && msg.data.ok) {
-      reqs = [];
-      renderRequests();
-    }
     if (msg.data.action === "historyClear" && msg.data.ok) {
       // every tab forgets what it learned from the wiped series
       lastDecode = lastPrefill = null;
       lastCacheHit = lastCacheTok = null;
       lastReq = prevTok = null;
-      if (view === "requests") {
-        reqs = [];
-        renderRequests();
-      } else {
-        void loadRange(range);
-      }
+      if (view === "monitor") void loadRange(range);
     }
   } else if (msg.type === "refresh") {
     chat?.onModels(msg.data.models);
@@ -1427,11 +1077,10 @@ listen((msg) => {
     chat?.onChat(msg.data);
   } else if (view === "chat") {
     chat?.onSample(msg.data);
-  } else {
+  } else if (view === "monitor") {
     // the series first, so the tiles' range totals include this tick
     appendLive(msg.data);
     renderTiles(msg.data);
-    if (view === "requests") noteRequest(msg.data);
   }
 });
 
@@ -1449,24 +1098,13 @@ $("ranges").addEventListener("click", (ev) => {
   void loadRange(btn.dataset.range as Range);
 });
 
-if (view === "requests") {
-  // the live bar and the connection pill move over; the monitor's charts
-  // are never built (redraw is a no-op without them)
-  document.title = "mlx-spy · requests";
-  $("view-monitor").hidden = true;
-  $("view-requests").hidden = false;
-  $("requests-head").append($("ws-state"));
-  $("requests-live").append($("req"));
-  // the action outcome line sits under the models table on the monitor;
-  // here it goes under the list, for the clear button
-  $("view-requests").append($("event"));
-} else if (view === "chat") {
+if (view === "chat") {
   // the frame fills the viewport; the header shows the connection pill
   $("view-monitor").hidden = true;
   $("view-chat").hidden = false;
   document.querySelector(".page")!.classList.add("chat");
   chat = mountChat();
-} else {
+} else if (view === "monitor") {
   setupCharts();
   void loadRange("1h");
 }

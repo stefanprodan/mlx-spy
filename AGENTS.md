@@ -165,9 +165,10 @@ src/ui/api.ts        api<T>(): one JSON call to this server
 src/ui/format.ts     gb, num, count, secs, tps, when, group (pure, tested)
 src/ui/icons.tsx     the inline SVGs as components
 src/ui/shell/        Header.tsx, Footer.tsx, Pill.tsx
-src/ui/app.ts        the monitor and requests views, still imperative:
-                     tiles, uPlot charts, range picker, actions; mounts
-                     the chat view
+src/ui/monitor/      request.ts, RequestBar.tsx, Event.tsx
+src/ui/requests/     Requests.tsx, Row.tsx
+src/ui/app.ts        the monitor view, still imperative: tiles, uPlot charts,
+                     range picker, actions; mounts the chat view
 src/ui/chat.ts       the Chat view: list, transcript, composer
 src/ui/style.css     follows the engine's own console (its tokens: #131314
                      page, #1e1f20 cards, #0f1216 inset tiles, 10px uppercase
