@@ -245,6 +245,9 @@ events on `/ws` in every tab → `done` with the final row and its stats.
   them, so the adapter reads the plist's ProgramArguments; the tiles
   multiply the budget by the resident model count (hot) and the tier dir
   count (SSD).
+- The hot cache evicts per workload since 26.9.2, keyed by
+  `prompt_cache_key`. The runner sends the chat id, so another client's
+  batch evicts its own entries before a chat in progress.
 - Host memory on macOS: `free` is small by design; free + inactive is the
   practical headroom. `compressed` is the compressor's page count.
 

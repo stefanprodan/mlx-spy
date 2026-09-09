@@ -112,6 +112,16 @@ describe("OpenAI chat body", () => {
     expect(body).not.toHaveProperty("tools");
   });
 
+  test("sends the cache key as prompt_cache_key only when set", () => {
+    expect(buildChatBody(request)).not.toHaveProperty("prompt_cache_key");
+    expect(buildChatBody({ ...request, cacheKey: null })).not.toHaveProperty(
+      "prompt_cache_key",
+    );
+    expect(
+      buildChatBody({ ...request, cacheKey: "chat-1" }).prompt_cache_key,
+    ).toBe("chat-1");
+  });
+
   test("maps non-empty tools to OpenAI function schemas", () => {
     expect(
       buildChatBody({

@@ -58,6 +58,7 @@ export function buildChatBody(req: ChatRequest): Record<string, unknown> {
   }
   if (req.temperature != null) body.temperature = req.temperature;
   if (req.topP != null) body.top_p = req.topP;
+  if (req.cacheKey) body.prompt_cache_key = req.cacheKey;
   if (req.maxTokens != null) body.max_tokens = req.maxTokens;
   return body;
 }

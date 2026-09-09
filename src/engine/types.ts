@@ -112,6 +112,10 @@ export type ChatRequest = {
   topP?: number | null;
   maxTokens?: number | null;
   tools?: ChatTool[];
+  // OpenAI's prompt_cache_key: an engine that evicts its prefix cache per
+  // workload keys on it, so one chat's turns are grouped and another client's
+  // batch cannot push the conversation out. Omitted when not set.
+  cacheKey?: string | null;
 };
 
 export type ChatEvent =
