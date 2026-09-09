@@ -7,20 +7,30 @@
 // (their points are bucket averages, so appending raw seconds would be
 // wrong). Each chart box shows the latest values in its head and, while the
 // cursor is over a plot, the values at the cursor; the cursor is shared
-// across charts. Bundled by Bun from index.html; uPlot is the only
-// dependency.
+// across charts. The socket lives in store.ts: this file subscribes to its
+// signals and message stream. Being replaced page by page with Preact
+// components (plans/26.09.09-preact-plan.md).
 
 import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
+import { effect, untracked } from "@preact/signals";
 import type { ActionEvent, ActionName } from "../actions.ts";
 import type { Capability } from "../engine/types.ts";
 import type { Range, Series } from "../history.ts";
 import type { LastRequest } from "../requests.ts";
 import type { Sample } from "../sample.ts";
-import type { snapshot, WsMessage } from "../web.ts";
 import { type ChatPage, mountChat } from "./chat.ts";
-
-type Snapshot = ReturnType<typeof snapshot>;
+import { count, DASH, diskSize, gb, num } from "./format.ts";
+import {
+  busy,
+  connection,
+  event,
+  listen,
+  pageOf,
+  refreshSnapshot,
+  type Snapshot,
+  snapshot,
+} from "./store.ts";
 
 const ENGINE_NAME: Record<Snapshot["engine"]["id"], string> = {
   mlxserve: "mlx-serve",
@@ -28,26 +38,14 @@ const ENGINE_NAME: Record<Snapshot["engine"]["id"], string> = {
 };
 
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
-// one bundle serves three paths; the view is the one the path names
-const view =
-  location.pathname === "/requests"
-    ? "requests"
-    : location.pathname === "/chat" || location.pathname.startsWith("/chat/")
-      ? "chat"
-      : "monitor";
+const view = pageOf(location.pathname);
 let chat: ChatPage | null = null;
 const css = (name: string) =>
   getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 // ---------- formatting ----------
 
-// Binary GB everywhere memory is shown, the unit About This Mac uses for
-// the machine (96 GB, not 103) and the engine's own --prefix-cache-* flags
-// use for their budgets. Only the host disk is decimal, as Finder labels it.
-const GB = 2 ** 30;
-// A value with no fact behind it is one quiet dash, everywhere; put()
-// marks it so the CSS can dim it. Counts stay 0: that is a fact.
-const DASH = "\u2013";
+// put() marks the dash so the CSS can dim it
 const put = (id: string, text: string) => {
   const e = $(id);
   e.textContent = text;
@@ -62,19 +60,6 @@ const fact = (id: string, text: string, note = "") => {
   );
   e.classList.toggle("none", text === DASH);
 };
-const gb = (b: number | null | undefined, d = 1) =>
-  b == null ? DASH : (b / GB).toFixed(d);
-const diskSize = (b: number) =>
-  b >= 1e12 ? `${(b / 1e12).toFixed(1)} TB` : `${Math.round(b / 1e9)} GB`;
-const num = (n: number | null | undefined, d = 0) =>
-  n == null ? DASH : n.toFixed(d);
-const count = (n: number) =>
-  n >= 1e6
-    ? `${(n / 1e6).toFixed(2)}M`
-    : n >= 1e3
-      ? `${(n / 1e3).toFixed(1)}K`
-      : `${n}`;
-
 // ---------- tiles ----------
 
 // Cache hit and TTFT are per finished request, so most windows carry null;
@@ -631,10 +616,9 @@ let engineName = "engine";
 let engineLocal = false;
 let limits: Snapshot["engine"]["limits"] = null;
 let loadedCount = 0;
-let busy: ActionName | null = null;
 
 function setEnabled(btn: HTMLButtonElement, on: boolean, why: string) {
-  btn.disabled = !on || busy !== null;
+  btn.disabled = !on || busy.value !== null;
   btn.title = on ? "" : why;
 }
 
@@ -680,7 +664,7 @@ function modelButtons(m: Snapshot["models"][number], snap: Snapshot) {
     b.type = "button";
     b.title = label;
     b.setAttribute("aria-label", label);
-    b.disabled = busy !== null;
+    b.disabled = busy.value !== null;
     b.append(icon(glyph));
     b.onclick = () => void runAction(action, m.id);
     return b;
@@ -804,7 +788,7 @@ function confirm(
 }
 
 function setBusy(action: ActionName | null) {
-  busy = action;
+  busy.value = action;
   for (const b of document.querySelectorAll<HTMLButtonElement>(
     ".btn, .ibtn, .trash",
   )) {
@@ -844,7 +828,7 @@ function showEvent(e: ActionEvent) {
 }
 
 async function runAction(action: ActionName, model: string | null) {
-  if (busy) return;
+  if (busy.value) return;
   const label = ACTION_LABEL[action];
   if (action !== "favorite") {
     // the restart dialog offers the disk wipe as an option: diskClear is a
@@ -866,28 +850,28 @@ async function runAction(action: ActionName, model: string | null) {
     });
     const body = (await res.json()) as ActionEvent | { error: string };
     if (!res.ok) {
-      showEvent({
+      event.value = {
         t: Date.now(),
         action,
         model,
         ok: false,
         ms: 0,
         detail: (body as { error: string }).error ?? `HTTP ${res.status}`,
-      });
+      };
     }
     // a 200 carries the event; the /ws push shows it in every tab
   } catch (err) {
-    showEvent({
+    event.value = {
       t: Date.now(),
       action,
       model,
       ok: false,
       ms: 0,
       detail: err instanceof Error ? err.message : String(err),
-    });
+    };
   } finally {
     setBusy(null);
-    void fetchSnapshot();
+    void refreshSnapshot();
   }
 }
 
@@ -1081,16 +1065,6 @@ function noteRequest(s: Sample) {
     .sort((a, b) => b.finishedAt - a.finishedAt)
     .slice(0, REQUESTS_SHOWN);
   renderRequests();
-}
-
-function fetchSnapshot() {
-  return fetch("/api/snapshot")
-    .then((r) => r.json())
-    .then((snap: Snapshot) => {
-      renderModels(snap);
-      chat?.onModels(snap.models);
-    })
-    .catch(() => {});
 }
 
 // ---------- charts ----------
@@ -1385,92 +1359,81 @@ function appendLive(s: Sample) {
   redraw();
 }
 
-// ---------- websocket ----------
+// ---------- the store ----------
 
-// The model list rides on every sample; the table re-renders only when the
-// residency picture changes, not 60 times a minute.
-let modelsKey = "";
-const modelsKeyOf = (models: Sample["models"]) =>
-  models
-    .map((m) => `${m.id}:${m.state}:${m.bytesResident}:${m.favorite ? 1 : 0}`)
-    .join("|");
-
-function refreshModels(s: Sample) {
-  const key = modelsKeyOf(s.models);
-  if (key === modelsKey) return;
-  modelsKey = key;
-  void fetchSnapshot();
-}
-
-let connected = false;
-function connect() {
-  const proto = location.protocol === "https:" ? "wss" : "ws";
-  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+// The snapshot: on connect, and again from /api/snapshot after an action or
+// a change in residency (the store fetches it). The render reads `busy`
+// through the buttons; untracked keeps that from re-running this effect
+// with a stale snapshot when an action ends.
+effect(() => {
+  const snap = snapshot.value;
+  if (!snap) return;
+  untracked(() => {
+    engineName = ENGINE_NAME[snap.engine.id];
+    $("engine-name").textContent = engineName;
+    $("engine-url").textContent = snap.engine.url;
+    renderHost(snap);
+    renderModels(snap);
+  });
+});
+effect(() => {
+  if (event.value) showEvent(event.value);
+});
+// the monitor and requests pages show the socket's state in their head
+effect(() => {
   const state = $("ws-state");
-  ws.onopen = () => {
-    state.textContent = "live";
-    state.className = "pill live";
-  };
-  ws.onmessage = (ev) => {
-    const msg = JSON.parse(ev.data) as WsMessage;
-    if (msg.type === "snapshot") {
-      engineName = ENGINE_NAME[msg.data.engine.id];
-      $("engine-name").textContent = engineName;
-      $("engine-url").textContent = msg.data.engine.url;
-      renderHost(msg.data);
-      $("version").textContent = `mlx-spy ${msg.data.version}`;
-      renderModels(msg.data);
-      modelsKey = modelsKeyOf(msg.data.models);
-      if (msg.data.sample) renderTiles(msg.data.sample);
-      // after a reconnect the series has a hole: fetch it again
-      if (view === "requests") void fetchRequests();
-      else if (view === "chat") {
-        chat?.onSnapshot(msg.data.models, msg.data.chat, connected);
-      } else if (connected) void loadRange(range);
-      connected = true;
-    } else if (msg.type === "event") {
-      showEvent(msg.data);
-      if (msg.data.action === "requestsClear" && msg.data.ok) {
-        reqs = [];
-        renderRequests();
-      }
-      if (msg.data.action === "historyClear" && msg.data.ok) {
-        // every tab forgets what it learned from the wiped series
-        lastDecode = lastPrefill = null;
-        lastCacheHit = lastCacheTok = null;
-        lastReq = prevTok = null;
-        if (view === "requests") {
-          reqs = [];
-          renderRequests();
-        } else {
-          void loadRange(range);
-        }
-      }
-      // another tab may have run it; the residency changed either way
-      void fetchSnapshot();
-    } else if (msg.type === "chat") {
-      chat?.onChat(msg.data);
-    } else if (view === "chat") {
-      chat?.onSample(msg.data);
-      refreshModels(msg.data);
-    } else {
-      // the series first, so the tiles' range totals include this tick
-      appendLive(msg.data);
-      renderTiles(msg.data);
-      refreshModels(msg.data);
-      if (view === "requests") noteRequest(msg.data);
-    }
-  };
-  ws.onclose = () => {
-    state.textContent = "reconnecting";
-    state.className = "pill err";
+  const c = connection.value;
+  state.textContent = c;
+  state.className =
+    c === "live" ? "pill live" : c === "reconnecting" ? "pill err" : "pill";
+  if (c === "reconnecting") {
     $("engine-state").textContent = "unknown";
     $("engine-state").className = "pill";
     prevTok = null; // the next sample is not the successor of the last one
     chat?.onDisconnect();
-    setTimeout(connect, 2000);
-  };
-}
+  }
+});
+
+let connected = false;
+listen((msg) => {
+  if (msg.type === "snapshot") {
+    if (msg.data.sample) renderTiles(msg.data.sample);
+    // after a reconnect the series has a hole: fetch it again
+    if (view === "requests") void fetchRequests();
+    else if (view === "chat") {
+      chat?.onSnapshot(msg.data.models, msg.data.chat, connected);
+    } else if (connected) void loadRange(range);
+    connected = true;
+  } else if (msg.type === "event") {
+    if (msg.data.action === "requestsClear" && msg.data.ok) {
+      reqs = [];
+      renderRequests();
+    }
+    if (msg.data.action === "historyClear" && msg.data.ok) {
+      // every tab forgets what it learned from the wiped series
+      lastDecode = lastPrefill = null;
+      lastCacheHit = lastCacheTok = null;
+      lastReq = prevTok = null;
+      if (view === "requests") {
+        reqs = [];
+        renderRequests();
+      } else {
+        void loadRange(range);
+      }
+    }
+  } else if (msg.type === "refresh") {
+    chat?.onModels(msg.data.models);
+  } else if (msg.type === "chat") {
+    chat?.onChat(msg.data);
+  } else if (view === "chat") {
+    chat?.onSample(msg.data);
+  } else {
+    // the series first, so the tiles' range totals include this tick
+    appendLive(msg.data);
+    renderTiles(msg.data);
+    if (view === "requests") noteRequest(msg.data);
+  }
+});
 
 // ---------- boot ----------
 
@@ -1486,9 +1449,6 @@ $("ranges").addEventListener("click", (ev) => {
   void loadRange(btn.dataset.range as Range);
 });
 
-for (const a of document.querySelectorAll<HTMLAnchorElement>(".menu a")) {
-  a.classList.toggle("active", a.dataset.view === view);
-}
 if (view === "requests") {
   // the live bar and the connection pill move over; the monitor's charts
   // are never built (redraw is a no-op without them)
@@ -1501,14 +1461,12 @@ if (view === "requests") {
   // here it goes under the list, for the clear button
   $("view-requests").append($("event"));
 } else if (view === "chat") {
-  // the frame fills the viewport; the connection pill moves to the header
+  // the frame fills the viewport; the header shows the connection pill
   $("view-monitor").hidden = true;
   $("view-chat").hidden = false;
   document.querySelector(".page")!.classList.add("chat");
-  document.querySelector(".top")!.append(el("span", "grow"), $("ws-state"));
   chat = mountChat();
 } else {
   setupCharts();
   void loadRange("1h");
 }
-connect();

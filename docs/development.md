@@ -29,8 +29,12 @@ to print one JSON sample and exit (exit code 2 when the engine did not
 answer).
 
 The page is bundled by Bun from `src/ui/index.html`: once at startup in
-the compiled binary, on demand with hot reload when `MLX_SPY_DEV=1` is set,
-which `make dev` and `make preview` do. `make preview` (re)starts a
+the compiled binary, on demand when `MLX_SPY_DEV=1` is set, which
+`make dev` and `make preview` do; then a CSS edit hot-reloads and an edit
+to the client's TypeScript reloads the page. The client is Preact with
+signals (`src/ui/main.tsx`, `store.ts`, `shell/`), bundled like uPlot so
+the binary still has no runtime dependencies; components render to a
+string in `test/ui/` without a DOM. `make preview` (re)starts a
 detached instance on `127.0.0.1:11236` against the engine named in
 `scripts/studio.env` (`make preview-stop`, `make preview-log`,
 `make preview-clean` to also wipe its db and log).

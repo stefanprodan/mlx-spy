@@ -15,6 +15,8 @@ import type { ChatWsEvent } from "../chat.ts";
 import type { Chat, ChatSettings, ChatSummary, Message } from "../chats.ts";
 import type { ModelInfo, ToolCall } from "../engine/types.ts";
 import type { Sample } from "../sample.ts";
+import { api } from "./api.ts";
+import { group, secs, tps, when } from "./format.ts";
 
 type Running = { chatId: string; messageId: number } | null;
 
@@ -58,43 +60,6 @@ const gb = (b: number) => `${(b / GB).toFixed(1)} GB`;
 const n = (v: number) => v.toLocaleString("en-US");
 // token counts in the composer: 8K, 262K
 const k = (v: number) => (v < 1000 ? String(v) : `${Math.round(v / 1000)}K`);
-const secs = (ms: number) =>
-  ms >= 60_000
-    ? `${Math.floor(ms / 60_000)} min ${Math.round((ms % 60_000) / 1000)} s`
-    : `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)} s`;
-const tps = (tokens: number, ms: number) =>
-  ms > 0 ? `${n(Math.round(tokens / (ms / 1000)))} tok/s` : "-";
-
-const fmtClock = new Intl.DateTimeFormat(undefined, {
-  hour: "2-digit",
-  minute: "2-digit",
-});
-const fmtDay = new Intl.DateTimeFormat(undefined, { weekday: "short" });
-const fmtDate = new Intl.DateTimeFormat(undefined, {
-  day: "numeric",
-  month: "short",
-});
-
-const DAY = 86_400_000;
-const startOfDay = (t: number) => new Date(t).setHours(0, 0, 0, 0);
-
-// "now", the clock today, the weekday this week, else the date
-function when(t: number, now: number): string {
-  if (now - t < 60_000) return "now";
-  const today = startOfDay(now);
-  if (t >= today) return fmtClock.format(t);
-  if (t >= today - 6 * DAY) return fmtDay.format(t);
-  return fmtDate.format(t);
-}
-
-function group(t: number, now: number): string {
-  const today = startOfDay(now);
-  if (t >= today) return "Today";
-  if (t >= today - DAY) return "Yesterday";
-  if (t >= today - 6 * DAY) return "This week";
-  return "Earlier";
-}
-
 const chatIdFromPath = () => {
   const m = /^\/chat\/([^/]+)$/.exec(location.pathname);
   if (!m) return null;
@@ -104,21 +69,6 @@ const chatIdFromPath = () => {
     return null;
   }
 };
-
-async function api<T>(
-  path: string,
-  method = "GET",
-  body?: unknown,
-): Promise<T> {
-  const res = await fetch(path, {
-    method,
-    headers: body === undefined ? {} : { "content-type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  const data = (await res.json().catch(() => ({}))) as { error?: string };
-  if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
-  return data as T;
-}
 
 // One rendered assistant row while it streams: the buffers as this tab has
 // them, the HTML the server last rendered and where the tail starts.
