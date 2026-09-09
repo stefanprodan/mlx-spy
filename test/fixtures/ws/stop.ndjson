@@ -1,0 +1,861 @@
+{"t":0,"note":"one long message, tools on, thinking on, stopped from a second tab while streaming, Jundot/Qwen3.8-27B-oQ4e-mtp resident"}
+{"t":1,"type":"snapshot","chat":null}
+{"t":7089,"type":"chat","data":{"kind":"chat","chat":{"id":"a97f4f38-7383-4257-9346-87b61bd71898","title":"","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","systemPrompt":"","thinking":true,"reasoningEffort":null,"temperature":null,"topP":null,"maxTokens":null,"toolsOff":[],"search":"exa","createdAt":1788949270980,"updatedAt":1788949270980,"streaming":false}}}
+{"t":7099,"type":"chat","data":{"kind":"chat","chat":{"id":"a97f4f38-7383-4257-9346-87b61bd71898","title":"Write a detailed 1500 word history of Apple sil…","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","systemPrompt":"","thinking":true,"reasoningEffort":null,"temperature":null,"topP":null,"maxTokens":null,"toolsOff":[],"search":"exa","createdAt":1788949270980,"updatedAt":1788949270990,"streaming":true}}}
+{"t":7099,"type":"chat","data":{"kind":"started","chat":{"id":"a97f4f38-7383-4257-9346-87b61bd71898","title":"Write a detailed 1500 word history of Apple sil…","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949270980,"updatedAt":1788949270990,"streaming":true},"user":{"id":161,"chatId":"a97f4f38-7383-4257-9346-87b61bd71898","role":"user","content":"Write a detailed 1500 word history of Apple silicon, from the A4 to the M series, with headings.","html":null,"reasoning":"","status":"done","error":null,"finishReason":null,"model":null,"createdAt":1788949270989,"finishedAt":null,"ttftMs":null,"thinkingMs":null,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null},"message":{"id":162,"chatId":"a97f4f38-7383-4257-9346-87b61bd71898","role":"assistant","content":"","html":"","reasoning":"","status":"streaming","error":null,"finishReason":null,"model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949270990,"finishedAt":null,"ttftMs":null,"thinkingMs":null,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null}}}
+{"t":7846,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"The","reasoningAt":0}}
+{"t":7855,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" user","reasoningAt":3}}
+{"t":7855,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" is","reasoningAt":8}}
+{"t":7942,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" asking","reasoningAt":11}}
+{"t":7951,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" for","reasoningAt":18}}
+{"t":7951,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" a","reasoningAt":22}}
+{"t":7951,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" detailed","reasoningAt":24}}
+{"t":8083,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ","reasoningAt":33}}
+{"t":8093,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":34}}
+{"t":8093,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":35}}
+{"t":8093,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":36}}
+{"t":8131,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":37}}
+{"t":8225,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-word","reasoningAt":38}}
+{"t":8235,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" history","reasoningAt":43}}
+{"t":8235,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" of","reasoningAt":51}}
+{"t":8235,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Apple","reasoningAt":54}}
+{"t":8320,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" silicon","reasoningAt":60}}
+{"t":8330,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":68}}
+{"t":8330,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" from","reasoningAt":69}}
+{"t":8330,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" the","reasoningAt":74}}
+{"t":8495,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" A","reasoningAt":78}}
+{"t":8505,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":80}}
+{"t":8505,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" to","reasoningAt":81}}
+{"t":8505,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" the","reasoningAt":84}}
+{"t":8515,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":88}}
+{"t":8515,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" series","reasoningAt":90}}
+{"t":8515,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":97}}
+{"t":8515,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" with","reasoningAt":98}}
+{"t":8605,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" headings","reasoningAt":103}}
+{"t":8614,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":112}}
+{"t":8700,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" This","reasoningAt":113}}
+{"t":8709,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" is","reasoningAt":118}}
+{"t":8709,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" a","reasoningAt":121}}
+{"t":8796,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" writing","reasoningAt":123}}
+{"t":8804,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" task","reasoningAt":131}}
+{"t":8804,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" that","reasoningAt":136}}
+{"t":8804,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" I","reasoningAt":141}}
+{"t":8890,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" can","reasoningAt":143}}
+{"t":8985,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" complete","reasoningAt":147}}
+{"t":8994,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" from","reasoningAt":156}}
+{"t":8994,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" my","reasoningAt":161}}
+{"t":8994,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" knowledge","reasoningAt":164}}
+{"t":9081,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":174}}
+{"t":9091,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Let","reasoningAt":175}}
+{"t":9092,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" me","reasoningAt":179}}
+{"t":9092,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" think","reasoningAt":182}}
+{"t":9175,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" about","reasoningAt":188}}
+{"t":9186,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" what","reasoningAt":194}}
+{"t":9186,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" I","reasoningAt":199}}
+{"t":9186,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" know","reasoningAt":201}}
+{"t":9269,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" about","reasoningAt":206}}
+{"t":9280,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Apple","reasoningAt":212}}
+{"t":9365,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"'s","reasoningAt":218}}
+{"t":9375,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" silicon","reasoningAt":220}}
+{"t":9375,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" history","reasoningAt":228}}
+{"t":9375,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":":","reasoningAt":236}}
+{"t":9459,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n\n","reasoningAt":237}}
+{"t":9468,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":239}}
+{"t":9468,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":240}}
+{"t":9468,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":241}}
+{"t":9554,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"A","reasoningAt":244}}
+{"t":9565,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":245}}
+{"t":9565,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":246}}
+{"t":9565,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":248}}
+{"t":9650,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":249}}
+{"t":9659,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":250}}
+{"t":9659,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":251}}
+{"t":9659,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":252}}
+{"t":9744,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" -","reasoningAt":255}}
+{"t":9757,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" First","reasoningAt":257}}
+{"t":9840,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Apple","reasoningAt":263}}
+{"t":9849,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-designed","reasoningAt":269}}
+{"t":9934,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" processor","reasoningAt":278}}
+{"t":9945,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":288}}
+{"t":9945,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" used","reasoningAt":289}}
+{"t":9945,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" in","reasoningAt":294}}
+{"t":10029,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" iPhone","reasoningAt":297}}
+{"t":10038,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ","reasoningAt":304}}
+{"t":10038,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":305}}
+{"t":10123,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":306}}
+{"t":10218,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" first","reasoningAt":307}}
+{"t":10339,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-gen","reasoningAt":313}}
+{"t":10349,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" iPad","reasoningAt":317}}
+{"t":10408,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":322}}
+{"t":10420,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":323}}
+{"t":10420,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":324}}
+{"t":10420,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":325}}
+{"t":10504,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"A","reasoningAt":328}}
+{"t":10516,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":329}}
+{"t":10516,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":330}}
+{"t":10516,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":332}}
+{"t":10601,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":333}}
+{"t":10614,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":334}}
+{"t":10693,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":335}}
+{"t":10701,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":336}}
+{"t":10701,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" -","reasoningAt":339}}
+{"t":10789,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Dual","reasoningAt":341}}
+{"t":10799,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-core","reasoningAt":346}}
+{"t":10884,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":351}}
+{"t":10893,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" used","reasoningAt":352}}
+{"t":10893,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" in","reasoningAt":357}}
+{"t":10893,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" iPhone","reasoningAt":360}}
+{"t":10979,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ","reasoningAt":367}}
+{"t":10989,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":368}}
+{"t":11149,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":369}}
+{"t":11156,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":370}}
+{"t":11156,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":371}}
+{"t":11156,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":372}}
+{"t":11168,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"A","reasoningAt":375}}
+{"t":11179,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"6","reasoningAt":376}}
+{"t":11179,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":377}}
+{"t":11179,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":379}}
+{"t":11264,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":380}}
+{"t":11273,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":381}}
+{"t":11273,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":382}}
+{"t":11273,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":383}}
+{"t":11367,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" -","reasoningAt":386}}
+{"t":11375,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Used","reasoningAt":388}}
+{"t":11375,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" in","reasoningAt":393}}
+{"t":11375,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" iPhone","reasoningAt":396}}
+{"t":11453,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ","reasoningAt":403}}
+{"t":11462,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":404}}
+{"t":11549,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"s","reasoningAt":405}}
+{"t":11558,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":406}}
+{"t":11558,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":407}}
+{"t":11558,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":408}}
+{"t":11644,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":409}}
+{"t":11654,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"A","reasoningAt":412}}
+{"t":11655,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"7","reasoningAt":413}}
+{"t":11655,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":414}}
+{"t":11740,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":416}}
+{"t":11749,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":417}}
+{"t":11749,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":418}}
+{"t":11836,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":419}}
+{"t":11845,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":420}}
+{"t":11845,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" -","reasoningAt":423}}
+{"t":11845,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" First","reasoningAt":425}}
+{"t":11930,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ","reasoningAt":431}}
+{"t":11939,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"6","reasoningAt":432}}
+{"t":11939,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":433}}
+{"t":11939,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-bit","reasoningAt":434}}
+{"t":12025,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ARM","reasoningAt":438}}
+{"t":12034,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" processor","reasoningAt":442}}
+{"t":12120,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" in","reasoningAt":452}}
+{"t":12215,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" a","reasoningAt":455}}
+{"t":12223,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" smartphone","reasoningAt":457}}
+{"t":12223,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":468}}
+{"t":12223,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" used","reasoningAt":469}}
+{"t":12309,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" in","reasoningAt":474}}
+{"t":12317,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" iPhone","reasoningAt":477}}
+{"t":12317,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ","reasoningAt":484}}
+{"t":12486,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":485}}
+{"t":12496,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"s","reasoningAt":486}}
+{"t":12508,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":487}}
+{"t":12596,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" A","reasoningAt":488}}
+{"t":12689,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"8","reasoningAt":490}}
+{"t":12784,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" in","reasoningAt":491}}
+{"t":12795,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" iPhone","reasoningAt":494}}
+{"t":12795,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ","reasoningAt":501}}
+{"t":12881,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"6","reasoningAt":502}}
+{"t":12892,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":503}}
+{"t":12892,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":504}}
+{"t":12892,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":505}}
+{"t":12999,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":506}}
+{"t":13008,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"A","reasoningAt":509}}
+{"t":13008,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"8","reasoningAt":510}}
+{"t":13008,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":511}}
+{"t":13100,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":513}}
+{"t":13109,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":514}}
+{"t":13109,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":515}}
+{"t":13109,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":516}}
+{"t":13166,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":517}}
+{"t":13261,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":520}}
+{"t":13271,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"6","reasoningAt":521}}
+{"t":13271,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":522}}
+{"t":13271,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":523}}
+{"t":13356,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"A","reasoningAt":526}}
+{"t":13367,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"9","reasoningAt":527}}
+{"t":13368,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":528}}
+{"t":13368,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":530}}
+{"t":13452,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":531}}
+{"t":13460,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":532}}
+{"t":13460,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":533}}
+{"t":13460,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":534}}
+{"t":13547,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":537}}
+{"t":13557,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"7","reasoningAt":538}}
+{"t":13557,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":539}}
+{"t":13557,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":540}}
+{"t":13642,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"A","reasoningAt":543}}
+{"t":13651,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":544}}
+{"t":13651,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":545}}
+{"t":13651,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":546}}
+{"t":13737,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":548}}
+{"t":13754,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":549}}
+{"t":13754,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":550}}
+{"t":13754,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"6","reasoningAt":551}}
+{"t":13833,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":552}}
+{"t":13852,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":555}}
+{"t":13852,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"8","reasoningAt":556}}
+{"t":13852,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":557}}
+{"t":13928,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":558}}
+{"t":13937,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"A","reasoningAt":561}}
+{"t":13937,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":562}}
+{"t":13938,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":563}}
+{"t":14024,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" B","reasoningAt":564}}
+{"t":14033,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"ionic","reasoningAt":566}}
+{"t":14033,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":571}}
+{"t":14033,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":573}}
+{"t":14226,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":574}}
+{"t":14235,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":575}}
+{"t":14235,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"7","reasoningAt":576}}
+{"t":14235,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":577}}
+{"t":14235,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" -","reasoningAt":580}}
+{"t":14308,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" First","reasoningAt":582}}
+{"t":14404,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Apple","reasoningAt":588}}
+{"t":14499,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" chip","reasoningAt":594}}
+{"t":14508,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" with","reasoningAt":599}}
+{"t":14594,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" neural","reasoningAt":604}}
+{"t":14604,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" engine","reasoningAt":611}}
+{"t":14692,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":618}}
+{"t":14701,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"9","reasoningAt":619}}
+{"t":14701,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":620}}
+{"t":14701,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":621}}
+{"t":14785,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"A","reasoningAt":624}}
+{"t":14794,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":625}}
+{"t":14794,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":626}}
+{"t":14880,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" B","reasoningAt":627}}
+{"t":14892,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"ionic","reasoningAt":629}}
+{"t":14892,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":634}}
+{"t":14892,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":636}}
+{"t":14977,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":637}}
+{"t":14989,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":638}}
+{"t":14989,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"8","reasoningAt":639}}
+{"t":14989,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":640}}
+{"t":15077,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" -","reasoningAt":643}}
+{"t":15090,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ","reasoningAt":645}}
+{"t":15090,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"7","reasoningAt":646}}
+{"t":15090,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"nm","reasoningAt":647}}
+{"t":15251,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":649}}
+{"t":15262,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" first","reasoningAt":650}}
+{"t":15273,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" with","reasoningAt":656}}
+{"t":15357,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" two","reasoningAt":661}}
+{"t":15452,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-core","reasoningAt":665}}
+{"t":15461,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" neural","reasoningAt":670}}
+{"t":15461,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" engine","reasoningAt":677}}
+{"t":15461,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":684}}
+{"t":15548,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":685}}
+{"t":15557,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":686}}
+{"t":15557,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":687}}
+{"t":15557,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":688}}
+{"t":15661,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"A","reasoningAt":691}}
+{"t":15670,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":692}}
+{"t":15670,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":693}}
+{"t":15743,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":694}}
+{"t":15751,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":696}}
+{"t":15751,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":697}}
+{"t":15751,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":698}}
+{"t":15844,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"9","reasoningAt":699}}
+{"t":15854,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":700}}
+{"t":15854,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" -","reasoningAt":703}}
+{"t":15854,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ","reasoningAt":705}}
+{"t":15934,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":706}}
+{"t":15944,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"nm","reasoningAt":707}}
+{"t":15944,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":709}}
+{"t":15944,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":710}}
+{"t":16030,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":711}}
+{"t":16039,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":712}}
+{"t":16040,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":713}}
+{"t":16040,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"A","reasoningAt":716}}
+{"t":16125,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":717}}
+{"t":16136,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":718}}
+{"t":16222,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" B","reasoningAt":719}}
+{"t":16231,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"ionic","reasoningAt":721}}
+{"t":16231,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":726}}
+{"t":16231,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":728}}
+{"t":16316,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":729}}
+{"t":16326,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":730}}
+{"t":16326,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":731}}
+{"t":16326,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":732}}
+{"t":16412,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":735}}
+{"t":16420,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":736}}
+{"t":16420,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":737}}
+{"t":16420,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":738}}
+{"t":16509,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":739}}
+{"t":16519,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"A","reasoningAt":742}}
+{"t":16519,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":743}}
+{"t":16519,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":744}}
+{"t":16672,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" B","reasoningAt":745}}
+{"t":16683,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"ionic","reasoningAt":747}}
+{"t":16683,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":752}}
+{"t":16683,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":754}}
+{"t":16700,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":755}}
+{"t":16709,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":756}}
+{"t":16709,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":757}}
+{"t":16709,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":758}}
+{"t":16795,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":761}}
+{"t":16805,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":762}}
+{"t":16805,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":763}}
+{"t":16805,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":764}}
+{"t":16890,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":765}}
+{"t":16902,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"A","reasoningAt":768}}
+{"t":16902,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":769}}
+{"t":16902,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"6","reasoningAt":770}}
+{"t":16986,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" B","reasoningAt":771}}
+{"t":16995,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"ionic","reasoningAt":773}}
+{"t":16995,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":778}}
+{"t":16995,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":780}}
+{"t":17085,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":781}}
+{"t":17095,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":782}}
+{"t":17095,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":783}}
+{"t":17095,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":784}}
+{"t":17197,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":787}}
+{"t":17206,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":788}}
+{"t":17206,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":789}}
+{"t":17206,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":790}}
+{"t":17299,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":791}}
+{"t":17367,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"M","reasoningAt":794}}
+{"t":17374,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":795}}
+{"t":17375,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":796}}
+{"t":17375,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":798}}
+{"t":17461,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":799}}
+{"t":17470,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":800}}
+{"t":17470,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":801}}
+{"t":17470,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":802}}
+{"t":17557,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" -","reasoningAt":805}}
+{"t":17566,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" First","reasoningAt":807}}
+{"t":17566,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Apple","reasoningAt":813}}
+{"t":17652,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" silicon","reasoningAt":819}}
+{"t":17661,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" for","reasoningAt":827}}
+{"t":17661,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Mac","reasoningAt":831}}
+{"t":17751,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":835}}
+{"t":17760,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ARM","reasoningAt":836}}
+{"t":17762,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-based","reasoningAt":840}}
+{"t":17843,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":846}}
+{"t":17852,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":847}}
+{"t":17852,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":848}}
+{"t":17852,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":849}}
+{"t":17937,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":850}}
+{"t":17954,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"M","reasoningAt":853}}
+{"t":17954,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":854}}
+{"t":17954,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Pro","reasoningAt":855}}
+{"t":18032,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":859}}
+{"t":18046,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":860}}
+{"t":18128,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":862}}
+{"t":18136,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Max","reasoningAt":863}}
+{"t":18223,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":867}}
+{"t":18238,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":868}}
+{"t":18239,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":870}}
+{"t":18239,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Ultra","reasoningAt":871}}
+{"t":18317,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":877}}
+{"t":18326,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":879}}
+{"t":18326,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":880}}
+{"t":18326,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":881}}
+{"t":18413,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":882}}
+{"t":18508,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":883}}
+{"t":18517,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":886}}
+{"t":18518,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":887}}
+{"t":18518,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"6","reasoningAt":888}}
+{"t":18603,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":889}}
+{"t":18612,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":890}}
+{"t":18612,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"M","reasoningAt":893}}
+{"t":18612,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":894}}
+{"t":18698,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":895}}
+{"t":18706,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":897}}
+{"t":18706,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":898}}
+{"t":18706,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":899}}
+{"t":18793,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":900}}
+{"t":18805,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":901}}
+{"t":18888,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":904}}
+{"t":18899,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":905}}
+{"t":18899,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"7","reasoningAt":906}}
+{"t":18899,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":907}}
+{"t":18984,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":908}}
+{"t":18993,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"M","reasoningAt":911}}
+{"t":18993,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":912}}
+{"t":18993,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Pro","reasoningAt":913}}
+{"t":19078,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":917}}
+{"t":19088,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":918}}
+{"t":19088,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":920}}
+{"t":19088,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Max","reasoningAt":921}}
+{"t":19173,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":925}}
+{"t":19181,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":926}}
+{"t":19181,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":928}}
+{"t":19181,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Ultra","reasoningAt":929}}
+{"t":19269,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":935}}
+{"t":19278,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":937}}
+{"t":19278,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":938}}
+{"t":19278,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":939}}
+{"t":19364,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":940}}
+{"t":19379,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":941}}
+{"t":19379,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":944}}
+{"t":19379,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":945}}
+{"t":19459,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"8","reasoningAt":946}}
+{"t":19468,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":947}}
+{"t":19469,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":948}}
+{"t":19469,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"M","reasoningAt":951}}
+{"t":19554,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":952}}
+{"t":19563,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":953}}
+{"t":19563,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":955}}
+{"t":19563,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":956}}
+{"t":19649,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":957}}
+{"t":19659,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":958}}
+{"t":19659,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":959}}
+{"t":19659,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":962}}
+{"t":19744,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":963}}
+{"t":19752,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"9","reasoningAt":964}}
+{"t":19752,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":965}}
+{"t":19752,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":966}}
+{"t":19840,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"M","reasoningAt":969}}
+{"t":19849,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":970}}
+{"t":19935,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Pro","reasoningAt":971}}
+{"t":19946,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":975}}
+{"t":19946,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":976}}
+{"t":19946,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":978}}
+{"t":20033,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Max","reasoningAt":979}}
+{"t":20046,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":",","reasoningAt":983}}
+{"t":20046,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":984}}
+{"t":20046,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":986}}
+{"t":20129,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Ultra","reasoningAt":987}}
+{"t":20139,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":993}}
+{"t":20139,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":995}}
+{"t":20139,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":996}}
+{"t":20220,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":997}}
+{"t":20231,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":998}}
+{"t":20371,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-","reasoningAt":999}}
+{"t":20380,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1000}}
+{"t":20380,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1001}}
+{"t":20380,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1002}}
+{"t":20412,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":1003}}
+{"t":20423,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":1004}}
+{"t":20423,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":1007}}
+{"t":20423,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1008}}
+{"t":20507,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1009}}
+{"t":20519,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":1010}}
+{"t":20519,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" **","reasoningAt":1011}}
+{"t":20519,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"M","reasoningAt":1014}}
+{"t":20610,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":1015}}
+{"t":20620,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":1016}}
+{"t":20620,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1018}}
+{"t":20620,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1019}}
+{"t":20697,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1020}}
+{"t":20706,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":1021}}
+{"t":20706,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")**","reasoningAt":1022}}
+{"t":20794,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n\n","reasoningAt":1025}}
+{"t":20803,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"Let","reasoningAt":1027}}
+{"t":20803,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" me","reasoningAt":1030}}
+{"t":20888,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" write","reasoningAt":1033}}
+{"t":20896,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" a","reasoningAt":1039}}
+{"t":20897,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" comprehensive","reasoningAt":1041}}
+{"t":20984,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ","reasoningAt":1055}}
+{"t":20994,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":1056}}
+{"t":20994,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":1057}}
+{"t":20994,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1058}}
+{"t":21081,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1059}}
+{"t":21091,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-word","reasoningAt":1060}}
+{"t":21191,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" piece","reasoningAt":1065}}
+{"t":21200,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" with","reasoningAt":1071}}
+{"t":21200,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" headings","reasoningAt":1076}}
+{"t":21200,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":1085}}
+{"t":21293,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" I","reasoningAt":1086}}
+{"t":21301,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"'ll","reasoningAt":1088}}
+{"t":21364,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" structure","reasoningAt":1091}}
+{"t":21372,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" it","reasoningAt":1101}}
+{"t":21459,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" into","reasoningAt":1104}}
+{"t":21556,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" meaningful","reasoningAt":1109}}
+{"t":21564,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" sections","reasoningAt":1120}}
+{"t":21565,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" covering","reasoningAt":1129}}
+{"t":21565,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" the","reasoningAt":1138}}
+{"t":21650,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" evolution","reasoningAt":1142}}
+{"t":21746,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":1152}}
+{"t":21843,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Let","reasoningAt":1153}}
+{"t":21850,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" me","reasoningAt":1157}}
+{"t":21851,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" aim","reasoningAt":1160}}
+{"t":21851,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" for","reasoningAt":1164}}
+{"t":21937,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" approximately","reasoningAt":1168}}
+{"t":21946,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ","reasoningAt":1182}}
+{"t":21946,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":1183}}
+{"t":21946,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":1184}}
+{"t":22033,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1185}}
+{"t":22046,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1186}}
+{"t":22046,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" words","reasoningAt":1187}}
+{"t":22046,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":1193}}
+{"t":22188,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n\n","reasoningAt":1194}}
+{"t":22197,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"Let","reasoningAt":1196}}
+{"t":22197,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" me","reasoningAt":1199}}
+{"t":22222,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" structure","reasoningAt":1202}}
+{"t":22230,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" this","reasoningAt":1212}}
+{"t":22230,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":":","reasoningAt":1217}}
+{"t":22230,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":1218}}
+{"t":22317,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-","reasoningAt":1219}}
+{"t":22326,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Introduction","reasoningAt":1220}}
+{"t":22413,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":1233}}
+{"t":22422,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-","reasoningAt":1234}}
+{"t":22422,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" The","reasoningAt":1235}}
+{"t":22422,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" A","reasoningAt":1239}}
+{"t":22508,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Series","reasoningAt":1241}}
+{"t":22516,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":":","reasoningAt":1248}}
+{"t":22602,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" From","reasoningAt":1249}}
+{"t":22699,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" A","reasoningAt":1254}}
+{"t":22708,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":1256}}
+{"t":22708,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" to","reasoningAt":1257}}
+{"t":22792,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" A","reasoningAt":1260}}
+{"t":22892,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"8","reasoningAt":1262}}
+{"t":22982,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":1263}}
+{"t":22990,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1265}}
+{"t":22990,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1266}}
+{"t":22990,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":1267}}
+{"t":23079,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1268}}
+{"t":23089,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-","reasoningAt":1269}}
+{"t":23089,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1270}}
+{"t":23089,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1271}}
+{"t":23173,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":1272}}
+{"t":23271,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":1273}}
+{"t":23280,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")","reasoningAt":1274}}
+{"t":23280,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":1275}}
+{"t":23280,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-","reasoningAt":1276}}
+{"t":23371,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" The","reasoningAt":1277}}
+{"t":23380,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" A","reasoningAt":1281}}
+{"t":23380,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Series","reasoningAt":1283}}
+{"t":23380,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":":","reasoningAt":1290}}
+{"t":23482,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" A","reasoningAt":1291}}
+{"t":23491,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"9","reasoningAt":1293}}
+{"t":23556,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" to","reasoningAt":1294}}
+{"t":23565,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" A","reasoningAt":1297}}
+{"t":23565,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":1299}}
+{"t":23652,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"6","reasoningAt":1300}}
+{"t":23661,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":1301}}
+{"t":23661,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1303}}
+{"t":23661,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1304}}
+{"t":23747,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":1305}}
+{"t":23756,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":1306}}
+{"t":23756,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-","reasoningAt":1307}}
+{"t":23756,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1308}}
+{"t":23843,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1309}}
+{"t":23851,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1310}}
+{"t":23938,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":1311}}
+{"t":23947,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")","reasoningAt":1312}}
+{"t":23947,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":1313}}
+{"t":23947,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-","reasoningAt":1314}}
+{"t":24058,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" The","reasoningAt":1315}}
+{"t":24068,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":1319}}
+{"t":24127,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Series","reasoningAt":1321}}
+{"t":24136,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":":","reasoningAt":1328}}
+{"t":24224,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":1329}}
+{"t":24236,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":1331}}
+{"t":24236,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":1332}}
+{"t":24236,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1334}}
+{"t":24319,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1335}}
+{"t":24329,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1336}}
+{"t":24330,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1337}}
+{"t":24414,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-","reasoningAt":1338}}
+{"t":24423,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1339}}
+{"t":24424,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1340}}
+{"t":24424,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1341}}
+{"t":24509,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":1342}}
+{"t":24519,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")","reasoningAt":1343}}
+{"t":24519,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":1344}}
+{"t":24519,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-","reasoningAt":1345}}
+{"t":24605,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" The","reasoningAt":1346}}
+{"t":24616,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":1350}}
+{"t":24616,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Series","reasoningAt":1352}}
+{"t":24616,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":":","reasoningAt":1359}}
+{"t":24701,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":1360}}
+{"t":24713,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":1362}}
+{"t":24713,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Pro","reasoningAt":1363}}
+{"t":24797,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"/","reasoningAt":1367}}
+{"t":24813,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"Max","reasoningAt":1368}}
+{"t":24892,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"/U","reasoningAt":1371}}
+{"t":24905,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"ltra","reasoningAt":1373}}
+{"t":24906,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" and","reasoningAt":1377}}
+{"t":24906,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":1381}}
+{"t":24988,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1383}}
+{"t":24997,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":1384}}
+{"t":24998,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1386}}
+{"t":24998,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1387}}
+{"t":25101,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1388}}
+{"t":25115,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":1389}}
+{"t":25115,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-","reasoningAt":1390}}
+{"t":25115,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1391}}
+{"t":25179,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1392}}
+{"t":25188,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1393}}
+{"t":25274,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1394}}
+{"t":25283,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")","reasoningAt":1395}}
+{"t":25283,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":1396}}
+{"t":25283,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-","reasoningAt":1397}}
+{"t":25370,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" The","reasoningAt":1398}}
+{"t":25380,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":1402}}
+{"t":25380,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Series","reasoningAt":1404}}
+{"t":25380,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":":","reasoningAt":1411}}
+{"t":25492,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":1412}}
+{"t":25501,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":1414}}
+{"t":25501,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" and","reasoningAt":1415}}
+{"t":25501,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" M","reasoningAt":1419}}
+{"t":25561,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":1421}}
+{"t":25571,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" (","reasoningAt":1422}}
+{"t":25572,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1424}}
+{"t":25572,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1425}}
+{"t":25655,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1426}}
+{"t":25663,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"3","reasoningAt":1427}}
+{"t":25663,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-","reasoningAt":1428}}
+{"t":25663,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1429}}
+{"t":25750,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1430}}
+{"t":25759,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"2","reasoningAt":1431}}
+{"t":25760,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"4","reasoningAt":1432}}
+{"t":25760,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":")","reasoningAt":1433}}
+{"t":25846,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":1434}}
+{"t":25857,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"-","reasoningAt":1435}}
+{"t":25857,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Legacy","reasoningAt":1436}}
+{"t":25941,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" and","reasoningAt":1443}}
+{"t":26036,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" Sign","reasoningAt":1447}}
+{"t":26045,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"ificance","reasoningAt":1452}}
+{"t":26045,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n\n","reasoningAt":1460}}
+{"t":26135,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"Let","reasoningAt":1462}}
+{"t":26147,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" me","reasoningAt":1465}}
+{"t":26147,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" write","reasoningAt":1468}}
+{"t":26147,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" this","reasoningAt":1474}}
+{"t":26226,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" out","reasoningAt":1479}}
+{"t":26322,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" and","reasoningAt":1483}}
+{"t":26515,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" try","reasoningAt":1487}}
+{"t":26517,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" to","reasoningAt":1491}}
+{"t":26517,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" hit","reasoningAt":1494}}
+{"t":26517,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" around","reasoningAt":1498}}
+{"t":26517,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" ","reasoningAt":1505}}
+{"t":26517,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"1","reasoningAt":1506}}
+{"t":26609,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"5","reasoningAt":1507}}
+{"t":26617,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1508}}
+{"t":26617,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"0","reasoningAt":1509}}
+{"t":26617,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" words","reasoningAt":1510}}
+{"t":26702,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":1516}}
+{"t":26799,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" I","reasoningAt":1517}}
+{"t":26811,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"'ll","reasoningAt":1519}}
+{"t":26895,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" be","reasoningAt":1522}}
+{"t":26905,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" careful","reasoningAt":1525}}
+{"t":26990,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" with","reasoningAt":1533}}
+{"t":27130,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" the","reasoningAt":1538}}
+{"t":27139,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":" facts","reasoningAt":1542}}
+{"t":27180,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":".","reasoningAt":1548}}
+{"t":27276,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"contentAt":0,"reasoning":"\n","reasoningAt":1549}}
+{"t":27287,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"#","contentAt":0,"reasoningAt":1550}}
+{"t":27287,"type":"chat","data":{"kind":"html","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"html":"<h1></h1>","htmlAt":1}}
+{"t":27371,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" The","contentAt":1,"reasoningAt":1550}}
+{"t":27382,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" History","contentAt":5,"reasoningAt":1550}}
+{"t":27382,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" of","contentAt":13,"reasoningAt":1550}}
+{"t":27382,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" Apple","contentAt":16,"reasoningAt":1550}}
+{"t":27539,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" Silicon","contentAt":22,"reasoningAt":1550}}
+{"t":27549,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":":","contentAt":30,"reasoningAt":1550}}
+{"t":27549,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" From","contentAt":31,"reasoningAt":1550}}
+{"t":27549,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" A","contentAt":36,"reasoningAt":1550}}
+{"t":27561,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"4","contentAt":38,"reasoningAt":1550}}
+{"t":27574,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" to","contentAt":39,"reasoningAt":1550}}
+{"t":27574,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" M","contentAt":42,"reasoningAt":1550}}
+{"t":27574,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" Series","contentAt":44,"reasoningAt":1550}}
+{"t":27658,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"\n\n","contentAt":51,"reasoningAt":1550}}
+{"t":27670,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"##","contentAt":53,"reasoningAt":1550}}
+{"t":27670,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" Introduction","contentAt":55,"reasoningAt":1550}}
+{"t":27670,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"\n\n","contentAt":68,"reasoningAt":1550}}
+{"t":27753,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"Apple","contentAt":70,"reasoningAt":1550}}
+{"t":27763,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"'s","contentAt":75,"reasoningAt":1550}}
+{"t":27847,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" journey","contentAt":77,"reasoningAt":1550}}
+{"t":27943,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" into","contentAt":85,"reasoningAt":1550}}
+{"t":27952,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" custom","contentAt":90,"reasoningAt":1550}}
+{"t":27952,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" silicon","contentAt":97,"reasoningAt":1550}}
+{"t":28038,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" represents","contentAt":105,"reasoningAt":1550}}
+{"t":28048,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" one","contentAt":116,"reasoningAt":1550}}
+{"t":28048,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" of","contentAt":120,"reasoningAt":1550}}
+{"t":28048,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" the","contentAt":123,"reasoningAt":1550}}
+{"t":28135,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" most","contentAt":127,"reasoningAt":1550}}
+{"t":28230,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" consequential","contentAt":132,"reasoningAt":1550}}
+{"t":28324,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" shifts","contentAt":146,"reasoningAt":1550}}
+{"t":28324,"type":"chat","data":{"kind":"html","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"html":"<h1>The History of Apple Silicon: From A4 to M Series</h1><h2>Introduction</h2><p>Apple's journey into custom silicon represents one of the most consequential shifts</p>","htmlAt":153}}
+{"t":28335,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" in","contentAt":153,"reasoningAt":1550}}
+{"t":28420,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" the","contentAt":156,"reasoningAt":1550}}
+{"t":28428,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" history","contentAt":160,"reasoningAt":1550}}
+{"t":28428,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" of","contentAt":168,"reasoningAt":1550}}
+{"t":28515,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" personal","contentAt":171,"reasoningAt":1550}}
+{"t":28525,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" computing","contentAt":180,"reasoningAt":1550}}
+{"t":28613,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" and","contentAt":190,"reasoningAt":1550}}
+{"t":28623,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" mobile","contentAt":194,"reasoningAt":1550}}
+{"t":28623,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" technology","contentAt":201,"reasoningAt":1550}}
+{"t":28623,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":".","contentAt":212,"reasoningAt":1550}}
+{"t":28706,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" What","contentAt":213,"reasoningAt":1550}}
+{"t":28713,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" began","contentAt":218,"reasoningAt":1550}}
+{"t":28802,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" with","contentAt":224,"reasoningAt":1550}}
+{"t":28811,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" a","contentAt":229,"reasoningAt":1550}}
+{"t":28900,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" single","contentAt":231,"reasoningAt":1550}}
+{"t":28992,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" processor","contentAt":238,"reasoningAt":1550}}
+{"t":29091,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" designed","contentAt":248,"reasoningAt":1550}}
+{"t":29104,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" to","contentAt":257,"reasoningAt":1550}}
+{"t":29104,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" power","contentAt":260,"reasoningAt":1550}}
+{"t":29104,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" the","contentAt":266,"reasoningAt":1550}}
+{"t":29183,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" iPhone","contentAt":270,"reasoningAt":1550}}
+{"t":29348,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" in","contentAt":277,"reasoningAt":1550}}
+{"t":29348,"type":"chat","data":{"kind":"html","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"html":"<h1>The History of Apple Silicon: From A4 to M Series</h1><h2>Introduction</h2><p>Apple's journey into custom silicon represents one of the most consequential shifts in the history of personal computing and mobile technology. What began with a single processor designed to power the iPhone in</p>","htmlAt":280}}
+{"t":29357,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" ","contentAt":280,"reasoningAt":1550}}
+{"t":29357,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"2","contentAt":281,"reasoningAt":1550}}
+{"t":29357,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"0","contentAt":282,"reasoningAt":1550}}
+{"t":29374,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"1","contentAt":283,"reasoningAt":1550}}
+{"t":29384,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"0","contentAt":284,"reasoningAt":1550}}
+{"t":29384,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" has","contentAt":285,"reasoningAt":1550}}
+{"t":29468,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" grown","contentAt":289,"reasoningAt":1550}}
+{"t":29477,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" into","contentAt":295,"reasoningAt":1550}}
+{"t":29477,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" a","contentAt":300,"reasoningAt":1550}}
+{"t":29564,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" full","contentAt":302,"reasoningAt":1550}}
+{"t":29574,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" family","contentAt":307,"reasoningAt":1550}}
+{"t":29574,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" of","contentAt":314,"reasoningAt":1550}}
+{"t":29574,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" chips","contentAt":317,"reasoningAt":1550}}
+{"t":29659,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" spanning","contentAt":323,"reasoningAt":1550}}
+{"t":29755,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" smartphones","contentAt":332,"reasoningAt":1550}}
+{"t":29764,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":",","contentAt":344,"reasoningAt":1550}}
+{"t":29765,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" tablets","contentAt":345,"reasoningAt":1550}}
+{"t":29765,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":",","contentAt":353,"reasoningAt":1550}}
+{"t":29850,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" laptops","contentAt":354,"reasoningAt":1550}}
+{"t":29858,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":",","contentAt":362,"reasoningAt":1550}}
+{"t":29945,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" desktop","contentAt":363,"reasoningAt":1550}}
+{"t":29955,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"s","contentAt":371,"reasoningAt":1550}}
+{"t":29955,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":",","contentAt":372,"reasoningAt":1550}}
+{"t":29955,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" and","contentAt":373,"reasoningAt":1550}}
+{"t":30045,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" media","contentAt":377,"reasoningAt":1550}}
+{"t":30137,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" players","contentAt":383,"reasoningAt":1550}}
+{"t":30146,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":".","contentAt":391,"reasoningAt":1550}}
+{"t":30304,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" This","contentAt":392,"reasoningAt":1550}}
+{"t":30326,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" history","contentAt":397,"reasoningAt":1550}}
+{"t":30502,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" traces","contentAt":405,"reasoningAt":1550}}
+{"t":30503,"type":"chat","data":{"kind":"html","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"html":"<h1>The History of Apple Silicon: From A4 to M Series</h1><h2>Introduction</h2><p>Apple's journey into custom silicon represents one of the most consequential shifts in the history of personal computing and mobile technology. What began with a single processor designed to power the iPhone in 2010 has grown into a full family of chips spanning smartphones, tablets, laptops, desktops, and media players. This history traces</p>","htmlAt":412}}
+{"t":30513,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" the","contentAt":412,"reasoningAt":1550}}
+{"t":30521,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" arc","contentAt":416,"reasoningAt":1550}}
+{"t":30521,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" from","contentAt":420,"reasoningAt":1550}}
+{"t":30521,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" the","contentAt":425,"reasoningAt":1550}}
+{"t":30613,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" humble","contentAt":429,"reasoningAt":1550}}
+{"t":30622,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" A","contentAt":436,"reasoningAt":1550}}
+{"t":30622,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"4","contentAt":438,"reasoningAt":1550}}
+{"t":30709,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" through","contentAt":439,"reasoningAt":1550}}
+{"t":30719,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" the","contentAt":447,"reasoningAt":1550}}
+{"t":30804,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" high","contentAt":451,"reasoningAt":1550}}
+{"t":30817,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"-performance","contentAt":456,"reasoningAt":1550}}
+{"t":30817,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" M","contentAt":468,"reasoningAt":1550}}
+{"t":30898,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"4","contentAt":470,"reasoningAt":1550}}
+{"t":30994,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" family","contentAt":471,"reasoningAt":1550}}
+{"t":31003,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":",","contentAt":478,"reasoningAt":1550}}
+{"t":31091,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" examining","contentAt":479,"reasoningAt":1550}}
+{"t":31102,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" how","contentAt":489,"reasoningAt":1550}}
+{"t":31102,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" Apple","contentAt":493,"reasoningAt":1550}}
+{"t":31188,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" transformed","contentAt":499,"reasoningAt":1550}}
+{"t":31197,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" from","contentAt":511,"reasoningAt":1550}}
+{"t":31197,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" a","contentAt":516,"reasoningAt":1550}}
+{"t":31280,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" consumer","contentAt":518,"reasoningAt":1550}}
+{"t":31289,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" of","contentAt":527,"reasoningAt":1550}}
+{"t":31376,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" third","contentAt":530,"reasoningAt":1550}}
+{"t":31384,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"-party","contentAt":536,"reasoningAt":1550}}
+{"t":31385,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" processors","contentAt":542,"reasoningAt":1550}}
+{"t":31385,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" into","contentAt":553,"reasoningAt":1550}}
+{"t":31533,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" one","contentAt":558,"reasoningAt":1550}}
+{"t":31533,"type":"chat","data":{"kind":"html","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"html":"<h1>The History of Apple Silicon: From A4 to M Series</h1><h2>Introduction</h2><p>Apple's journey into custom silicon represents one of the most consequential shifts in the history of personal computing and mobile technology. What began with a single processor designed to power the iPhone in 2010 has grown into a full family of chips spanning smartphones, tablets, laptops, desktops, and media players. This history traces the arc from the humble A4 through the high-performance M4 family, examining how Apple transformed from a consumer of third-party processors into one</p>","htmlAt":562}}
+{"t":31544,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" of","contentAt":562,"reasoningAt":1550}}
+{"t":31544,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" the","contentAt":565,"reasoningAt":1550}}
+{"t":31566,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" industry","contentAt":569,"reasoningAt":1550}}
+{"t":31576,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"'s","contentAt":578,"reasoningAt":1550}}
+{"t":31576,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" most","contentAt":580,"reasoningAt":1550}}
+{"t":31576,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" influential","contentAt":585,"reasoningAt":1550}}
+{"t":31662,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" chip","contentAt":597,"reasoningAt":1550}}
+{"t":31672,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" designers","contentAt":602,"reasoningAt":1550}}
+{"t":31672,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":".","contentAt":612,"reasoningAt":1550}}
+{"t":31673,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"\n\n","contentAt":613,"reasoningAt":1550}}
+{"t":31758,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"##","contentAt":615,"reasoningAt":1550}}
+{"t":31771,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" The","contentAt":617,"reasoningAt":1550}}
+{"t":31771,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" A","contentAt":621,"reasoningAt":1550}}
+{"t":31771,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"4","contentAt":623,"reasoningAt":1550}}
+{"t":31855,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":":","contentAt":624,"reasoningAt":1550}}
+{"t":31863,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" The","contentAt":625,"reasoningAt":1550}}
+{"t":31949,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" Beginning","contentAt":629,"reasoningAt":1550}}
+{"t":31958,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" (","contentAt":639,"reasoningAt":1550}}
+{"t":31958,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"2","contentAt":641,"reasoningAt":1550}}
+{"t":31958,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"0","contentAt":642,"reasoningAt":1550}}
+{"t":32047,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"1","contentAt":643,"reasoningAt":1550}}
+{"t":32057,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"0","contentAt":644,"reasoningAt":1550}}
+{"t":32057,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":")","contentAt":645,"reasoningAt":1550}}
+{"t":32057,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"\n\n","contentAt":646,"reasoningAt":1550}}
+{"t":32143,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"In","contentAt":648,"reasoningAt":1550}}
+{"t":32151,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" January","contentAt":650,"reasoningAt":1550}}
+{"t":32151,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" ","contentAt":658,"reasoningAt":1550}}
+{"t":32151,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"2","contentAt":659,"reasoningAt":1550}}
+{"t":32242,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"0","contentAt":660,"reasoningAt":1550}}
+{"t":32252,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"1","contentAt":661,"reasoningAt":1550}}
+{"t":32252,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"0","contentAt":662,"reasoningAt":1550}}
+{"t":32252,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":",","contentAt":663,"reasoningAt":1550}}
+{"t":32357,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" Apple","contentAt":664,"reasoningAt":1550}}
+{"t":32556,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" introduced","contentAt":670,"reasoningAt":1550}}
+{"t":32556,"type":"chat","data":{"kind":"html","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"html":"<h1>The History of Apple Silicon: From A4 to M Series</h1><h2>Introduction</h2><p>Apple's journey into custom silicon represents one of the most consequential shifts in the history of personal computing and mobile technology. What began with a single processor designed to power the iPhone in 2010 has grown into a full family of chips spanning smartphones, tablets, laptops, desktops, and media players. This history traces the arc from the humble A4 through the high-performance M4 family, examining how Apple transformed from a consumer of third-party processors into one of the industry's most influential chip designers.</p><h2>The A4: The Beginning (2010)</h2><p>In January 2010, Apple introduced</p>","htmlAt":681}}
+{"t":32564,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" the","contentAt":681,"reasoningAt":1550}}
+{"t":32564,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" A","contentAt":685,"reasoningAt":1550}}
+{"t":32564,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"4","contentAt":687,"reasoningAt":1550}}
+{"t":32585,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":",","contentAt":688,"reasoningAt":1550}}
+{"t":32593,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" the","contentAt":689,"reasoningAt":1550}}
+{"t":32593,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" first","contentAt":693,"reasoningAt":1550}}
+{"t":32680,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" processor","contentAt":699,"reasoningAt":1550}}
+{"t":32696,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" designed","contentAt":709,"reasoningAt":1550}}
+{"t":32776,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" and","contentAt":718,"reasoningAt":1550}}
+{"t":32785,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" manufactured","contentAt":722,"reasoningAt":1550}}
+{"t":32871,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" under","contentAt":735,"reasoningAt":1550}}
+{"t":32881,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" the","contentAt":741,"reasoningAt":1550}}
+{"t":32966,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" Apple","contentAt":745,"reasoningAt":1550}}
+{"t":33065,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" brand","contentAt":751,"reasoningAt":1550}}
+{"t":33078,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":".","contentAt":757,"reasoningAt":1550}}
+{"t":33158,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" Fabric","contentAt":758,"reasoningAt":1550}}
+{"t":33168,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"ated","contentAt":765,"reasoningAt":1550}}
+{"t":33168,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" by","contentAt":769,"reasoningAt":1550}}
+{"t":33254,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" Samsung","contentAt":772,"reasoningAt":1550}}
+{"t":33348,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" on","contentAt":780,"reasoningAt":1550}}
+{"t":33358,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" a","contentAt":783,"reasoningAt":1550}}
+{"t":33358,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" ","contentAt":785,"reasoningAt":1550}}
+{"t":33477,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"4","contentAt":786,"reasoningAt":1550}}
+{"t":33487,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"5","contentAt":787,"reasoningAt":1550}}
+{"t":33539,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"-n","contentAt":788,"reasoningAt":1550}}
+{"t":33549,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"an","contentAt":790,"reasoningAt":1550}}
+{"t":33550,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"ometer","contentAt":792,"reasoningAt":1550}}
+{"t":33550,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" process","contentAt":798,"reasoningAt":1550}}
+{"t":33635,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":",","contentAt":806,"reasoningAt":1550}}
+{"t":33635,"type":"chat","data":{"kind":"html","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"html":"<h1>The History of Apple Silicon: From A4 to M Series</h1><h2>Introduction</h2><p>Apple's journey into custom silicon represents one of the most consequential shifts in the history of personal computing and mobile technology. What began with a single processor designed to power the iPhone in 2010 has grown into a full family of chips spanning smartphones, tablets, laptops, desktops, and media players. This history traces the arc from the humble A4 through the high-performance M4 family, examining how Apple transformed from a consumer of third-party processors into one of the industry's most influential chip designers.</p><h2>The A4: The Beginning (2010)</h2><p>In January 2010, Apple introduced the A4, the first processor designed and manufactured under the Apple brand. Fabricated by Samsung on a 45-nanometer process,</p>","htmlAt":807}}
+{"t":33645,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" the","contentAt":807,"reasoningAt":1550}}
+{"t":33645,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" A","contentAt":811,"reasoningAt":1550}}
+{"t":33645,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"4","contentAt":813,"reasoningAt":1550}}
+{"t":33730,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" was","contentAt":814,"reasoningAt":1550}}
+{"t":33740,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" a","contentAt":818,"reasoningAt":1550}}
+{"t":33827,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" system","contentAt":820,"reasoningAt":1550}}
+{"t":33835,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"-on","contentAt":827,"reasoningAt":1550}}
+{"t":33922,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"-ch","contentAt":830,"reasoningAt":1550}}
+{"t":33931,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"ip","contentAt":833,"reasoningAt":1550}}
+{"t":34019,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" combining","contentAt":835,"reasoningAt":1550}}
+{"t":34027,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" a","contentAt":845,"reasoningAt":1550}}
+{"t":34112,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" single","contentAt":847,"reasoningAt":1550}}
+{"t":34208,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"-core","contentAt":854,"reasoningAt":1550}}
+{"t":34217,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" ARM","contentAt":859,"reasoningAt":1550}}
+{"t":34217,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" Cortex","contentAt":863,"reasoningAt":1550}}
+{"t":34217,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"-A","contentAt":870,"reasoningAt":1550}}
+{"t":34304,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"8","contentAt":872,"reasoningAt":1550}}
+{"t":34400,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" CPU","contentAt":873,"reasoningAt":1550}}
+{"t":34606,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" clock","contentAt":877,"reasoningAt":1550}}
+{"t":34614,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"ed","contentAt":883,"reasoningAt":1550}}
+{"t":34614,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" at","contentAt":885,"reasoningAt":1550}}
+{"t":34614,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" ","contentAt":888,"reasoningAt":1550}}
+{"t":34614,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"1","contentAt":889,"reasoningAt":1550}}
+{"t":34685,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" GHz","contentAt":890,"reasoningAt":1550}}
+{"t":34685,"type":"chat","data":{"kind":"html","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"html":"<h1>The History of Apple Silicon: From A4 to M Series</h1><h2>Introduction</h2><p>Apple's journey into custom silicon represents one of the most consequential shifts in the history of personal computing and mobile technology. What began with a single processor designed to power the iPhone in 2010 has grown into a full family of chips spanning smartphones, tablets, laptops, desktops, and media players. This history traces the arc from the humble A4 through the high-performance M4 family, examining how Apple transformed from a consumer of third-party processors into one of the industry's most influential chip designers.</p><h2>The A4: The Beginning (2010)</h2><p>In January 2010, Apple introduced the A4, the first processor designed and manufactured under the Apple brand. Fabricated by Samsung on a 45-nanometer process, the A4 was a system-on-chip combining a single-core ARM Cortex-A8 CPU clocked at 1 GHz</p>","htmlAt":894}}
+{"t":34782,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" with","contentAt":894,"reasoningAt":1550}}
+{"t":34790,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" a","contentAt":899,"reasoningAt":1550}}
+{"t":34791,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" Power","contentAt":901,"reasoningAt":1550}}
+{"t":34878,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"VR","contentAt":907,"reasoningAt":1550}}
+{"t":34887,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" SG","contentAt":909,"reasoningAt":1550}}
+{"t":34887,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"X","contentAt":912,"reasoningAt":1550}}
+{"t":34977,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"5","contentAt":913,"reasoningAt":1550}}
+{"t":35069,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"3","contentAt":914,"reasoningAt":1550}}
+{"t":35080,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":"5","contentAt":915,"reasoningAt":1550}}
+{"t":35080,"type":"chat","data":{"kind":"delta","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"content":" GPU","contentAt":916,"reasoningAt":1550}}
+{"t":35156,"type":"chat","data":{"kind":"html","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","messageId":162,"html":"<h1>The History of Apple Silicon: From A4 to M Series</h1><h2>Introduction</h2><p>Apple's journey into custom silicon represents one of the most consequential shifts in the history of personal computing and mobile technology. What began with a single processor designed to power the iPhone in 2010 has grown into a full family of chips spanning smartphones, tablets, laptops, desktops, and media players. This history traces the arc from the humble A4 through the high-performance M4 family, examining how Apple transformed from a consumer of third-party processors into one of the industry's most influential chip designers.</p><h2>The A4: The Beginning (2010)</h2><p>In January 2010, Apple introduced the A4, the first processor designed and manufactured under the Apple brand. Fabricated by Samsung on a 45-nanometer process, the A4 was a system-on-chip combining a single-core ARM Cortex-A8 CPU clocked at 1 GHz with a PowerVR SGX535 GPU</p>","htmlAt":920}}
+{"t":35156,"type":"chat","data":{"kind":"row","chatId":"a97f4f38-7383-4257-9346-87b61bd71898","message":{"id":162,"chatId":"a97f4f38-7383-4257-9346-87b61bd71898","role":"assistant","content":"# The History of Apple Silicon: From A4 to M Series\n\n## Introduction\n\nApple's journey into custom silicon represents one of the most consequential shifts in the history of personal computing and mobile technology. What began with a single processor designed to power the iPhone in 2010 has grown into a full family of chips spanning smartphones, tablets, laptops, desktops, and media players. This history traces the arc from the humble A4 through the high-performance M4 family, examining how Apple transformed from a consumer of third-party processors into one of the industry's most influential chip designers.\n\n## The A4: The Beginning (2010)\n\nIn January 2010, Apple introduced the A4, the first processor designed and manufactured under the Apple brand. Fabricated by Samsung on a 45-nanometer process, the A4 was a system-on-chip combining a single-core ARM Cortex-A8 CPU clocked at 1 GHz with a PowerVR SGX535 GPU","html":"<h1>The History of Apple Silicon: From A4 to M Series</h1><h2>Introduction</h2><p>Apple's journey into custom silicon represents one of the most consequential shifts in the history of personal computing and mobile technology. What began with a single processor designed to power the iPhone in 2010 has grown into a full family of chips spanning smartphones, tablets, laptops, desktops, and media players. This history traces the arc from the humble A4 through the high-performance M4 family, examining how Apple transformed from a consumer of third-party processors into one of the industry's most influential chip designers.</p><h2>The A4: The Beginning (2010)</h2><p>In January 2010, Apple introduced the A4, the first processor designed and manufactured under the Apple brand. Fabricated by Samsung on a 45-nanometer process, the A4 was a system-on-chip combining a single-core ARM Cortex-A8 CPU clocked at 1 GHz with a PowerVR SGX535 GPU</p>","reasoning":"The user is asking for a detailed 1500-word history of Apple silicon, from the A4 to the M series, with headings. This is a writing task that I can complete from my knowledge. Let me think about what I know about Apple's silicon history:\n\n1. **A4 (2010)** - First Apple-designed processor, used in iPhone 4, first-gen iPad\n2. **A5 (2012)** - Dual-core, used in iPhone 5\n3. **A6 (2013)** - Used in iPhone 5s\n4. **A7 (2013)** - First 64-bit ARM processor in a smartphone, used in iPhone 5s, A8 in iPhone 6\n5. **A8 (2014)**\n6. **A9 (2015)**\n7. **A10 (2016)**\n8. **A11 Bionic (2017)** - First Apple chip with neural engine\n9. **A12 Bionic (2018)** - 7nm, first with two-core neural engine\n10. **A13 (2019)** - 5nm\n11. **A14 Bionic (2020)**\n12. **A15 Bionic (2021)**\n13. **A16 Bionic (2022)**\n14. **M1 (2020)** - First Apple silicon for Mac, ARM-based\n15. **M1 Pro, M1 Max, M1 Ultra (2021)**\n16. **M2 (2022)**\n17. **M2 Pro, M2 Max, M2 Ultra (2023)**\n18. **M3 (2023)**\n19. **M3 Pro, M3 Max, M3 Ultra (2023-2024)**\n20. **M4 (2024)**\n\nLet me write a comprehensive 1500-word piece with headings. I'll structure it into meaningful sections covering the evolution. Let me aim for approximately 1500 words.\n\nLet me structure this:\n- Introduction\n- The A Series: From A4 to A8 (2010-2015)\n- The A Series: A9 to A16 (2015-2023)\n- The M Series: M1 (2020-2021)\n- The M Series: M1 Pro/Max/Ultra and M2 (2021-2022)\n- The M Series: M3 and M4 (2023-2024)\n- Legacy and Significance\n\nLet me write this out and try to hit around 1500 words. I'll be careful with the facts.\n","status":"stopped","error":null,"finishReason":null,"model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949270990,"finishedAt":1788949299047,"ttftMs":747,"thinkingMs":19441,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null},"chat":{"id":"a97f4f38-7383-4257-9346-87b61bd71898","title":"Write a detailed 1500 word history of Apple sil…","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949270980,"updatedAt":1788949299047,"streaming":false}}}
+{"t":35157,"type":"chat","data":{"kind":"done","chat":{"id":"a97f4f38-7383-4257-9346-87b61bd71898","title":"Write a detailed 1500 word history of Apple sil…","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949270980,"updatedAt":1788949299047,"streaming":false},"message":{"id":162,"chatId":"a97f4f38-7383-4257-9346-87b61bd71898","role":"assistant","content":"# The History of Apple Silicon: From A4 to M Series\n\n## Introduction\n\nApple's journey into custom silicon represents one of the most consequential shifts in the history of personal computing and mobile technology. What began with a single processor designed to power the iPhone in 2010 has grown into a full family of chips spanning smartphones, tablets, laptops, desktops, and media players. This history traces the arc from the humble A4 through the high-performance M4 family, examining how Apple transformed from a consumer of third-party processors into one of the industry's most influential chip designers.\n\n## The A4: The Beginning (2010)\n\nIn January 2010, Apple introduced the A4, the first processor designed and manufactured under the Apple brand. Fabricated by Samsung on a 45-nanometer process, the A4 was a system-on-chip combining a single-core ARM Cortex-A8 CPU clocked at 1 GHz with a PowerVR SGX535 GPU","html":"<h1>The History of Apple Silicon: From A4 to M Series</h1><h2>Introduction</h2><p>Apple's journey into custom silicon represents one of the most consequential shifts in the history of personal computing and mobile technology. What began with a single processor designed to power the iPhone in 2010 has grown into a full family of chips spanning smartphones, tablets, laptops, desktops, and media players. This history traces the arc from the humble A4 through the high-performance M4 family, examining how Apple transformed from a consumer of third-party processors into one of the industry's most influential chip designers.</p><h2>The A4: The Beginning (2010)</h2><p>In January 2010, Apple introduced the A4, the first processor designed and manufactured under the Apple brand. Fabricated by Samsung on a 45-nanometer process, the A4 was a system-on-chip combining a single-core ARM Cortex-A8 CPU clocked at 1 GHz with a PowerVR SGX535 GPU</p>","reasoning":"The user is asking for a detailed 1500-word history of Apple silicon, from the A4 to the M series, with headings. This is a writing task that I can complete from my knowledge. Let me think about what I know about Apple's silicon history:\n\n1. **A4 (2010)** - First Apple-designed processor, used in iPhone 4, first-gen iPad\n2. **A5 (2012)** - Dual-core, used in iPhone 5\n3. **A6 (2013)** - Used in iPhone 5s\n4. **A7 (2013)** - First 64-bit ARM processor in a smartphone, used in iPhone 5s, A8 in iPhone 6\n5. **A8 (2014)**\n6. **A9 (2015)**\n7. **A10 (2016)**\n8. **A11 Bionic (2017)** - First Apple chip with neural engine\n9. **A12 Bionic (2018)** - 7nm, first with two-core neural engine\n10. **A13 (2019)** - 5nm\n11. **A14 Bionic (2020)**\n12. **A15 Bionic (2021)**\n13. **A16 Bionic (2022)**\n14. **M1 (2020)** - First Apple silicon for Mac, ARM-based\n15. **M1 Pro, M1 Max, M1 Ultra (2021)**\n16. **M2 (2022)**\n17. **M2 Pro, M2 Max, M2 Ultra (2023)**\n18. **M3 (2023)**\n19. **M3 Pro, M3 Max, M3 Ultra (2023-2024)**\n20. **M4 (2024)**\n\nLet me write a comprehensive 1500-word piece with headings. I'll structure it into meaningful sections covering the evolution. Let me aim for approximately 1500 words.\n\nLet me structure this:\n- Introduction\n- The A Series: From A4 to A8 (2010-2015)\n- The A Series: A9 to A16 (2015-2023)\n- The M Series: M1 (2020-2021)\n- The M Series: M1 Pro/Max/Ultra and M2 (2021-2022)\n- The M Series: M3 and M4 (2023-2024)\n- Legacy and Significance\n\nLet me write this out and try to hit around 1500 words. I'll be careful with the facts.\n","status":"stopped","error":null,"finishReason":null,"model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949270990,"finishedAt":1788949299047,"ttftMs":747,"thinkingMs":19441,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null}}}

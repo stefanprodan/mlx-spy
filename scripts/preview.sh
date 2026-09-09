@@ -2,9 +2,9 @@
 # The local preview: mlx-spy from source against the Studio's engine, on
 # 127.0.0.1:11236, detached, with its pid, db and log under .preview/
 # (`clean` stops it and removes them).
-# MLX_SPY_DEV=1 turns on Bun's dev server, so edits to the page (style.css,
-# index.html, app.ts, chat.ts) hot-reload in the browser; --watch restarts
-# the process on server-side TypeScript changes.
+# MLX_SPY_DEV=1 turns on Bun's dev server: style.css hot-reloads in the
+# browser, an edit under src/ui/ reloads the page; --watch restarts the
+# process on server-side TypeScript changes.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

@@ -1,0 +1,612 @@
+{"t":0,"note":"one long message, tools on, thinking on; mlx-spy (the preview) was restarted with make preview while the reply streamed, so the runner marked the row interrupted; the recorder reconnects and fetches the chat; stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp resident"}
+{"t":1,"type":"snapshot","chat":null}
+{"t":5215,"type":"chat","data":{"kind":"chat","chat":{"id":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","title":"","model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","systemPrompt":"","thinking":true,"reasoningEffort":null,"temperature":null,"topP":null,"maxTokens":null,"toolsOff":[],"search":"exa","createdAt":1788949994415,"updatedAt":1788949994415,"streaming":false}}}
+{"t":5221,"type":"chat","data":{"kind":"chat","chat":{"id":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","title":"Write a detailed 1200 word explanation of how u…","model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","systemPrompt":"","thinking":true,"reasoningEffort":null,"temperature":null,"topP":null,"maxTokens":null,"toolsOff":[],"search":"exa","createdAt":1788949994415,"updatedAt":1788949994421,"streaming":true}}}
+{"t":5221,"type":"chat","data":{"kind":"started","chat":{"id":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","title":"Write a detailed 1200 word explanation of how u…","model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","createdAt":1788949994415,"updatedAt":1788949994421,"streaming":true},"user":{"id":193,"chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","role":"user","content":"Write a detailed 1200 word explanation of how unified memory on Apple silicon helps LLM inference, with headings.","html":null,"reasoning":"","status":"done","error":null,"finishReason":null,"model":null,"createdAt":1788949994421,"finishedAt":null,"ttftMs":null,"thinkingMs":null,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null},"message":{"id":194,"chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","role":"assistant","content":"","html":"","reasoning":"","status":"streaming","error":null,"finishReason":null,"model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","createdAt":1788949994421,"finishedAt":null,"ttftMs":null,"thinkingMs":null,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null}}}
+{"t":5743,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"The","reasoningAt":0}}
+{"t":5753,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" user","reasoningAt":3}}
+{"t":5753,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" wants","reasoningAt":8}}
+{"t":5764,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" a","reasoningAt":14}}
+{"t":5773,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" detailed","reasoningAt":16}}
+{"t":5785,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" ~","reasoningAt":25}}
+{"t":5785,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"1","reasoningAt":27}}
+{"t":5803,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"2","reasoningAt":28}}
+{"t":5813,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"0","reasoningAt":29}}
+{"t":5821,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"0","reasoningAt":30}}
+{"t":5821,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" word","reasoningAt":31}}
+{"t":5845,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" explanation","reasoningAt":36}}
+{"t":5854,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" of","reasoningAt":48}}
+{"t":5854,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" how","reasoningAt":51}}
+{"t":5869,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" unified","reasoningAt":55}}
+{"t":5878,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":63}}
+{"t":5878,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" on","reasoningAt":70}}
+{"t":5893,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Apple","reasoningAt":73}}
+{"t":5903,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" silicon","reasoningAt":79}}
+{"t":5903,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" helps","reasoningAt":87}}
+{"t":5918,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" L","reasoningAt":93}}
+{"t":5928,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"LM","reasoningAt":95}}
+{"t":5928,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" inference","reasoningAt":97}}
+{"t":5943,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":107}}
+{"t":5952,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" with","reasoningAt":108}}
+{"t":5952,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" headings","reasoningAt":113}}
+{"t":5967,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":122}}
+{"t":5989,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Let","reasoningAt":123}}
+{"t":5997,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" me","reasoningAt":127}}
+{"t":6014,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" think","reasoningAt":130}}
+{"t":6024,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" about","reasoningAt":136}}
+{"t":6024,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" this","reasoningAt":142}}
+{"t":6037,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" carefully","reasoningAt":147}}
+{"t":6058,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" and","reasoningAt":157}}
+{"t":6067,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" write","reasoningAt":161}}
+{"t":6076,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" a","reasoningAt":167}}
+{"t":6076,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" comprehensive","reasoningAt":169}}
+{"t":6093,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" explanation","reasoningAt":183}}
+{"t":6101,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":195}}
+{"t":6111,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n\n","reasoningAt":196}}
+{"t":6120,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"Key","reasoningAt":198}}
+{"t":6132,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" concepts","reasoningAt":201}}
+{"t":6132,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" to","reasoningAt":210}}
+{"t":6149,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" cover","reasoningAt":213}}
+{"t":6158,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":":","reasoningAt":219}}
+{"t":6166,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":220}}
+{"t":6167,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"1","reasoningAt":221}}
+{"t":6185,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":222}}
+{"t":6193,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" What","reasoningAt":223}}
+{"t":6203,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" unified","reasoningAt":228}}
+{"t":6203,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":236}}
+{"t":6219,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" is","reasoningAt":243}}
+{"t":6228,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" on","reasoningAt":246}}
+{"t":6238,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Apple","reasoningAt":249}}
+{"t":6245,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" silicon","reasoningAt":255}}
+{"t":6257,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":263}}
+{"t":6265,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"2","reasoningAt":264}}
+{"t":6275,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":265}}
+{"t":6292,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Why","reasoningAt":266}}
+{"t":6301,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" it","reasoningAt":270}}
+{"t":6312,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" matters","reasoningAt":273}}
+{"t":6320,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" for","reasoningAt":281}}
+{"t":6334,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" L","reasoningAt":285}}
+{"t":6341,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"LM","reasoningAt":287}}
+{"t":6360,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" inference","reasoningAt":289}}
+{"t":6378,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" specifically","reasoningAt":299}}
+{"t":6386,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":312}}
+{"t":6396,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"3","reasoningAt":313}}
+{"t":6403,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":314}}
+{"t":6413,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" The","reasoningAt":315}}
+{"t":6432,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" mechanics","reasoningAt":319}}
+{"t":6450,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" -","reasoningAt":329}}
+{"t":6469,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" shared","reasoningAt":331}}
+{"t":6496,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":338}}
+{"t":6506,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" pool","reasoningAt":345}}
+{"t":6506,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":350}}
+{"t":6514,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" no","reasoningAt":351}}
+{"t":6535,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" data","reasoningAt":354}}
+{"t":6543,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" copying","reasoningAt":359}}
+{"t":6555,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":367}}
+{"t":6572,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" low","reasoningAt":368}}
+{"t":6580,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" latency","reasoningAt":372}}
+{"t":6593,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":380}}
+{"t":6593,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"4","reasoningAt":381}}
+{"t":6608,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":382}}
+{"t":6626,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Model","reasoningAt":383}}
+{"t":6646,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" loading","reasoningAt":389}}
+{"t":6663,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" and","reasoningAt":397}}
+{"t":6680,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":401}}
+{"t":6700,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" allocation","reasoningAt":408}}
+{"t":6718,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" patterns","reasoningAt":419}}
+{"t":6727,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":428}}
+{"t":6736,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"5","reasoningAt":429}}
+{"t":6745,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":430}}
+{"t":6755,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Practical","reasoningAt":431}}
+{"t":6762,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" implications","reasoningAt":441}}
+{"t":6773,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" (","reasoningAt":454}}
+{"t":6792,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"loading","reasoningAt":456}}
+{"t":6810,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" models","reasoningAt":463}}
+{"t":6829,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" directly","reasoningAt":470}}
+{"t":6846,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" into","reasoningAt":479}}
+{"t":6865,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":484}}
+{"t":6875,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":491}}
+{"t":6884,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" running","reasoningAt":492}}
+{"t":6900,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" larger","reasoningAt":500}}
+{"t":6910,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" models","reasoningAt":507}}
+{"t":6919,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":")","reasoningAt":514}}
+{"t":6919,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":515}}
+{"t":6936,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"6","reasoningAt":516}}
+{"t":6945,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":517}}
+{"t":6955,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Comparison","reasoningAt":518}}
+{"t":6973,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" to","reasoningAt":529}}
+{"t":6990,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" discrete","reasoningAt":532}}
+{"t":7002,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" GPU","reasoningAt":541}}
+{"t":7013,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":545}}
+{"t":7027,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":552}}
+{"t":7035,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"7","reasoningAt":553}}
+{"t":7046,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":554}}
+{"t":7064,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Software","reasoningAt":555}}
+{"t":7082,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" ecosystem","reasoningAt":564}}
+{"t":7090,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" (","reasoningAt":574}}
+{"t":7102,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"ML","reasoningAt":576}}
+{"t":7110,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"X","reasoningAt":578}}
+{"t":7119,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":579}}
+{"t":7137,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Core","reasoningAt":580}}
+{"t":7155,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" ML","reasoningAt":585}}
+{"t":7165,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":588}}
+{"t":7176,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" etc","reasoningAt":589}}
+{"t":7176,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".)","reasoningAt":593}}
+{"t":7197,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":595}}
+{"t":7207,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"8","reasoningAt":596}}
+{"t":7207,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":597}}
+{"t":7226,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Limit","reasoningAt":598}}
+{"t":7236,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"ations","reasoningAt":604}}
+{"t":7236,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" and","reasoningAt":610}}
+{"t":7249,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" considerations","reasoningAt":614}}
+{"t":7258,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n\n","reasoningAt":629}}
+{"t":7258,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"Let","reasoningAt":631}}
+{"t":7275,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" me","reasoningAt":634}}
+{"t":7299,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" write","reasoningAt":637}}
+{"t":7299,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" this","reasoningAt":643}}
+{"t":7299,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" in","reasoningAt":648}}
+{"t":7299,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" a","reasoningAt":651}}
+{"t":7299,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" well","reasoningAt":653}}
+{"t":7328,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":658}}
+{"t":7335,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"structured","reasoningAt":659}}
+{"t":7336,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" way","reasoningAt":669}}
+{"t":7336,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" with","reasoningAt":673}}
+{"t":7348,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" headings","reasoningAt":678}}
+{"t":7358,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":687}}
+{"t":7376,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" I","reasoningAt":688}}
+{"t":7389,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" should","reasoningAt":690}}
+{"t":7389,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" aim","reasoningAt":697}}
+{"t":7389,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" for","reasoningAt":701}}
+{"t":7412,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" around","reasoningAt":705}}
+{"t":7421,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" ","reasoningAt":712}}
+{"t":7421,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"1","reasoningAt":713}}
+{"t":7421,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"2","reasoningAt":714}}
+{"t":7421,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"0","reasoningAt":715}}
+{"t":7446,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"0","reasoningAt":716}}
+{"t":7455,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" words","reasoningAt":717}}
+{"t":7456,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":723}}
+{"t":7474,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" I","reasoningAt":724}}
+{"t":7483,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" don","reasoningAt":726}}
+{"t":7483,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"'t","reasoningAt":730}}
+{"t":7483,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" need","reasoningAt":732}}
+{"t":7494,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" to","reasoningAt":737}}
+{"t":7505,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" search","reasoningAt":740}}
+{"t":7529,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" the","reasoningAt":747}}
+{"t":7538,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" web","reasoningAt":751}}
+{"t":7538,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" for","reasoningAt":755}}
+{"t":7538,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" this","reasoningAt":759}}
+{"t":7549,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" -","reasoningAt":764}}
+{"t":7585,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" it","reasoningAt":766}}
+{"t":7595,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"'s","reasoningAt":769}}
+{"t":7604,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" a","reasoningAt":771}}
+{"t":7625,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" conceptual","reasoningAt":773}}
+{"t":7655,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" explanation","reasoningAt":784}}
+{"t":7673,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" I","reasoningAt":796}}
+{"t":7683,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" can","reasoningAt":798}}
+{"t":7696,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" write","reasoningAt":802}}
+{"t":7696,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" from","reasoningAt":808}}
+{"t":7722,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" knowledge","reasoningAt":813}}
+{"t":7731,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":823}}
+{"t":7731,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" but","reasoningAt":824}}
+{"t":7751,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" let","reasoningAt":828}}
+{"t":7759,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" me","reasoningAt":832}}
+{"t":7780,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" make","reasoningAt":835}}
+{"t":7789,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" sure","reasoningAt":840}}
+{"t":7804,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" my","reasoningAt":845}}
+{"t":7813,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" facts","reasoningAt":848}}
+{"t":7814,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" are","reasoningAt":854}}
+{"t":7828,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" accurate","reasoningAt":858}}
+{"t":7843,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":867}}
+{"t":7852,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n\n","reasoningAt":868}}
+{"t":7860,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"Apple","reasoningAt":870}}
+{"t":7860,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" silicon","reasoningAt":875}}
+{"t":7877,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" unified","reasoningAt":883}}
+{"t":7887,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":891}}
+{"t":7897,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":":","reasoningAt":898}}
+{"t":7921,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" The","reasoningAt":899}}
+{"t":7931,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" M","reasoningAt":903}}
+{"t":7931,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"1","reasoningAt":905}}
+{"t":7940,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"/M","reasoningAt":906}}
+{"t":7940,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"2","reasoningAt":908}}
+{"t":7957,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"/M","reasoningAt":909}}
+{"t":7966,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"3","reasoningAt":911}}
+{"t":7981,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"/M","reasoningAt":912}}
+{"t":7990,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"4","reasoningAt":914}}
+{"t":7990,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" chips","reasoningAt":915}}
+{"t":8004,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" have","reasoningAt":921}}
+{"t":8014,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" a","reasoningAt":926}}
+{"t":8030,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" unified","reasoningAt":928}}
+{"t":8039,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":936}}
+{"t":8039,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" architecture","reasoningAt":943}}
+{"t":8054,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" (","reasoningAt":956}}
+{"t":8064,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"UMA","reasoningAt":958}}
+{"t":8064,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":")","reasoningAt":961}}
+{"t":8079,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" where","reasoningAt":962}}
+{"t":8089,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" the","reasoningAt":968}}
+{"t":8089,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" CPU","reasoningAt":972}}
+{"t":8106,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":976}}
+{"t":8116,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" GPU","reasoningAt":977}}
+{"t":8116,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":981}}
+{"t":8116,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" and","reasoningAt":982}}
+{"t":8127,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" other","reasoningAt":986}}
+{"t":8155,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" acceler","reasoningAt":992}}
+{"t":8166,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"ators","reasoningAt":1000}}
+{"t":8166,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" share","reasoningAt":1005}}
+{"t":8184,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" a","reasoningAt":1011}}
+{"t":8191,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" single","reasoningAt":1013}}
+{"t":8208,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" pool","reasoningAt":1020}}
+{"t":8217,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" of","reasoningAt":1025}}
+{"t":8217,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":1028}}
+{"t":8235,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":1035}}
+{"t":8245,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" This","reasoningAt":1036}}
+{"t":8245,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" is","reasoningAt":1041}}
+{"t":8253,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" different","reasoningAt":1044}}
+{"t":8253,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" from","reasoningAt":1054}}
+{"t":8270,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" traditional","reasoningAt":1059}}
+{"t":8290,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" PCs","reasoningAt":1071}}
+{"t":8299,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" where","reasoningAt":1075}}
+{"t":8318,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" the","reasoningAt":1081}}
+{"t":8327,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" CPU","reasoningAt":1085}}
+{"t":8327,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" has","reasoningAt":1089}}
+{"t":8343,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" system","reasoningAt":1093}}
+{"t":8350,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" RAM","reasoningAt":1100}}
+{"t":8350,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" and","reasoningAt":1104}}
+{"t":8366,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" the","reasoningAt":1108}}
+{"t":8375,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" GPU","reasoningAt":1112}}
+{"t":8375,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" has","reasoningAt":1116}}
+{"t":8391,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" separate","reasoningAt":1120}}
+{"t":8398,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" VR","reasoningAt":1129}}
+{"t":8398,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"AM","reasoningAt":1132}}
+{"t":8425,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":1134}}
+{"t":8434,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n\n","reasoningAt":1135}}
+{"t":8435,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"Key","reasoningAt":1137}}
+{"t":8447,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" facts","reasoningAt":1140}}
+{"t":8470,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":":","reasoningAt":1146}}
+{"t":8478,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":1147}}
+{"t":8478,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":1148}}
+{"t":8495,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Unified","reasoningAt":1149}}
+{"t":8508,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":1157}}
+{"t":8517,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" means","reasoningAt":1164}}
+{"t":8541,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" CPU","reasoningAt":1170}}
+{"t":8550,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":1174}}
+{"t":8550,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" GPU","reasoningAt":1175}}
+{"t":8564,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":1179}}
+{"t":8573,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Neural","reasoningAt":1180}}
+{"t":8573,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Engine","reasoningAt":1187}}
+{"t":8588,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" all","reasoningAt":1194}}
+{"t":8620,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" access","reasoningAt":1198}}
+{"t":8630,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" the","reasoningAt":1205}}
+{"t":8630,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" same","reasoningAt":1209}}
+{"t":8639,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" physical","reasoningAt":1214}}
+{"t":8639,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":1223}}
+{"t":8639,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":1230}}
+{"t":8663,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":1231}}
+{"t":8671,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" No","reasoningAt":1232}}
+{"t":8686,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" separate","reasoningAt":1235}}
+{"t":8715,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" VR","reasoningAt":1244}}
+{"t":8723,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"AM","reasoningAt":1247}}
+{"t":8732,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":1249}}
+{"t":8751,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" no","reasoningAt":1250}}
+{"t":8758,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" data","reasoningAt":1253}}
+{"t":8775,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" copying","reasoningAt":1258}}
+{"t":8784,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" between","reasoningAt":1266}}
+{"t":8784,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" CPU","reasoningAt":1274}}
+{"t":8799,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" RAM","reasoningAt":1278}}
+{"t":8808,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" and","reasoningAt":1282}}
+{"t":8808,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" GPU","reasoningAt":1286}}
+{"t":8825,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" VR","reasoningAt":1290}}
+{"t":8836,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"AM","reasoningAt":1293}}
+{"t":8836,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":1295}}
+{"t":8845,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":1296}}
+{"t":8852,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Memory","reasoningAt":1297}}
+{"t":8866,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" is","reasoningAt":1304}}
+{"t":8889,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" shared","reasoningAt":1307}}
+{"t":8910,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":1314}}
+{"t":8922,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" so","reasoningAt":1315}}
+{"t":8934,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" the","reasoningAt":1318}}
+{"t":8955,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" whole","reasoningAt":1322}}
+{"t":8978,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" pool","reasoningAt":1328}}
+{"t":8987,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" can","reasoningAt":1333}}
+{"t":8987,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" be","reasoningAt":1337}}
+{"t":8995,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" used","reasoningAt":1340}}
+{"t":9014,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" for","reasoningAt":1345}}
+{"t":9035,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" whatever","reasoningAt":1349}}
+{"t":9059,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" needs","reasoningAt":1358}}
+{"t":9068,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" it","reasoningAt":1364}}
+{"t":9068,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":1367}}
+{"t":9079,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":1368}}
+{"t":9105,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Band","reasoningAt":1369}}
+{"t":9116,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"width","reasoningAt":1374}}
+{"t":9127,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":":","reasoningAt":1379}}
+{"t":9136,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" M","reasoningAt":1380}}
+{"t":9148,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-series","reasoningAt":1382}}
+{"t":9173,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" chips","reasoningAt":1389}}
+{"t":9182,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" have","reasoningAt":1395}}
+{"t":9182,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" high","reasoningAt":1400}}
+{"t":9198,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":1405}}
+{"t":9206,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" bandwidth","reasoningAt":1412}}
+{"t":9206,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" (","reasoningAt":1422}}
+{"t":9215,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"e","reasoningAt":1424}}
+{"t":9223,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".g","reasoningAt":1425}}
+{"t":9234,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".,","reasoningAt":1427}}
+{"t":9258,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" M","reasoningAt":1429}}
+{"t":9278,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"2","reasoningAt":1431}}
+{"t":9303,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Ultra","reasoningAt":1432}}
+{"t":9312,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" ~","reasoningAt":1438}}
+{"t":9327,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"8","reasoningAt":1440}}
+{"t":9337,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"0","reasoningAt":1441}}
+{"t":9337,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"0","reasoningAt":1442}}
+{"t":9353,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" GB","reasoningAt":1443}}
+{"t":9361,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"/s","reasoningAt":1446}}
+{"t":9361,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":",","reasoningAt":1448}}
+{"t":9375,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" M","reasoningAt":1449}}
+{"t":9383,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"4","reasoningAt":1451}}
+{"t":9383,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Max","reasoningAt":1452}}
+{"t":9400,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" ~","reasoningAt":1456}}
+{"t":9425,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"5","reasoningAt":1458}}
+{"t":9449,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"4","reasoningAt":1459}}
+{"t":9458,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"6","reasoningAt":1460}}
+{"t":9458,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" GB","reasoningAt":1461}}
+{"t":9473,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"/s","reasoningAt":1464}}
+{"t":9483,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":")","reasoningAt":1466}}
+{"t":9483,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":1467}}
+{"t":9496,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":1468}}
+{"t":9517,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" The","reasoningAt":1469}}
+{"t":9541,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" amount","reasoningAt":1473}}
+{"t":9550,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" of","reasoningAt":1480}}
+{"t":9566,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" unified","reasoningAt":1483}}
+{"t":9572,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":1491}}
+{"t":9588,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" ranges","reasoningAt":1498}}
+{"t":9598,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" from","reasoningAt":1505}}
+{"t":9608,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" ","reasoningAt":1510}}
+{"t":9618,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"8","reasoningAt":1511}}
+{"t":9625,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"GB","reasoningAt":1512}}
+{"t":9625,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" to","reasoningAt":1514}}
+{"t":9663,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" ","reasoningAt":1517}}
+{"t":9670,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"1","reasoningAt":1518}}
+{"t":9670,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"9","reasoningAt":1519}}
+{"t":9680,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"2","reasoningAt":1520}}
+{"t":9680,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"GB","reasoningAt":1521}}
+{"t":9693,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"+","reasoningAt":1523}}
+{"t":9716,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" across","reasoningAt":1524}}
+{"t":9744,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" models","reasoningAt":1531}}
+{"t":9753,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":1538}}
+{"t":9762,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":1539}}
+{"t":9762,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" L","reasoningAt":1540}}
+{"t":9774,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"LM","reasoningAt":1542}}
+{"t":9783,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"s","reasoningAt":1544}}
+{"t":9791,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" benefit","reasoningAt":1545}}
+{"t":9809,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" because","reasoningAt":1553}}
+{"t":9816,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" you","reasoningAt":1561}}
+{"t":9827,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" can","reasoningAt":1565}}
+{"t":9837,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" load","reasoningAt":1569}}
+{"t":9846,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" the","reasoningAt":1574}}
+{"t":9846,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" entire","reasoningAt":1578}}
+{"t":9864,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" model","reasoningAt":1585}}
+{"t":9873,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" into","reasoningAt":1591}}
+{"t":9882,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" unified","reasoningAt":1596}}
+{"t":9882,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":1604}}
+{"t":9900,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" and","reasoningAt":1611}}
+{"t":9918,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" the","reasoningAt":1615}}
+{"t":9927,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" GPU","reasoningAt":1619}}
+{"t":9938,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"/","reasoningAt":1623}}
+{"t":9948,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"Ne","reasoningAt":1624}}
+{"t":9960,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"ural","reasoningAt":1626}}
+{"t":9960,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Engine","reasoningAt":1630}}
+{"t":9973,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" can","reasoningAt":1637}}
+{"t":9984,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" access","reasoningAt":1641}}
+{"t":9994,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" it","reasoningAt":1648}}
+{"t":9994,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" directly","reasoningAt":1651}}
+{"t":10009,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n\n","reasoningAt":1660}}
+{"t":10029,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"Let","reasoningAt":1662}}
+{"t":10040,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" me","reasoningAt":1665}}
+{"t":10048,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" write","reasoningAt":1668}}
+{"t":10048,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" this","reasoningAt":1674}}
+{"t":10064,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" out","reasoningAt":1679}}
+{"t":10083,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" with","reasoningAt":1683}}
+{"t":10101,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" good","reasoningAt":1688}}
+{"t":10117,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" headings","reasoningAt":1693}}
+{"t":10128,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" and","reasoningAt":1702}}
+{"t":10137,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" structure","reasoningAt":1706}}
+{"t":10154,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":1716}}
+{"t":10163,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" I","reasoningAt":1717}}
+{"t":10175,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"'ll","reasoningAt":1719}}
+{"t":10175,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" aim","reasoningAt":1722}}
+{"t":10191,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" for","reasoningAt":1726}}
+{"t":10199,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" ~","reasoningAt":1730}}
+{"t":10208,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"1","reasoningAt":1732}}
+{"t":10208,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"2","reasoningAt":1733}}
+{"t":10226,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"0","reasoningAt":1734}}
+{"t":10234,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"0","reasoningAt":1735}}
+{"t":10244,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" words","reasoningAt":1736}}
+{"t":10252,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":1742}}
+{"t":10262,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n\n","reasoningAt":1743}}
+{"t":10281,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"I","reasoningAt":1745}}
+{"t":10290,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" should","reasoningAt":1746}}
+{"t":10300,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" mention","reasoningAt":1753}}
+{"t":10317,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":":","reasoningAt":1761}}
+{"t":10325,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":1762}}
+{"t":10337,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":1763}}
+{"t":10348,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" The","reasoningAt":1764}}
+{"t":10359,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":1768}}
+{"t":10372,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" pool","reasoningAt":1775}}
+{"t":10389,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" concept","reasoningAt":1780}}
+{"t":10402,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":1788}}
+{"t":10412,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":1789}}
+{"t":10412,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Elim","reasoningAt":1790}}
+{"t":10427,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"ination","reasoningAt":1795}}
+{"t":10435,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" of","reasoningAt":1802}}
+{"t":10454,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" data","reasoningAt":1805}}
+{"t":10467,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" transfer","reasoningAt":1810}}
+{"t":10489,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" bottleneck","reasoningAt":1819}}
+{"t":10505,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":1830}}
+{"t":10514,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":1831}}
+{"t":10522,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Loading","reasoningAt":1832}}
+{"t":10536,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" models","reasoningAt":1840}}
+{"t":10545,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" directly","reasoningAt":1847}}
+{"t":10555,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" into","reasoningAt":1856}}
+{"t":10574,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":1861}}
+{"t":10585,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":1868}}
+{"t":10593,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":1869}}
+{"t":10609,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" The","reasoningAt":1870}}
+{"t":10626,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" role","reasoningAt":1874}}
+{"t":10634,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" of","reasoningAt":1879}}
+{"t":10648,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" the","reasoningAt":1882}}
+{"t":10667,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" GPU","reasoningAt":1886}}
+{"t":10675,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" and","reasoningAt":1890}}
+{"t":10691,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Neural","reasoningAt":1894}}
+{"t":10700,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Engine","reasoningAt":1901}}
+{"t":10716,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" (","reasoningAt":1908}}
+{"t":10736,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"ANE","reasoningAt":1910}}
+{"t":10745,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":")","reasoningAt":1913}}
+{"t":10745,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":1914}}
+{"t":10767,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":1915}}
+{"t":10782,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Memory","reasoningAt":1916}}
+{"t":10791,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" bandwidth","reasoningAt":1923}}
+{"t":10802,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" matters","reasoningAt":1933}}
+{"t":10820,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" for","reasoningAt":1941}}
+{"t":10829,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" inference","reasoningAt":1945}}
+{"t":10838,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" speed","reasoningAt":1955}}
+{"t":10859,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" (","reasoningAt":1961}}
+{"t":10869,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"token","reasoningAt":1963}}
+{"t":10879,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" generation","reasoningAt":1968}}
+{"t":10893,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" is","reasoningAt":1979}}
+{"t":10911,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":1982}}
+{"t":10936,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-bound","reasoningAt":1989}}
+{"t":10945,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":")","reasoningAt":1995}}
+{"t":10946,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":1996}}
+{"t":10955,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":1997}}
+{"t":10965,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Practical","reasoningAt":1998}}
+{"t":10975,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" examples","reasoningAt":2008}}
+{"t":10996,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" -","reasoningAt":2017}}
+{"t":11014,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" what","reasoningAt":2019}}
+{"t":11034,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" sizes","reasoningAt":2024}}
+{"t":11053,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" of","reasoningAt":2030}}
+{"t":11060,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" models","reasoningAt":2033}}
+{"t":11075,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" can","reasoningAt":2040}}
+{"t":11075,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" run","reasoningAt":2044}}
+{"t":11088,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":2048}}
+{"t":11097,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":2049}}
+{"t":11105,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" ML","reasoningAt":2050}}
+{"t":11105,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"X","reasoningAt":2053}}
+{"t":11123,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" framework","reasoningAt":2054}}
+{"t":11141,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":2064}}
+{"t":11152,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":2065}}
+{"t":11164,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Core","reasoningAt":2066}}
+{"t":11175,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" ML","reasoningAt":2071}}
+{"t":11191,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":2074}}
+{"t":11200,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":2075}}
+{"t":11210,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Comparison","reasoningAt":2076}}
+{"t":11229,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" to","reasoningAt":2087}}
+{"t":11246,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" the","reasoningAt":2090}}
+{"t":11264,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" discrete","reasoningAt":2094}}
+{"t":11273,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" GPU","reasoningAt":2103}}
+{"t":11283,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" approach","reasoningAt":2107}}
+{"t":11290,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":2116}}
+{"t":11300,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":2117}}
+{"t":11319,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Quant","reasoningAt":2118}}
+{"t":11328,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"ization","reasoningAt":2124}}
+{"t":11337,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" and","reasoningAt":2131}}
+{"t":11356,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" memory","reasoningAt":2135}}
+{"t":11363,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" efficiency","reasoningAt":2142}}
+{"t":11375,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":2153}}
+{"t":11385,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"-","reasoningAt":2154}}
+{"t":11393,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" Limit","reasoningAt":2155}}
+{"t":11393,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"ations","reasoningAt":2161}}
+{"t":11409,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n\n","reasoningAt":2167}}
+{"t":11420,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"Let","reasoningAt":2169}}
+{"t":11431,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" me","reasoningAt":2172}}
+{"t":11449,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" write","reasoningAt":2175}}
+{"t":11458,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" this","reasoningAt":2181}}
+{"t":11467,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":" now","reasoningAt":2186}}
+{"t":11476,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":".","reasoningAt":2190}}
+{"t":11486,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"contentAt":0,"reasoning":"\n","reasoningAt":2191}}
+{"t":11505,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"#","contentAt":0,"reasoningAt":2192}}
+{"t":11505,"type":"chat","data":{"kind":"html","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"html":"<h1></h1>","htmlAt":1}}
+{"t":11522,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" How","contentAt":1,"reasoningAt":2192}}
+{"t":11531,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" Unified","contentAt":5,"reasoningAt":2192}}
+{"t":11541,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" Memory","contentAt":13,"reasoningAt":2192}}
+{"t":11549,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" on","contentAt":20,"reasoningAt":2192}}
+{"t":11559,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" Apple","contentAt":23,"reasoningAt":2192}}
+{"t":11570,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" Silicon","contentAt":29,"reasoningAt":2192}}
+{"t":11579,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" Helps","contentAt":37,"reasoningAt":2192}}
+{"t":11580,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" L","contentAt":43,"reasoningAt":2192}}
+{"t":11595,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"LM","contentAt":45,"reasoningAt":2192}}
+{"t":11604,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" In","contentAt":47,"reasoningAt":2192}}
+{"t":11614,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"ference","contentAt":50,"reasoningAt":2192}}
+{"t":11624,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"\n\n","contentAt":57,"reasoningAt":2192}}
+{"t":11635,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"##","contentAt":59,"reasoningAt":2192}}
+{"t":11650,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" What","contentAt":61,"reasoningAt":2192}}
+{"t":11669,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" Unified","contentAt":66,"reasoningAt":2192}}
+{"t":11676,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" Memory","contentAt":74,"reasoningAt":2192}}
+{"t":11687,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" Actually","contentAt":81,"reasoningAt":2192}}
+{"t":11693,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" Is","contentAt":90,"reasoningAt":2192}}
+{"t":11705,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"\n\n","contentAt":93,"reasoningAt":2192}}
+{"t":11712,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"Apple","contentAt":95,"reasoningAt":2192}}
+{"t":11723,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"'s","contentAt":100,"reasoningAt":2192}}
+{"t":11731,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" silicon","contentAt":102,"reasoningAt":2192}}
+{"t":11742,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" chips","contentAt":110,"reasoningAt":2192}}
+{"t":11760,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"—","contentAt":116,"reasoningAt":2192}}
+{"t":11779,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"begin","contentAt":117,"reasoningAt":2192}}
+{"t":11788,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"ning","contentAt":122,"reasoningAt":2192}}
+{"t":11798,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" with","contentAt":126,"reasoningAt":2192}}
+{"t":11798,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" the","contentAt":131,"reasoningAt":2192}}
+{"t":11815,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" M","contentAt":135,"reasoningAt":2192}}
+{"t":11826,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"1","contentAt":137,"reasoningAt":2192}}
+{"t":11835,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" in","contentAt":138,"reasoningAt":2192}}
+{"t":11835,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" ","contentAt":141,"reasoningAt":2192}}
+{"t":11852,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"2","contentAt":142,"reasoningAt":2192}}
+{"t":11862,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"0","contentAt":143,"reasoningAt":2192}}
+{"t":11870,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"2","contentAt":144,"reasoningAt":2192}}
+{"t":11870,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"0","contentAt":145,"reasoningAt":2192}}
+{"t":11889,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" and","contentAt":146,"reasoningAt":2192}}
+{"t":11899,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" continuing","contentAt":150,"reasoningAt":2192}}
+{"t":11911,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" through","contentAt":161,"reasoningAt":2192}}
+{"t":11911,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" the","contentAt":169,"reasoningAt":2192}}
+{"t":11925,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" M","contentAt":173,"reasoningAt":2192}}
+{"t":11934,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"2","contentAt":175,"reasoningAt":2192}}
+{"t":11944,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":",","contentAt":176,"reasoningAt":2192}}
+{"t":11944,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" M","contentAt":177,"reasoningAt":2192}}
+{"t":11961,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"3","contentAt":179,"reasoningAt":2192}}
+{"t":11970,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":",","contentAt":180,"reasoningAt":2192}}
+{"t":11978,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" and","contentAt":181,"reasoningAt":2192}}
+{"t":11979,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" M","contentAt":185,"reasoningAt":2192}}
+{"t":11997,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"4","contentAt":187,"reasoningAt":2192}}
+{"t":12007,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" generations","contentAt":188,"reasoningAt":2192}}
+{"t":12015,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"—","contentAt":200,"reasoningAt":2192}}
+{"t":12033,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"use","contentAt":201,"reasoningAt":2192}}
+{"t":12042,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" a","contentAt":204,"reasoningAt":2192}}
+{"t":12051,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" **","contentAt":206,"reasoningAt":2192}}
+{"t":12070,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"un","contentAt":209,"reasoningAt":2192}}
+{"t":12080,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"ified","contentAt":211,"reasoningAt":2192}}
+{"t":12090,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" memory","contentAt":216,"reasoningAt":2192}}
+{"t":12090,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" architecture","contentAt":223,"reasoningAt":2192}}
+{"t":12106,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" (","contentAt":236,"reasoningAt":2192}}
+{"t":12115,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":"UMA","contentAt":238,"reasoningAt":2192}}
+{"t":12124,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":")**.","contentAt":241,"reasoningAt":2192}}
+{"t":12144,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" This","contentAt":245,"reasoningAt":2192}}
+{"t":12154,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" means","contentAt":250,"reasoningAt":2192}}
+{"t":12163,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" the","contentAt":256,"reasoningAt":2192}}
+{"t":12163,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" CPU","contentAt":260,"reasoningAt":2192}}
+{"t":12179,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":",","contentAt":264,"reasoningAt":2192}}
+{"t":12197,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" GPU","contentAt":265,"reasoningAt":2192}}
+{"t":12205,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":",","contentAt":269,"reasoningAt":2192}}
+{"t":12217,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" and","contentAt":270,"reasoningAt":2192}}
+{"t":12234,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" the","contentAt":274,"reasoningAt":2192}}
+{"t":12243,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" dedicated","contentAt":278,"reasoningAt":2192}}
+{"t":12252,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" Neural","contentAt":288,"reasoningAt":2192}}
+{"t":12252,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" Engine","contentAt":295,"reasoningAt":2192}}
+{"t":12269,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" all","contentAt":302,"reasoningAt":2192}}
+{"t":12279,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" share","contentAt":306,"reasoningAt":2192}}
+{"t":12288,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" a","contentAt":312,"reasoningAt":2192}}
+{"t":12296,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" single","contentAt":314,"reasoningAt":2192}}
+{"t":12309,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" pool","contentAt":321,"reasoningAt":2192}}
+{"t":12309,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" of","contentAt":326,"reasoningAt":2192}}
+{"t":12324,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" physical","contentAt":329,"reasoningAt":2192}}
+{"t":12335,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" memory","contentAt":338,"reasoningAt":2192}}
+{"t":12345,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" that","contentAt":345,"reasoningAt":2192}}
+{"t":12345,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" is","contentAt":350,"reasoningAt":2192}}
+{"t":12360,"type":"chat","data":{"kind":"delta","chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","messageId":194,"content":" directly","contentAt":353,"reasoningAt":2192}}
+{"t":12364,"closed":true}
+{"t":13367,"type":"snapshot","chat":null}
+{"t":13370,"fetch":{"status":200,"body":{"id":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","title":"Write a detailed 1200 word explanation of how u…","model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","systemPrompt":"","thinking":true,"reasoningEffort":null,"temperature":null,"topP":null,"maxTokens":null,"toolsOff":[],"search":"exa","createdAt":1788949994415,"updatedAt":1788950001564,"streaming":false,"messages":[{"id":193,"chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","role":"user","content":"Write a detailed 1200 word explanation of how unified memory on Apple silicon helps LLM inference, with headings.","html":null,"reasoning":"","status":"done","error":null,"finishReason":null,"model":null,"createdAt":1788949994421,"finishedAt":null,"ttftMs":null,"thinkingMs":null,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null},{"id":194,"chatId":"dea46beb-0c08-468f-9d5f-2c7bb78da5f1","role":"assistant","content":"# How Unified Memory on Apple Silicon Helps LLM Inference\n\n## What Unified Memory Actually Is\n\nApple's silicon chips—beginning with the M1 in 2020 and continuing through the M2, M3, and M4 generations—use a **unified memory architecture (UMA)**. This means the CPU, GPU, and the dedicated Neural Engine all share a single pool of physical memory that is directly","html":"<h1>How Unified Memory on Apple Silicon Helps LLM Inference</h1><h2>What Unified Memory Actually Is</h2><p>Apple's silicon chips—beginning with the M1 in 2020 and continuing through the M2, M3, and M4 generations—use a <strong>unified memory architecture (UMA)</strong>. This means the CPU, GPU, and the dedicated Neural Engine all share a single pool of physical memory that is directly</p>","reasoning":"The user wants a detailed ~1200 word explanation of how unified memory on Apple silicon helps LLM inference, with headings. Let me think about this carefully and write a comprehensive explanation.\n\nKey concepts to cover:\n1. What unified memory is on Apple silicon\n2. Why it matters for LLM inference specifically\n3. The mechanics - shared memory pool, no data copying, low latency\n4. Model loading and memory allocation patterns\n5. Practical implications (loading models directly into memory, running larger models)\n6. Comparison to discrete GPU memory\n7. Software ecosystem (MLX, Core ML, etc.)\n8. Limitations and considerations\n\nLet me write this in a well-structured way with headings. I should aim for around 1200 words. I don't need to search the web for this - it's a conceptual explanation I can write from knowledge, but let me make sure my facts are accurate.\n\nApple silicon unified memory: The M1/M2/M3/M4 chips have a unified memory architecture (UMA) where the CPU, GPU, and other accelerators share a single pool of memory. This is different from traditional PCs where the CPU has system RAM and the GPU has separate VRAM.\n\nKey facts:\n- Unified memory means CPU, GPU, Neural Engine all access the same physical memory\n- No separate VRAM, no data copying between CPU RAM and GPU VRAM\n- Memory is shared, so the whole pool can be used for whatever needs it\n- Bandwidth: M-series chips have high memory bandwidth (e.g., M2 Ultra ~800 GB/s, M4 Max ~546 GB/s)\n- The amount of unified memory ranges from 8GB to 192GB+ across models\n- LLMs benefit because you can load the entire model into unified memory and the GPU/Neural Engine can access it directly\n\nLet me write this out with good headings and structure. I'll aim for ~1200 words.\n\nI should mention:\n- The memory pool concept\n- Elimination of data transfer bottleneck\n- Loading models directly into memory\n- The role of the GPU and Neural Engine (ANE)\n- Memory bandwidth matters for inference speed (token generation is memory-bound)\n- Practical examples - what sizes of models can run\n- MLX framework\n- Core ML\n- Comparison to the discrete GPU approach\n- Quantization and memory efficiency\n- Limitations\n\nLet me write this now.\n","status":"interrupted","error":null,"finishReason":null,"model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","createdAt":1788949994421,"finishedAt":1788950001564,"ttftMs":523,"thinkingMs":5761,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null}]}}}

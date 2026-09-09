@@ -8,8 +8,9 @@ chat that streams through mlx-spy so replies survive the tab.
 
 - **Runtime:** Bun only, TypeScript run directly. No Node.
 - **Platform:** macOS on Apple Silicon. Host probes use `bun:ffi`.
-- **Zero runtime dependencies.** The one devDependency is uPlot, exact pin,
-  bundled into the page at build time. Do not add packages.
+- **Zero runtime dependencies.** The devDependencies bundled into the page
+  at build time are uPlot, Preact, `@preact/signals` and
+  `preact-render-to-string` (tests only), exact pins. Do not add packages.
 - The roadmap is in `plans/`.
 
 ## The dev loop
@@ -35,11 +36,13 @@ make deploy-studio  # build, install and restart on the Mac Studio
    git-ignored) on `http://127.0.0.1:11236`, with its pid, db and log
    under `.preview/`. Never start the server by hand in the background.
 2. Edit. The preview runs with `MLX_SPY_DEV=1`, which turns on Bun's dev
-   server: edits to the page (`src/ui/style.css`, `index.html`, `app.ts`,
-   `chat.ts`) hot-reload in the open tab; server-side TypeScript restarts
-   the process through `bun --watch`. The one exception: an edit to
-   `index.html` can leave the dev server with "Failed to load bundled
-   module './app.ts'" in the page; `make preview` clears it.
+   server: an edit to `src/ui/style.css` hot-reloads in the open tab, an
+   edit to a `.ts` or `.tsx` file under `src/ui/` reloads the page (Bun
+   has no fast refresh for Preact; the state comes back from the server);
+   server-side TypeScript restarts the process through `bun --watch`.
+   The one exception: an edit to `index.html` can leave the dev server
+   with "Failed to load bundled module" in the page; `make preview`
+   clears it.
 3. Look at it. Open `http://127.0.0.1:11236/`, `/requests` and `/chat` in
    Chrome through the DevTools MCP: screenshot at a desktop width (1400)
    and a phone width (390), read the console (it must stay empty), and
@@ -70,6 +73,12 @@ Deploy when asked, then say what is now running there.
   `curl <engine>/v1/models`, pretty-printed. Never record `/props`.
 - `handle()` in `src/web.ts` is separate from `serve()`, so tests call it
   with a `Request`.
+- `test/fixtures/ws/*.ndjson` are chat event sequences recorded from the
+  preview's `/ws` with `bun scripts/record-ws.ts <file> --note "..."`
+  while the chat is driven in Chrome; the first line is the note, `t` is
+  milliseconds since the first message. Record a new one for every chat
+  bug before fixing it (`plans/26.09.09-preact-plan.md`, "Recorded event
+  fixtures").
 
 ## Rules that protect the engine
 
@@ -144,11 +153,43 @@ src/web.ts           Bun.serve: the page, /api/snapshot, /api/history,
                      /api/requests, POST /api/actions/<name>, /api/chats and
                      sub-routes, /ws; development mode from MLX_SPY_DEV=1;
                      handle() separate from serve() for tests
-src/ui/index.html    one bundle for / (monitor), /requests and /chat;
-                     Bun bundles style.css and app.ts from it
-src/ui/app.ts        browser client: WebSocket, tiles, uPlot charts, range
-                     picker, the requests page; mounts the chat view
-src/ui/chat.ts       the Chat view: list, transcript, composer
+src/ui/index.html    the shell: head, the header, page and footer roots,
+                     the script tag; Bun bundles style.css and main.tsx
+                     from it
+src/ui/main.tsx      entry: renders the shell and the page's root, opens
+                     the store
+src/ui/store.ts      the WebSocket client and its signals (connection,
+                     snapshot, sample, models, event, busy); listen() for
+                     the chat's event routing
+src/ui/api.ts        api<T>(): one JSON call to this server
+src/ui/format.ts     gb, num, count, secs, tps, when, group (pure, tested)
+src/ui/icons.tsx     the inline SVGs as components
+src/ui/shell/        Header.tsx, Footer.tsx, Pill.tsx, Confirm.tsx (the
+                     dialog with a promise API)
+src/ui/monitor/      Monitor.tsx (the page: range, series and tile memory
+                     signals), Tiles.tsx, Charts.tsx (uPlot in a ref),
+                     Models.tsx, Runtime.tsx, RangePicker.tsx, RequestBar.tsx,
+                     Event.tsx; the pure, tested tiles.ts (seed/apply and
+                     the eight tiles), range.ts, series.ts, request.ts;
+                     actions.ts (runAction, confirmText, engine facts)
+src/ui/requests/     Requests.tsx, Row.tsx
+src/ui/chat/         the Chat page. Pure and tested on the recordings in
+                     test/fixtures/ws/: stream.ts (one streaming row:
+                     liveOf, applyDelta, applyHtml, finish; offsets and
+                     gaps), events.ts (ChatState and applyEvent, the
+                     reducer over the socket events), thread.ts
+                     (groupRows: the user rows, work groups and replies
+                     the transcript renders, computed from the state so a
+                     reload shows what a live tab shows). store.ts (the
+                     signals: chats, state, draft, running, note, opened
+                     blocks; the commands: send, patch, regenerate),
+                     nav.ts (open() with its token, showDraft, the socket
+                     routing with the pending queue while a fetch is in
+                     flight, boot). Components: Chat.tsx, List.tsx,
+                     Header.tsx, ModelPicker.tsx, Settings.tsx, Thread.tsx
+                     (the scroll stickiness), Reply.tsx, UserRow.tsx,
+                     Think.tsx, Tool.tsx, Work.tsx, Composer.tsx,
+                     Stats.tsx, Context.tsx, Empty.tsx
 src/ui/style.css     follows the engine's own console (its tokens: #131314
                      page, #1e1f20 cards, #0f1216 inset tiles, 10px uppercase
                      labels, bold mono values)
@@ -156,12 +197,18 @@ src/host/            probes: darwin.ts (bun:ffi, offsets verified with
                      offsetof(), load-bearing comments), info.ts (static host
                      facts), disk.ts (cache dir sizes, no spawn), local.ts
                      (is the engine on this host), index.ts (facade)
-test/                bun test suites; fixtures/ holds recorded engine bodies
+test/                bun test suites; fixtures/ holds recorded engine bodies,
+                     fixtures/ws/ recorded /ws chat event sequences (ndjson),
+                     ui/ the client's pure modules (the chat ones driven
+                     over every recording by ui/ws.ts) and render-to-string
+                     checks of its components
 docs/                user docs: monitor, chat, api (keep in step with web.ts),
                      development; internal/studio.md is the Studio guide
 scripts/             preview.sh (make preview), deploy-studio.sh (make
-                     deploy-studio), studio.env.example, and copies of the
-                     two Studio LaunchAgent plists (mlx-spy and mlx-serve)
+                     deploy-studio), record-ws.ts (records /ws chat events
+                     from the preview into test/fixtures/ws/),
+                     studio.env.example, and copies of the two Studio
+                     LaunchAgent plists (mlx-spy and mlx-serve)
 plans/               the development plan and milestones
 ```
 

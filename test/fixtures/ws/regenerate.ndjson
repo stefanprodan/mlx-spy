@@ -1,0 +1,231 @@
+{"t":0,"note":"on the plain chat: regenerate the reply, then edit the user message and resend; thinking on, tools off, Jundot/Qwen3.8-27B-oQ4e-mtp resident"}
+{"t":1,"type":"snapshot","chat":null}
+{"t":5908,"type":"chat","data":{"kind":"started","chat":{"id":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","title":"In two short sentences, what is a prefix cache?","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949155507,"updatedAt":1788949324432,"streaming":true},"user":{"id":153,"chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","role":"user","content":"In two short sentences, what is a prefix cache?","html":null,"reasoning":"","status":"done","error":null,"finishReason":null,"model":null,"createdAt":1788949155514,"finishedAt":null,"ttftMs":null,"thinkingMs":null,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null},"message":{"id":163,"chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","role":"assistant","content":"","html":"","reasoning":"","status":"streaming","error":null,"finishReason":null,"model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949324432,"finishedAt":null,"ttftMs":null,"thinkingMs":null,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null},"deletedFrom":154}}
+{"t":6623,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":"The user","reasoningAt":0}}
+{"t":6714,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" wants","reasoningAt":8}}
+{"t":6723,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" a","reasoningAt":14}}
+{"t":6723,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" concise","reasoningAt":16}}
+{"t":6808,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" two","reasoningAt":24}}
+{"t":6817,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":"-s","reasoningAt":28}}
+{"t":6817,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":"entence","reasoningAt":30}}
+{"t":7004,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" definition","reasoningAt":37}}
+{"t":7006,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" of","reasoningAt":48}}
+{"t":7006,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" a","reasoningAt":51}}
+{"t":7006,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" prefix","reasoningAt":53}}
+{"t":7006,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" cache","reasoningAt":60}}
+{"t":7006,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":".","reasoningAt":66}}
+{"t":7086,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" A","reasoningAt":67}}
+{"t":7096,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" prefix","reasoningAt":69}}
+{"t":7096,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" cache","reasoningAt":76}}
+{"t":7096,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" is","reasoningAt":82}}
+{"t":7177,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" a","reasoningAt":85}}
+{"t":7270,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" data","reasoningAt":87}}
+{"t":7280,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" structure","reasoningAt":92}}
+{"t":7362,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":"/","reasoningAt":102}}
+{"t":7454,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":"techn","reasoningAt":103}}
+{"t":7463,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":"ique","reasoningAt":108}}
+{"t":7546,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" used","reasoningAt":112}}
+{"t":7556,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" in","reasoningAt":117}}
+{"t":7640,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" various","reasoningAt":120}}
+{"t":7651,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" contexts","reasoningAt":128}}
+{"t":7651,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" (","reasoningAt":137}}
+{"t":7732,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":"d","reasoningAt":139}}
+{"t":7742,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":"atabases","reasoningAt":140}}
+{"t":7742,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":",","reasoningAt":148}}
+{"t":7825,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" networking","reasoningAt":149}}
+{"t":7834,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":",","reasoningAt":160}}
+{"t":7916,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" L","reasoningAt":161}}
+{"t":7929,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":"LM","reasoningAt":163}}
+{"t":8009,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" inference","reasoningAt":165}}
+{"t":8101,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":",","reasoningAt":175}}
+{"t":8110,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" etc","reasoningAt":176}}
+{"t":8110,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":".)","reasoningAt":180}}
+{"t":8194,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" that","reasoningAt":182}}
+{"t":8204,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" stores","reasoningAt":187}}
+{"t":8287,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" and","reasoningAt":194}}
+{"t":8380,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" re","reasoningAt":198}}
+{"t":8388,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":"uses","reasoningAt":201}}
+{"t":8472,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" the","reasoningAt":205}}
+{"t":8566,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" initial","reasoningAt":209}}
+{"t":8720,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" portion","reasoningAt":217}}
+{"t":8731,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" (","reasoningAt":225}}
+{"t":8731,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":"prefix","reasoningAt":227}}
+{"t":8731,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":")","reasoningAt":233}}
+{"t":8749,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" of","reasoningAt":234}}
+{"t":8758,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" a","reasoningAt":237}}
+{"t":8843,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" sequence","reasoningAt":239}}
+{"t":8933,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" to","reasoningAt":248}}
+{"t":8941,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" avoid","reasoningAt":251}}
+{"t":9025,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" redundant","reasoningAt":257}}
+{"t":9035,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" computation","reasoningAt":267}}
+{"t":9120,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" or","reasoningAt":279}}
+{"t":9129,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" lookup","reasoningAt":282}}
+{"t":9130,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":".","reasoningAt":289}}
+{"t":9211,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" I","reasoningAt":290}}
+{"t":9218,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":"'ll","reasoningAt":292}}
+{"t":9304,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" keep","reasoningAt":295}}
+{"t":9312,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" it","reasoningAt":300}}
+{"t":9312,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" to","reasoningAt":303}}
+{"t":9398,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" exactly","reasoningAt":306}}
+{"t":9408,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" two","reasoningAt":314}}
+{"t":9492,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" short","reasoningAt":318}}
+{"t":9501,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":" sentences","reasoningAt":324}}
+{"t":9502,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":".","reasoningAt":334}}
+{"t":9502,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"contentAt":0,"reasoning":"\n","reasoningAt":335}}
+{"t":9584,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":"A","contentAt":0,"reasoningAt":336}}
+{"t":9584,"type":"chat","data":{"kind":"html","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"html":"<p>A</p>","htmlAt":1}}
+{"t":9594,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" prefix","contentAt":1,"reasoningAt":336}}
+{"t":9676,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" cache","contentAt":8,"reasoningAt":336}}
+{"t":9769,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" is","contentAt":14,"reasoningAt":336}}
+{"t":9778,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" a","contentAt":17,"reasoningAt":336}}
+{"t":9778,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" data","contentAt":19,"reasoningAt":336}}
+{"t":9778,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" structure","contentAt":24,"reasoningAt":336}}
+{"t":9861,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" that","contentAt":34,"reasoningAt":336}}
+{"t":9871,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" stores","contentAt":39,"reasoningAt":336}}
+{"t":9953,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" the","contentAt":46,"reasoningAt":336}}
+{"t":10047,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" initial","contentAt":50,"reasoningAt":336}}
+{"t":10057,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" portion","contentAt":58,"reasoningAt":336}}
+{"t":10140,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" (","contentAt":66,"reasoningAt":336}}
+{"t":10148,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":"prefix","contentAt":68,"reasoningAt":336}}
+{"t":10148,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":")","contentAt":74,"reasoningAt":336}}
+{"t":10148,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" of","contentAt":75,"reasoningAt":336}}
+{"t":10231,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" a","contentAt":78,"reasoningAt":336}}
+{"t":10242,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" sequence","contentAt":80,"reasoningAt":336}}
+{"t":10324,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" so","contentAt":89,"reasoningAt":336}}
+{"t":10487,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" it","contentAt":92,"reasoningAt":336}}
+{"t":10498,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" can","contentAt":95,"reasoningAt":336}}
+{"t":10498,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" be","contentAt":99,"reasoningAt":336}}
+{"t":10498,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" reused","contentAt":102,"reasoningAt":336}}
+{"t":10508,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" later","contentAt":109,"reasoningAt":336}}
+{"t":10602,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" without","contentAt":115,"reasoningAt":336}}
+{"t":10602,"type":"chat","data":{"kind":"html","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"html":"<p>A prefix cache is a data structure that stores the initial portion (prefix) of a sequence so it can be reused later without</p>","htmlAt":123}}
+{"t":10613,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" recom","contentAt":123,"reasoningAt":336}}
+{"t":10695,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":"putation","contentAt":129,"reasoningAt":336}}
+{"t":10705,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":".","contentAt":137,"reasoningAt":336}}
+{"t":10705,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" It","contentAt":138,"reasoningAt":336}}
+{"t":10792,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":"'s","contentAt":141,"reasoningAt":336}}
+{"t":10801,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" commonly","contentAt":143,"reasoningAt":336}}
+{"t":10801,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" used","contentAt":152,"reasoningAt":336}}
+{"t":10801,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" in","contentAt":157,"reasoningAt":336}}
+{"t":10882,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" L","contentAt":160,"reasoningAt":336}}
+{"t":10892,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":"LM","contentAt":162,"reasoningAt":336}}
+{"t":10892,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" inference","contentAt":164,"reasoningAt":336}}
+{"t":10892,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":",","contentAt":174,"reasoningAt":336}}
+{"t":10986,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" databases","contentAt":175,"reasoningAt":336}}
+{"t":10999,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":",","contentAt":185,"reasoningAt":336}}
+{"t":10999,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" and","contentAt":186,"reasoningAt":336}}
+{"t":10999,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" networking","contentAt":190,"reasoningAt":336}}
+{"t":11069,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" to","contentAt":201,"reasoningAt":336}}
+{"t":11158,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" speed","contentAt":204,"reasoningAt":336}}
+{"t":11169,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" up","contentAt":210,"reasoningAt":336}}
+{"t":11169,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" repeated","contentAt":213,"reasoningAt":336}}
+{"t":11254,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" operations","contentAt":222,"reasoningAt":336}}
+{"t":11344,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" that","contentAt":233,"reasoningAt":336}}
+{"t":11353,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" share","contentAt":238,"reasoningAt":336}}
+{"t":11438,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" a","contentAt":244,"reasoningAt":336}}
+{"t":11448,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" common","contentAt":246,"reasoningAt":336}}
+{"t":11448,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":" beginning","contentAt":253,"reasoningAt":336}}
+{"t":11448,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"content":".","contentAt":263,"reasoningAt":336}}
+{"t":11533,"type":"chat","data":{"kind":"html","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":163,"html":"<p>A prefix cache is a data structure that stores the initial portion (prefix) of a sequence so it can be reused later without recomputation. It's commonly used in LLM inference, databases, and networking to speed up repeated operations that share a common beginning.</p>","htmlAt":264}}
+{"t":11533,"type":"chat","data":{"kind":"row","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","message":{"id":163,"chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","role":"assistant","content":"A prefix cache is a data structure that stores the initial portion (prefix) of a sequence so it can be reused later without recomputation. It's commonly used in LLM inference, databases, and networking to speed up repeated operations that share a common beginning.","html":"<p>A prefix cache is a data structure that stores the initial portion (prefix) of a sequence so it can be reused later without recomputation. It's commonly used in LLM inference, databases, and networking to speed up repeated operations that share a common beginning.</p>","reasoning":"The user wants a concise two-sentence definition of a prefix cache. A prefix cache is a data structure/technique used in various contexts (databases, networking, LLM inference, etc.) that stores and reuses the initial portion (prefix) of a sequence to avoid redundant computation or lookup. I'll keep it to exactly two short sentences.\n","status":"done","error":null,"finishReason":"stop","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949324432,"finishedAt":1788949330056,"ttftMs":714,"thinkingMs":2962,"stats":{"promptTokens":51,"cachedTokens":20,"generated":126,"prefillMs":581.569,"decodeMs":4909.987,"tokenizeMs":3.631},"toolCalls":null,"toolCallId":null,"toolName":null},"chat":{"id":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","title":"In two short sentences, what is a prefix cache?","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949155507,"updatedAt":1788949330056,"streaming":false}}}
+{"t":11533,"type":"chat","data":{"kind":"done","chat":{"id":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","title":"In two short sentences, what is a prefix cache?","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949155507,"updatedAt":1788949330056,"streaming":false},"message":{"id":163,"chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","role":"assistant","content":"A prefix cache is a data structure that stores the initial portion (prefix) of a sequence so it can be reused later without recomputation. It's commonly used in LLM inference, databases, and networking to speed up repeated operations that share a common beginning.","html":"<p>A prefix cache is a data structure that stores the initial portion (prefix) of a sequence so it can be reused later without recomputation. It's commonly used in LLM inference, databases, and networking to speed up repeated operations that share a common beginning.</p>","reasoning":"The user wants a concise two-sentence definition of a prefix cache. A prefix cache is a data structure/technique used in various contexts (databases, networking, LLM inference, etc.) that stores and reuses the initial portion (prefix) of a sequence to avoid redundant computation or lookup. I'll keep it to exactly two short sentences.\n","status":"done","error":null,"finishReason":"stop","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949324432,"finishedAt":1788949330056,"ttftMs":714,"thinkingMs":2962,"stats":{"promptTokens":51,"cachedTokens":20,"generated":126,"prefillMs":581.569,"decodeMs":4909.987,"tokenizeMs":3.631},"toolCalls":null,"toolCallId":null,"toolName":null}}}
+{"t":24211,"type":"chat","data":{"kind":"started","chat":{"id":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","title":"In two short sentences, what is a prefix cache?","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949155507,"updatedAt":1788949342735,"streaming":true},"user":{"id":164,"chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","role":"user","content":"In one short sentence, what is a KV cache?","html":null,"reasoning":"","status":"done","error":null,"finishReason":null,"model":null,"createdAt":1788949342735,"finishedAt":null,"ttftMs":null,"thinkingMs":null,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null},"message":{"id":165,"chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","role":"assistant","content":"","html":"","reasoning":"","status":"streaming","error":null,"finishReason":null,"model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949342735,"finishedAt":null,"ttftMs":null,"thinkingMs":null,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null},"deletedFrom":153}}
+{"t":24904,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":"The user","reasoningAt":0}}
+{"t":24913,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" is","reasoningAt":8}}
+{"t":24913,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" asking","reasoningAt":11}}
+{"t":24995,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" for","reasoningAt":18}}
+{"t":25005,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" a","reasoningAt":22}}
+{"t":25088,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" one","reasoningAt":24}}
+{"t":25097,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":"-s","reasoningAt":28}}
+{"t":25098,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":"entence","reasoningAt":30}}
+{"t":25181,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" explanation","reasoningAt":37}}
+{"t":25192,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" of","reasoningAt":49}}
+{"t":25192,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" what","reasoningAt":52}}
+{"t":25192,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" a","reasoningAt":57}}
+{"t":25276,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" KV","reasoningAt":59}}
+{"t":25289,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" cache","reasoningAt":62}}
+{"t":25289,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" is","reasoningAt":68}}
+{"t":25289,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":".","reasoningAt":71}}
+{"t":25370,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" This","reasoningAt":72}}
+{"t":25381,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" is","reasoningAt":77}}
+{"t":25382,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" a","reasoningAt":80}}
+{"t":25459,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" concept","reasoningAt":82}}
+{"t":25468,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" from","reasoningAt":90}}
+{"t":25551,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" transformer","reasoningAt":95}}
+{"t":25559,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":"-based","reasoningAt":107}}
+{"t":25644,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" language","reasoningAt":113}}
+{"t":25654,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" models","reasoningAt":122}}
+{"t":25654,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":".","reasoningAt":129}}
+{"t":25846,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" The","reasoningAt":130}}
+{"t":25846,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" KV","reasoningAt":134}}
+{"t":25846,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" cache","reasoningAt":137}}
+{"t":25846,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" stores","reasoningAt":143}}
+{"t":25846,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" the","reasoningAt":150}}
+{"t":25846,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" key","reasoningAt":154}}
+{"t":25856,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" and","reasoningAt":158}}
+{"t":25922,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" value","reasoningAt":162}}
+{"t":25933,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" vectors","reasoningAt":168}}
+{"t":25933,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" from","reasoningAt":176}}
+{"t":25933,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" previous","reasoningAt":181}}
+{"t":26015,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" tokens","reasoningAt":190}}
+{"t":26024,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" during","reasoningAt":197}}
+{"t":26107,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" autore","reasoningAt":204}}
+{"t":26119,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":"gressive","reasoningAt":211}}
+{"t":26199,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" generation","reasoningAt":219}}
+{"t":26209,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":",","reasoningAt":230}}
+{"t":26293,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" avoiding","reasoningAt":231}}
+{"t":26389,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" redundant","reasoningAt":240}}
+{"t":26400,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" computation","reasoningAt":250}}
+{"t":26400,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":".","reasoningAt":262}}
+{"t":26400,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" Let","reasoningAt":263}}
+{"t":26477,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" me","reasoningAt":267}}
+{"t":26570,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" write","reasoningAt":270}}
+{"t":26579,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" a","reasoningAt":276}}
+{"t":26579,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" concise","reasoningAt":278}}
+{"t":26579,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":",","reasoningAt":286}}
+{"t":26749,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" clear","reasoningAt":287}}
+{"t":26756,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":" sentence","reasoningAt":293}}
+{"t":26756,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":".","reasoningAt":302}}
+{"t":26756,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"contentAt":0,"reasoning":"\n","reasoningAt":303}}
+{"t":26756,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":"A","contentAt":0,"reasoningAt":304}}
+{"t":26756,"type":"chat","data":{"kind":"html","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"html":"<p>A</p>","htmlAt":1}}
+{"t":26756,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" KV","contentAt":1,"reasoningAt":304}}
+{"t":26848,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" cache","contentAt":4,"reasoningAt":304}}
+{"t":26858,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" is","contentAt":10,"reasoningAt":304}}
+{"t":26858,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" a","contentAt":13,"reasoningAt":304}}
+{"t":26858,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" memory","contentAt":15,"reasoningAt":304}}
+{"t":26941,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" structure","contentAt":22,"reasoningAt":304}}
+{"t":26951,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" that","contentAt":32,"reasoningAt":304}}
+{"t":26951,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" stores","contentAt":37,"reasoningAt":304}}
+{"t":26951,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" the","contentAt":44,"reasoningAt":304}}
+{"t":27034,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" key","contentAt":48,"reasoningAt":304}}
+{"t":27044,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" and","contentAt":52,"reasoningAt":304}}
+{"t":27044,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" value","contentAt":56,"reasoningAt":304}}
+{"t":27044,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" vectors","contentAt":62,"reasoningAt":304}}
+{"t":27126,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" computed","contentAt":70,"reasoningAt":304}}
+{"t":27218,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" for","contentAt":79,"reasoningAt":304}}
+{"t":27312,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" previous","contentAt":83,"reasoningAt":304}}
+{"t":27321,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" tokens","contentAt":92,"reasoningAt":304}}
+{"t":27321,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" during","contentAt":99,"reasoningAt":304}}
+{"t":27321,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" autore","contentAt":106,"reasoningAt":304}}
+{"t":27405,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":"gressive","contentAt":113,"reasoningAt":304}}
+{"t":27419,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" generation","contentAt":121,"reasoningAt":304}}
+{"t":27419,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":",","contentAt":132,"reasoningAt":304}}
+{"t":27419,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" so","contentAt":133,"reasoningAt":304}}
+{"t":27498,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" they","contentAt":136,"reasoningAt":304}}
+{"t":27507,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" don","contentAt":141,"reasoningAt":304}}
+{"t":27507,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":"'t","contentAt":145,"reasoningAt":304}}
+{"t":27507,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" need","contentAt":147,"reasoningAt":304}}
+{"t":27591,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" to","contentAt":152,"reasoningAt":304}}
+{"t":27599,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" be","contentAt":155,"reasoningAt":304}}
+{"t":27599,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" recal","contentAt":158,"reasoningAt":304}}
+{"t":27599,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":"culated","contentAt":164,"reasoningAt":304}}
+{"t":27684,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" for","contentAt":171,"reasoningAt":304}}
+{"t":27691,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" each","contentAt":175,"reasoningAt":304}}
+{"t":27691,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" new","contentAt":180,"reasoningAt":304}}
+{"t":27691,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":" token","contentAt":184,"reasoningAt":304}}
+{"t":27776,"type":"chat","data":{"kind":"delta","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"content":".","contentAt":190,"reasoningAt":304}}
+{"t":27776,"type":"chat","data":{"kind":"html","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"html":"<p>A KV cache is a memory structure that stores the key and value vectors computed for previous tokens during autoregressive generation, so they don't need to be recalculated for each new token.</p>","htmlAt":191}}
+{"t":27778,"type":"chat","data":{"kind":"html","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","messageId":165,"html":"<p>A KV cache is a memory structure that stores the key and value vectors computed for previous tokens during autoregressive generation, so they don't need to be recalculated for each new token.</p>","htmlAt":191}}
+{"t":27778,"type":"chat","data":{"kind":"row","chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","message":{"id":165,"chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","role":"assistant","content":"A KV cache is a memory structure that stores the key and value vectors computed for previous tokens during autoregressive generation, so they don't need to be recalculated for each new token.","html":"<p>A KV cache is a memory structure that stores the key and value vectors computed for previous tokens during autoregressive generation, so they don't need to be recalculated for each new token.</p>","reasoning":"The user is asking for a one-sentence explanation of what a KV cache is. This is a concept from transformer-based language models. The KV cache stores the key and value vectors from previous tokens during autoregressive generation, avoiding redundant computation. Let me write a concise, clear sentence.\n","status":"done","error":null,"finishReason":"stop","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949342735,"finishedAt":1788949346301,"ttftMs":692,"thinkingMs":1853,"stats":{"promptTokens":51,"cachedTokens":20,"generated":97,"prefillMs":576.428,"decodeMs":2873.814,"tokenizeMs":1.518},"toolCalls":null,"toolCallId":null,"toolName":null},"chat":{"id":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","title":"In two short sentences, what is a prefix cache?","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949155507,"updatedAt":1788949346301,"streaming":false}}}
+{"t":27778,"type":"chat","data":{"kind":"done","chat":{"id":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","title":"In two short sentences, what is a prefix cache?","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949155507,"updatedAt":1788949346301,"streaming":false},"message":{"id":165,"chatId":"f9312cbe-c473-4b53-8d2a-ffb6ca5be319","role":"assistant","content":"A KV cache is a memory structure that stores the key and value vectors computed for previous tokens during autoregressive generation, so they don't need to be recalculated for each new token.","html":"<p>A KV cache is a memory structure that stores the key and value vectors computed for previous tokens during autoregressive generation, so they don't need to be recalculated for each new token.</p>","reasoning":"The user is asking for a one-sentence explanation of what a KV cache is. This is a concept from transformer-based language models. The KV cache stores the key and value vectors from previous tokens during autoregressive generation, avoiding redundant computation. Let me write a concise, clear sentence.\n","status":"done","error":null,"finishReason":"stop","model":"Jundot/Qwen3.8-27B-oQ4e-mtp","createdAt":1788949342735,"finishedAt":1788949346301,"ttftMs":692,"thinkingMs":1853,"stats":{"promptTokens":51,"cachedTokens":20,"generated":97,"prefillMs":576.428,"decodeMs":2873.814,"tokenizeMs":1.518},"toolCalls":null,"toolCallId":null,"toolName":null}}}

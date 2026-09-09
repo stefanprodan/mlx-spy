@@ -21,10 +21,14 @@ same series.
   time spent prefilling and decoding) or the last one finished with its
   prompt size and cached share.
 - **Models** (or "No models found." and "Engine unreachable." as one line when
-  there are none): every model the engine lists with its state, size and
+  there are none): every model the engine lists, the daily driver first and
+  the rest by id so nothing moves on a load, with its state, size and
   context, and the buttons: load, unload, make default, plus the
-  daily-driver star (mlx-spy's own mark). Every action asks for
-  confirmation and is logged under the table.
+  daily-driver star (mlx-spy's own mark). A failed action is reported
+  under the table; a success shows in the list or the uptime. Unload, the daily-driver toggle and a load into an empty
+  engine run at once; loading next to a resident model asks first and
+  shows the estimated engine memory after the load (its footprint now
+  plus the model's weights); the rest ask for confirmation.
 - **Runtime**: the engine process (pid, RSS, CPU, GPU, weights) next to
   host facts (OS, chip, cores, GPU cores, memory, disk), plus Restart
   engine and Clear disk cache. Those two, and the process probes, only

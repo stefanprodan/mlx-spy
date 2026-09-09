@@ -12,7 +12,15 @@
     "strict": true,
     "skipLibCheck": true,
     "noUncheckedIndexedAccess": false,
-    "types": ["bun"]
+    "types": ["bun"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "test/**/*.ts",
+    "test/**/*.tsx",
+    "scripts/**/*.ts"
+  ]
 }

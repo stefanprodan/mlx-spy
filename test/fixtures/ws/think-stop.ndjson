@@ -1,0 +1,86 @@
+{"t":0,"note":"one puzzle message, thinking on, tools on, stopped 1.5 s after the send while the model was still thinking and before any content, stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp resident"}
+{"t":1,"type":"snapshot","chat":null}
+{"t":7090,"type":"chat","data":{"kind":"chat","chat":{"id":"618eba92-2a5a-469e-bfdc-4666f6c20330","title":"","model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","systemPrompt":"","thinking":true,"reasoningEffort":null,"temperature":null,"topP":null,"maxTokens":null,"toolsOff":[],"search":"exa","createdAt":1788949942037,"updatedAt":1788949942037,"streaming":false}}}
+{"t":7095,"type":"chat","data":{"kind":"chat","chat":{"id":"618eba92-2a5a-469e-bfdc-4666f6c20330","title":"Three people check into a hotel room that costs…","model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","systemPrompt":"","thinking":true,"reasoningEffort":null,"temperature":null,"topP":null,"maxTokens":null,"toolsOff":[],"search":"exa","createdAt":1788949942037,"updatedAt":1788949942043,"streaming":true}}}
+{"t":7095,"type":"chat","data":{"kind":"started","chat":{"id":"618eba92-2a5a-469e-bfdc-4666f6c20330","title":"Three people check into a hotel room that costs…","model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","createdAt":1788949942037,"updatedAt":1788949942043,"streaming":true},"user":{"id":187,"chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","role":"user","content":"Three people check into a hotel room that costs 30 dollars; each pays 10. Later the clerk realises it costs 25 and sends the bellboy with 5 back; he keeps 2 and returns 1 to each. Reason step by step, double-check, then explain the missing dollar.","html":null,"reasoning":"","status":"done","error":null,"finishReason":null,"model":null,"createdAt":1788949942042,"finishedAt":null,"ttftMs":null,"thinkingMs":null,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null},"message":{"id":188,"chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","role":"assistant","content":"","html":"","reasoning":"","status":"streaming","error":null,"finishReason":null,"model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","createdAt":1788949942043,"finishedAt":null,"ttftMs":null,"thinkingMs":null,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null}}}
+{"t":7797,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"Let","reasoningAt":0}}
+{"t":7807,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" me","reasoningAt":3}}
+{"t":7821,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" work","reasoningAt":6}}
+{"t":7832,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" through","reasoningAt":11}}
+{"t":7832,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" this","reasoningAt":19}}
+{"t":7840,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" classic","reasoningAt":24}}
+{"t":7858,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" puzzle","reasoningAt":32}}
+{"t":7869,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" carefully","reasoningAt":39}}
+{"t":7879,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":".","reasoningAt":49}}
+{"t":7879,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"\n\n","reasoningAt":50}}
+{"t":7896,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"Three","reasoningAt":52}}
+{"t":7906,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" people","reasoningAt":57}}
+{"t":7915,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" each","reasoningAt":64}}
+{"t":7915,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" pay","reasoningAt":69}}
+{"t":7931,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" $","reasoningAt":73}}
+{"t":7939,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"1","reasoningAt":75}}
+{"t":7949,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"0","reasoningAt":76}}
+{"t":7957,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":",","reasoningAt":77}}
+{"t":7967,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" so","reasoningAt":78}}
+{"t":7978,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" the","reasoningAt":81}}
+{"t":7987,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" clerk","reasoningAt":85}}
+{"t":8006,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" has","reasoningAt":91}}
+{"t":8014,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" $","reasoningAt":95}}
+{"t":8023,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"3","reasoningAt":97}}
+{"t":8023,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"0","reasoningAt":98}}
+{"t":8041,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":".","reasoningAt":99}}
+{"t":8050,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"\n","reasoningAt":100}}
+{"t":8060,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"C","reasoningAt":101}}
+{"t":8068,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"ler","reasoningAt":102}}
+{"t":8082,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"k","reasoningAt":105}}
+{"t":8090,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" realizes","reasoningAt":106}}
+{"t":8099,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" it","reasoningAt":115}}
+{"t":8099,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" costs","reasoningAt":118}}
+{"t":8115,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" $","reasoningAt":124}}
+{"t":8125,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"2","reasoningAt":126}}
+{"t":8135,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"5","reasoningAt":127}}
+{"t":8135,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":",","reasoningAt":128}}
+{"t":8151,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" sends","reasoningAt":129}}
+{"t":8170,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" bell","reasoningAt":135}}
+{"t":8177,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"boy","reasoningAt":140}}
+{"t":8191,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" back","reasoningAt":143}}
+{"t":8210,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" $","reasoningAt":148}}
+{"t":8220,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"5","reasoningAt":150}}
+{"t":8230,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":".","reasoningAt":151}}
+{"t":8230,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"\n","reasoningAt":152}}
+{"t":8242,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"Bell","reasoningAt":153}}
+{"t":8251,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"boy","reasoningAt":157}}
+{"t":8258,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" keeps","reasoningAt":160}}
+{"t":8270,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" $","reasoningAt":166}}
+{"t":8281,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"2","reasoningAt":168}}
+{"t":8281,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":",","reasoningAt":169}}
+{"t":8296,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" returns","reasoningAt":170}}
+{"t":8306,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" $","reasoningAt":178}}
+{"t":8318,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"1","reasoningAt":180}}
+{"t":8318,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" to","reasoningAt":181}}
+{"t":8333,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" each","reasoningAt":184}}
+{"t":8342,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" person","reasoningAt":189}}
+{"t":8352,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":".","reasoningAt":196}}
+{"t":8359,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"\n\n","reasoningAt":197}}
+{"t":8371,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"Let","reasoningAt":199}}
+{"t":8389,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" me","reasoningAt":202}}
+{"t":8406,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" track","reasoningAt":205}}
+{"t":8414,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" the","reasoningAt":211}}
+{"t":8425,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" money","reasoningAt":215}}
+{"t":8434,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" carefully","reasoningAt":221}}
+{"t":8443,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":".","reasoningAt":231}}
+{"t":8451,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"\n\n","reasoningAt":232}}
+{"t":8461,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"Each","reasoningAt":234}}
+{"t":8470,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" person","reasoningAt":238}}
+{"t":8480,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" originally","reasoningAt":245}}
+{"t":8499,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" gave","reasoningAt":256}}
+{"t":8512,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" $","reasoningAt":261}}
+{"t":8522,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"1","reasoningAt":263}}
+{"t":8522,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":"0","reasoningAt":264}}
+{"t":8534,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":".","reasoningAt":265}}
+{"t":8552,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" Each","reasoningAt":266}}
+{"t":8571,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" got","reasoningAt":271}}
+{"t":8581,"type":"chat","data":{"kind":"delta","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"contentAt":0,"reasoning":" back","reasoningAt":275}}
+{"t":8590,"type":"chat","data":{"kind":"html","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","messageId":188,"html":"","htmlAt":0}}
+{"t":8590,"type":"chat","data":{"kind":"row","chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","message":{"id":188,"chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","role":"assistant","content":"","html":"","reasoning":"Let me work through this classic puzzle carefully.\n\nThree people each pay $10, so the clerk has $30.\nClerk realizes it costs $25, sends bellboy back $5.\nBellboy keeps $2, returns $1 to each person.\n\nLet me track the money carefully.\n\nEach person originally gave $10. Each got back","status":"stopped","error":null,"finishReason":null,"model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","createdAt":1788949942043,"finishedAt":1788949943538,"ttftMs":702,"thinkingMs":793,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null},"chat":{"id":"618eba92-2a5a-469e-bfdc-4666f6c20330","title":"Three people check into a hotel room that costs…","model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","createdAt":1788949942037,"updatedAt":1788949943538,"streaming":false}}}
+{"t":8590,"type":"chat","data":{"kind":"done","chat":{"id":"618eba92-2a5a-469e-bfdc-4666f6c20330","title":"Three people check into a hotel room that costs…","model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","createdAt":1788949942037,"updatedAt":1788949943538,"streaming":false},"message":{"id":188,"chatId":"618eba92-2a5a-469e-bfdc-4666f6c20330","role":"assistant","content":"","html":"","reasoning":"Let me work through this classic puzzle carefully.\n\nThree people each pay $10, so the clerk has $30.\nClerk realizes it costs $25, sends bellboy back $5.\nBellboy keeps $2, returns $1 to each person.\n\nLet me track the money carefully.\n\nEach person originally gave $10. Each got back","status":"stopped","error":null,"finishReason":null,"model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","createdAt":1788949942043,"finishedAt":1788949943538,"ttftMs":702,"thinkingMs":793,"stats":null,"toolCalls":null,"toolCallId":null,"toolName":null}}}

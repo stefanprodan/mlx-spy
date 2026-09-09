@@ -55,7 +55,9 @@ the gear holds the system prompt, temperature, top p, max tokens and the
 tools, the fields empty by default so the engine's own defaults apply.
 Settings live on the chat and apply to the next message. The button at the left of the header
 folds the chat list away so the conversation takes the whole width (the
-page remembers the choice); on a phone it opens the list as a drawer.
+page remembers the choice); on a phone it opens the list as a drawer. The
+page also remembers the chat last used: opening `/chat` from the header
+comes back to it, until New chat or a deletion.
 
 Enter sends, Shift+Enter breaks a line. The Send button becomes Stop while
 the reply streams. Hover a reply for Copy and Regenerate, a message of your
@@ -72,7 +74,8 @@ With any tool on, every send can take several rounds: the model asks for
 a call, mlx-spy runs it and sends the result back, and the model answers
 or calls again. The calls of a round run at once. The numbers in the composer cover the
 whole send: the tokens every round generated and the time from the first
-round. A send stops after 8 rounds (the last
+round; while it runs, the rate and the count last seen stay on the line
+through a tool call and move on when the next round streams. A send stops after 8 rounds (the last
 one tells the model to answer with text), after 24 calls, after 60 s
 spent in tools, or when the model repeats the same call three times in a
 row; the row then says so. Stop works during a call as it does during a
