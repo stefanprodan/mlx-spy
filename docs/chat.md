@@ -125,7 +125,7 @@ provider is a chat setting in the gear: **Exa** (the default) answers
 with dated page excerpts the model can often answer from without a
 fetch; **Firecrawl** answers with a list of titles and short
 descriptions to fetch from. The model can limit a search to one site
-(`domain`). A send gets three searches. Both providers are tried without a
+(`domain`). A send gets three searches; the tool description tells the model so. Both providers are tried without a
 key: Exa keyless is its free plan (rate limited), and Firecrawl refuses
 some networks keyless with a message the model sees and reports. A key
 is a file holding the bare key, read at start: `../secrets/exa.key` and
