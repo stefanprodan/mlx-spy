@@ -9,8 +9,10 @@
 import type { ActionName } from "../../actions.ts";
 import type { Capability, ModelInfo } from "../../engine/types.ts";
 import { gb, orderModels } from "../format.ts";
-import { busy, type Snapshot } from "../store.ts";
+import { busy, pulls, type Snapshot } from "../store.ts";
 import { runAction } from "./actions.ts";
+import { PullRow } from "./Pull.tsx";
+import { visiblePulls } from "./pull.ts";
 
 const ICON = {
   play: "M5 3l9 5-9 5z",
@@ -115,6 +117,8 @@ function Buttons({
 export function Models({ snap }: { snap: Snapshot | null }) {
   const models = orderModels(snap?.models ?? []);
   const can = (c: Capability) => snap?.engine.capabilities.includes(c) ?? false;
+  // downloads sit on top: a running one is the row that changes
+  const downloads = visiblePulls(pulls.value, models);
   // the list is empty while the engine is unreachable (the sampler drops
   // it) or when it really lists nothing; one sentence either way
   const none =
@@ -125,6 +129,9 @@ export function Models({ snap }: { snap: Snapshot | null }) {
     <section class="card models">
       <table id="models">
         <tbody>
+          {downloads.map((p) => (
+            <PullRow key={`pull-${p.id}`} p={p} />
+          ))}
           {models.map((m) => {
             const slash = m.id.lastIndexOf("/");
             const facts = [
@@ -160,7 +167,7 @@ export function Models({ snap }: { snap: Snapshot | null }) {
           })}
         </tbody>
       </table>
-      <p class="blank" hidden={models.length > 0}>
+      <p class="blank" hidden={models.length > 0 || downloads.length > 0}>
         {none}
       </p>
     </section>

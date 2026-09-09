@@ -32,6 +32,20 @@ export const Trash = () => (
   </svg>
 );
 
+// the Download button in the Models head
+export const Download = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"
+    />
+  </svg>
+);
+
 const stroke = {
   fill: "none",
   stroke: "currentColor",

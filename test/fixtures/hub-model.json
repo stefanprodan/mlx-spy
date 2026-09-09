@@ -1,0 +1,106 @@
+{
+  "_id": "6a6aae36ca980c9aa7b9e2c0",
+  "id": "Jundot/gemma-4-E2B-it-oQ4e-mtp",
+  "private": false,
+  "library_name": "mlx",
+  "tags": [
+    "mlx",
+    "safetensors",
+    "gemma4",
+    "oq",
+    "quantized",
+    "4-bit",
+    "region:us"
+  ],
+  "downloads": 273,
+  "likes": 0,
+  "modelId": "Jundot/gemma-4-E2B-it-oQ4e-mtp",
+  "author": "Jundot",
+  "sha": "7a33e95a223a89fc477659f30c4cfe6061920539",
+  "lastModified": "2026-07-30T01:52:42.000Z",
+  "gated": false,
+  "disabled": false,
+  "model-index": null,
+  "siblings": [
+    {
+      "rfilename": ".gitattributes",
+      "blobId": "52373fe24473b1aa44333d318f578ae6bf04b49b",
+      "size": 1570
+    },
+    {
+      "rfilename": "README.md",
+      "blobId": "4f477ab0834e08668dde5af9fef6388f0da19bcf",
+      "size": 316
+    },
+    {
+      "rfilename": "chat_template.jinja",
+      "blobId": "afb1d517bedb410d5bb32df4300d17f6e5888e2a",
+      "size": 11926
+    },
+    {
+      "rfilename": "config.json",
+      "blobId": "d846a79e3099a350060158636bfffdf64f6fd13f",
+      "size": 33202
+    },
+    {
+      "rfilename": "generation_config.json",
+      "blobId": "e605bb4523b1462ea9d9a3810b9e3ecf7ab7b1f6",
+      "size": 208
+    },
+    {
+      "rfilename": "model-mtp.safetensors",
+      "blobId": "e61f420cb9ba26bce29fecf8a4477ae58bbe3ff0",
+      "size": 157566176,
+      "lfs": {
+        "sha256": "792a8b2f1a8f7be6ab1b450ce023323e3e0a9bcce3a927c8755472f7f6afcefa",
+        "size": 157566176,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "model.safetensors",
+      "blobId": "c637132af36a0106a2d4da58a22d96667aa26c1f",
+      "size": 3677777908,
+      "lfs": {
+        "sha256": "ca36950608cae6b6f67ab3885d6be5f043ee5901b5ca590edcd034961d587ad5",
+        "size": 3677777908,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "oq_imatrix_report.json",
+      "blobId": "4e0229f84a1a6a212393b0542422cae769877dd0",
+      "size": 17926
+    },
+    {
+      "rfilename": "processor_config.json",
+      "blobId": "5465974d23e1eca2c46c2809b26c997946ce0d90",
+      "size": 1689
+    },
+    {
+      "rfilename": "tokenizer.json",
+      "blobId": "1ff9f3e3439a939b971f9919e821bf87e835a503",
+      "size": 32169626,
+      "lfs": {
+        "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f",
+        "size": 32169626,
+        "pointerSize": 133
+      }
+    },
+    {
+      "rfilename": "tokenizer_config.json",
+      "blobId": "e54180678550bb9eb3ed2e4a64c540dcdf80a2ee",
+      "size": 2068
+    }
+  ],
+  "spaces": [],
+  "createdAt": "2026-07-30T01:51:50.000Z",
+  "safetensors": {
+    "parameters": {
+      "BF16": 472475203,
+      "U32": 4631822336
+    },
+    "total": 5104297539
+  },
+  "usedStorage": 3867513710
+}

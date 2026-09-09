@@ -13,7 +13,7 @@
 
 import { mkdirSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import pkg from "../package.json";
 import { Actions } from "./actions.ts";
 import { ChatRunner } from "./chat.ts";
@@ -23,10 +23,12 @@ import { History } from "./history.ts";
 import { createHostProbes } from "./host/index.ts";
 import { hostInfo } from "./host/info.ts";
 import { isLocalUrl } from "./host/local.ts";
+import { PullRunner } from "./pull.ts";
+import { PullStore } from "./pulls.ts";
 import { takeSample } from "./sample.ts";
 import { Sampler } from "./sampler.ts";
 import type { SearchKeys } from "./tools/search/types.ts";
-import { loadSearchKeys, secretsDir } from "./tools/websearch.ts";
+import { loadKey, loadSearchKeys, secretsDir } from "./tools/websearch.ts";
 import { TOOLS } from "./tools.ts";
 import page from "./ui/index.html";
 import { DEFAULT_PORT, serve, tailscaleAddress } from "./web.ts";
@@ -36,6 +38,7 @@ export const VERSION = buildVersion || `v${pkg.version}`;
 
 const DEFAULT_ENGINE = "http://127.0.0.1:11234";
 const DEFAULT_DB = join(homedir(), ".mlx-spy", "history.sqlite");
+const DEFAULT_MODEL_DIR = join(homedir(), ".mlx-spy", "models");
 const DEFAULT_RETENTION_DAYS = 7;
 // Rates need two readings; one second matches the sampler's tick.
 const ONCE_WINDOW_MS = 1000;
@@ -52,15 +55,18 @@ const HELP = `\x1b[1mmlx-spy\x1b[0m - monitor and control an LLM inference serve
   --db <path>          SQLite history file (default: ~/.mlx-spy/history.sqlite;
                        ":memory:" keeps nothing)
   --retention <days>   history retention (default: ${DEFAULT_RETENTION_DAYS})
+  --model-dir <path>   where downloads from the Hugging Face Hub land, as
+                       <owner>/<name> directories (default: ~/.mlx-spy/models;
+                       point it at the engine's model directory)
   --hot-cache-max <n>  hot cache budget per model, e.g. 16GB (default: read
                        from the engine's launchd plist when local)
   --disk-cache-max <n> SSD cache tier budget per model, e.g. 50GB (same)
   --once               print one JSON sample and exit
   -v, --version        show version
   -h, --help           show this help
-  Search keys: ../secrets/{exa,firecrawl}.key next to the binary
-                       (.preview/secrets/ from source); keyless when absent;
-                       read at start
+  Keys: ../secrets/{exa,firecrawl,hf}.key next to the binary
+                       (.preview/secrets/ from source); search is keyless
+                       and the Hub anonymous when absent; read at start
 
 \x1b[1mAPI:\x1b[0m
   GET /                        the dashboard
@@ -71,6 +77,9 @@ const HELP = `\x1b[1mmlx-spy\x1b[0m - monitor and control an LLM inference serve
                                read, update or delete a chat
   POST /api/chats/<id>/<name>  messages, regenerate, edit or stop
   GET /api/tools                available chat tools
+  GET|POST /api/pulls          list downloads or start one (body {"repo"})
+  GET|DELETE /api/pulls/<id>   read or forget a download
+  POST /api/pulls/<id>/cancel  stop a download; its parts are kept
   GET /api/snapshot            latest sample and model list
   GET /api/history?range=1h    series for 1h, 6h, 24h or 7d
   WS  /ws                      snapshot on connect, then one sample per second
@@ -92,6 +101,7 @@ function fail(message: string): never {
 let engineUrl = DEFAULT_ENGINE;
 let listen: string | null = null;
 let dbPath = DEFAULT_DB;
+let modelDir = DEFAULT_MODEL_DIR;
 let retentionDays = DEFAULT_RETENTION_DAYS;
 let once = false;
 let hotMax: number | null = null;
@@ -127,6 +137,10 @@ for (let i = 0; i < args.length; i++) {
     [listen, i] = value(i);
   } else if (name === "--db") {
     [dbPath, i] = value(i);
+  } else if (name === "--model-dir") {
+    [modelDir, i] = value(i);
+    if (modelDir === "") fail("--model-dir must not be empty");
+    modelDir = resolve(modelDir);
   } else if (name === "--retention") {
     const [v, j] = value(i);
     i = j;
@@ -193,8 +207,10 @@ const log = (line: string) =>
 // the message is what the user needs
 const searchDir = secretsDir();
 let searchKeys: SearchKeys;
+let hubToken: string | null;
 try {
   searchKeys = loadSearchKeys(searchDir);
+  hubToken = loadKey(join(searchDir, "hf.key"));
 } catch (error) {
   console.error(
     `error: ${error instanceof Error ? error.message : String(error)}`,
@@ -209,6 +225,7 @@ log(
     searchKeys.firecrawl === null ? "none" : join(searchDir, "firecrawl.key")
   }`,
 );
+log(`hf key: ${hubToken === null ? "none" : join(searchDir, "hf.key")}`);
 
 if (dbPath !== ":memory:") mkdirSync(dirname(dbPath), { recursive: true });
 const history = new History(dbPath, retentionDays);
@@ -234,6 +251,14 @@ const chat = new ChatRunner({
   version: VERSION,
   searchKeys,
 });
+const pulls = new PullRunner({
+  store: new PullStore(history.db),
+  modelDir,
+  token: hubToken,
+  engine,
+  refreshModels: () => sampler.refreshModels(),
+  log,
+});
 const web = serve(
   {
     engine,
@@ -241,22 +266,26 @@ const web = serve(
     history,
     actions,
     chat,
+    pulls,
     version: VERSION,
     local,
     limits,
     host: await hostInfo(),
+    modelDir,
   },
   { hostname, port },
   page,
 );
 sampler.start();
+pulls.resume();
 log(
-  `mlx-spy ${VERSION} on http://${web.server.hostname}:${web.server.port}, engine ${engineUrl} (${local ? "local" : "remote"}), history ${dbPath}`,
+  `mlx-spy ${VERSION} on http://${web.server.hostname}:${web.server.port}, engine ${engineUrl} (${local ? "local" : "remote"}), history ${dbPath}, models ${modelDir}`,
 );
 
 const shutdown = () => {
   sampler.stop();
   chat.shutdown();
+  pulls.shutdown();
   web.stop();
   history.close();
   process.exit(0);
