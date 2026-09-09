@@ -371,6 +371,15 @@ describe("chat API", () => {
     expect(await stopped.json()).toEqual({ ok: true });
     expect(snapshot(s.deps).chat).toBeNull();
 
+    // a stopped reply is nothing to summarize
+    const compact = await response(
+      s.deps,
+      `/api/chats/${chat.id}/compact`,
+      "POST",
+    );
+    expect(compact.status).toBe(400);
+    expect(await compact.json()).toEqual({ error: "Nothing to summarize yet" });
+
     const regenerated = await response(
       s.deps,
       `/api/chats/${chat.id}/regenerate`,

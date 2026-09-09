@@ -34,17 +34,16 @@ function pretty(args: string): string {
 }
 
 // One tool call with its result row, when it has one; the result is the
-// model's input, shown as text and labelled untrusted.
+// model's input, shown as text and labelled untrusted. A call without a
+// row was never run: the engine cut the round, or it came in the answer
+// round after a tool limit.
 export function Tool({ call, result }: ToolNode) {
   const key = `tool-${call.id}`;
-  const busy =
-    result === null ||
-    result.status === "pending" ||
-    result.status === "running";
+  const busy = result?.status === "pending" || result?.status === "running";
   const took =
     result?.status === "done" && result.finishedAt !== null
       ? secs(result.finishedAt - result.createdAt)
-      : (result?.status ?? "pending");
+      : (result?.status ?? "not run");
   return (
     <details
       class={busy ? "tool live" : "tool"}

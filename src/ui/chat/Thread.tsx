@@ -5,6 +5,7 @@ import { useSignal } from "@preact/signals";
 import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import { Empty } from "./Empty.tsx";
 import { Reply } from "./Reply.tsx";
+import { Summary } from "./Summary.tsx";
 import { current, tree } from "./store.ts";
 import type { Node } from "./thread.ts";
 import { UserRow } from "./UserRow.tsx";
@@ -13,6 +14,7 @@ import { Work } from "./Work.tsx";
 export function Row({ node }: { node: Node }) {
   if (node.kind === "user") return <UserRow message={node.message} />;
   if (node.kind === "work") return <Work node={node} />;
+  if (node.kind === "summary") return <Summary node={node} />;
   return (
     <Reply
       message={node.message}

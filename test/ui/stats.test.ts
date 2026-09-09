@@ -99,6 +99,16 @@ describe("live stats", () => {
     expect(values(r.items)[1]).toBe("40 tok");
   });
 
+  test("a summary streaming on its own is its own send", () => {
+    const msgs = [
+      row(1, "user"),
+      row(2, "assistant", { stats: stats(25), createdAt: t0 - 100_000 }),
+      row(3, "summary", { status: "streaming", createdAt: t0 }),
+    ];
+    const r = liveStats(freshSend(), msgs, decoding, t0 + 1500);
+    expect(values(r.items)).toEqual(["decode 88 tok/s", "40 tok", "1.5 s"]);
+  });
+
   test("prefill wins over decode while prefilling", () => {
     const msgs = [row(1, "user"), row(2, "assistant", { status: "streaming" })];
     const smp = { ...decoding, requestsPrefilling: 1, prefillTps: 1200.6 };

@@ -51,9 +51,16 @@ export type Reply = {
   last: boolean;
 };
 export type UserRow = { kind: "user"; message: Message };
-export type Node = UserRow | Work | Reply;
+// a summary row: the fold that stands for the rows above it in the next
+// request (compaction)
+export type SummaryNode = {
+  kind: "summary";
+  message: Message;
+  live: Live | null;
+};
+export type Node = UserRow | Work | Reply | SummaryNode;
 
-type Send = { user: Message | null; rows: Message[] };
+type Send = { user: Message | null; summary?: Message; rows: Message[] };
 
 const count = (k: number) => `${k} tool call${k === 1 ? "" : "s"}`;
 
@@ -100,7 +107,9 @@ export function groupRows(s: ChatState, toolsOn: boolean): Node[] {
     if (m.role === "tool") {
       if (m.toolCallId !== null) results.set(m.toolCallId, m);
     } else if (m.role === "user") sends.push({ user: m, rows: [] });
-    else {
+    else if (m.role === "summary") {
+      sends.push({ user: null, summary: m, rows: [] });
+    } else {
       if (sends.length === 0) sends.push({ user: null, rows: [] });
       sends[sends.length - 1].rows.push(m);
     }
@@ -115,6 +124,13 @@ export function groupRows(s: ChatState, toolsOn: boolean): Node[] {
   const nodes: Node[] = [];
   sends.forEach((send, i) => {
     if (send.user) nodes.push({ kind: "user", message: send.user });
+    if (send.summary) {
+      nodes.push({
+        kind: "summary",
+        message: send.summary,
+        live: liveOf(send.summary),
+      });
+    }
     if (send.rows.length === 0) return;
     const live = sendLive && i === sends.length - 1;
     // a send with tools streams its rows inside the group: the text may
@@ -190,7 +206,13 @@ export function groupRows(s: ChatState, toolsOn: boolean): Node[] {
       items,
     });
   });
-  const tailNode = nodes[nodes.length - 1];
-  if (tailNode?.kind === "reply") tailNode.last = true;
+  // the last reply keeps Regenerate behind a summary: regenerate drops
+  // the summary with the reply
+  for (let i = nodes.length - 1; i >= 0; i--) {
+    const node = nodes[i];
+    if (node.kind === "summary") continue;
+    if (node.kind === "reply") node.last = true;
+    break;
+  }
   return nodes;
 }

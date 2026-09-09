@@ -99,13 +99,15 @@ tools on can take several engine rounds. Bodies are JSON, at most 256 KB.
 | `POST /api/chats/<id>/messages` | `{content}` | 202 `{user, message}`: the user row and the assistant row that starts streaming |
 | `POST /api/chats/<id>/regenerate` | | 202 `{user, message}`; the last reply is dropped and answered again |
 | `POST /api/chats/<id>/edit` | `{messageId, content}` | 202 `{user, message}`; that user message and everything after it are replaced |
+| `POST /api/chats/<id>/compact` | | 202 `{message}`: a `summary` row that starts streaming; 400 when no finished reply follows the last summary |
 | `POST /api/chats/<id>/stop` | | `{ok: true}`, also when nothing runs; stops the engine round or the tool call that is running |
 | `GET /api/tools` | | `{timezone, tools: [{name, description}]}`, the tool registry and the host timezone of the date line the runner appends to every system prompt |
 
 A message is `{id, chatId, role, content, html, reasoning, status, error,
 finishReason, model, createdAt, finishedAt, ttftMs, thinkingMs, stats,
-toolCalls, toolCallId, toolName}`. `role` is `user`, `assistant` or `tool`.
-`html` is the server-rendered markdown of an assistant row. `status` is
+toolCalls, toolCallId, toolName}`. `role` is `user`, `assistant`, `tool`
+or `summary`. `html` is the server-rendered markdown of an assistant or
+summary row. `status` is
 `done`, `streaming`, `stopped` (the stop button), `interrupted` (mlx-spy
 was restarted mid-answer) or `error` (the engine's message in `error`); a
 tool row also passes through `pending` and `running`. `stats` comes from
@@ -128,10 +130,26 @@ with `finishReason` `tool_loop`. A send that hits a limit (rounds, calls,
 time or result size) marks that round `tool_limit`, leaves its unrun calls
 as interrupted tool rows, and runs one answer round in which no call is
 run; the reply is that round, or the `tool_limit` round itself when the
-model called a tool anyway.
+model called a tool anyway. A round the engine cut while the model wrote
+its calls (`length`, or `length/repetition_loop`) keeps the calls on the
+row without tool rows: they were not run, the row stays in the chat, and
+later requests carry it without them.
 
 The runner appends a line with today's date in the host's timezone to
 the system prompt of every send, after `systemPrompt` or alone.
+
+A `summary` row is the chat compacted: when a finished reply's
+`promptTokens + generated` reaches the model's context length minus a
+reserve (20,000, or a quarter of the context length when that is
+smaller), the send runs one more round that asks the model to summarize
+the conversation (thinking off, no tools, at most 4,096 tokens or the
+reserve) and
+writes the answer as a `summary` row; `POST .../compact` runs the same
+round on demand. Every later request starts with the system prompt, a
+user message carrying the last `done` summary, and only the rows after
+it; a summary with any other status is skipped. Its `stats.promptTokens`
+is the size of what it stood in for. A model whose context length is
+unknown never compacts on its own.
 
 Settings live on the chat and apply to the next message. `thinking` maps to
 the engine's `enable_thinking`; `reasoningEffort` is `low`, `medium`,
@@ -160,10 +178,10 @@ and `{type: "chat"}` for the chat:
 
 | `data.kind` | Fields | When |
 |---|---|---|
-| `started` | `chat, user, message, deletedFrom?` | a send started; both rows are new. After a regenerate or an edit, `deletedFrom` is the id of the first row that was removed: drop it and every later one |
+| `started` | `chat, user, message, deletedFrom?` | a send started; both rows are new (`user` is null for a summary round started on its own, `message` then the `summary` row). After a regenerate or an edit, `deletedFrom` is the id of the first row that was removed: drop it and every later one |
 | `row` | `chatId, message, chat` | one row of a send with tools changed: a later round's streaming row, a round finished with its calls, or a tool row in any state; insert or replace it by id |
 | `delta` | `chatId, messageId, content?, contentAt, reasoning?, reasoningAt` | text arrived; `*At` is the length of the buffer before it, so a client applies a delta only when it continues the text it has |
 | `html` | `chatId, messageId, html, htmlAt` | at most once a second: the reply rendered up to `htmlAt` characters |
-| `done` | `chat, message` | the send ended; `message` is its last assistant row with the terminal status |
+| `done` | `chat, message` | the send ended; `message` is its last assistant row with the terminal status, or the `summary` row when the send ended with a summary round |
 | `chat` | `chat` | a chat was created or its title or settings changed |
 | `deleted` | `chatId` | a chat was deleted |

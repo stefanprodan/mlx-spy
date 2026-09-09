@@ -53,7 +53,8 @@ the engine reports shown in the composer.
 - **Nothing extra runs.** Markdown is rendered by Bun on the server, and
   a fenced code block is highlighted there too (about forty languages;
   one the server does not know stays plain); the page loads no library
-  for it and the engine is only called when you send.
+  for it and the engine is only called when you send, or to summarize a
+  chat that fills the model's window (see below).
 - **Diagrams.** A `mermaid` block is drawn on the server once the reply
   is finished and shown as an image in place of the code (flowchart,
   sequence, state, class, ER and XY charts; Copy still copies the
@@ -89,6 +90,18 @@ otherwise. Delete is in the gear.
 A reply that was cut shows why under it: `stopped`, `cut at max tokens`,
 `interrupted, mlx-spy restarted`, or the engine's error.
 
+A long chat is compacted before it outgrows the model's window. When a
+reply leaves less than 20k tokens of the window (the number in the
+composer; a quarter of the window on a model with a small one), the
+send goes on with one more round that asks the model to
+summarize the conversation, thinking off and no tools, and the summary
+lands in the transcript as a fold, "Summarized 41k tokens". The next
+message is answered from the summary and the turns after it; the rows
+above the fold stay on the page but are no longer sent to the engine, so
+that reply prefills from scratch once. Type `/compact` in the composer
+to summarize a chat on demand. A summary that fails or is stopped is
+skipped, and the next reply that fills the window tries again.
+
 ## Tools
 
 With any tool on, every send can take several rounds: the model asks for
@@ -101,7 +114,9 @@ one tells the model to answer with text), after 24 calls, after 60 s
 spent in tools, or when the model repeats the same call three times in a
 row; the row then says so. Stop works during a call as it does during a
 reply. A call the model got wrong (an unknown tool, bad arguments) goes
-back to it as an error text, so it can correct itself.
+back to it as an error text, so it can correct itself. A call the engine
+cut short, or one made in the answer round after a limit, shows as "not
+run" in the fold and is left out of the next message's context.
 
 The tools go into the prompt, so the first message after a change to the
 set re-prefills and every message carries their tokens. The time itself
@@ -125,7 +140,7 @@ provider is a chat setting in the gear: **Exa** (the default) answers
 with dated page excerpts the model can often answer from without a
 fetch; **Firecrawl** answers with a list of titles and short
 descriptions to fetch from. The model can limit a search to one site
-(`domain`). A send gets three searches. Both providers are tried without a
+(`domain`). A send gets three searches; the tool description tells the model so. Both providers are tried without a
 key: Exa keyless is its free plan (rate limited), and Firecrawl refuses
 some networks keyless with a message the model sees and reports. A key
 is a file holding the bare key, read at start: `../secrets/exa.key` and

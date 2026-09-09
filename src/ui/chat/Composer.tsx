@@ -8,6 +8,7 @@ import { Stats } from "./Stats.tsx";
 import {
   chats,
   command,
+  compact,
   current,
   currentStreaming,
   modelInfo,
@@ -54,6 +55,10 @@ export function Composer() {
     if (!content) return;
     el.value = "";
     grow();
+    if (content === "/compact") {
+      await compact();
+      return;
+    }
     if (!(await send(content))) {
       el.value = content;
       grow();

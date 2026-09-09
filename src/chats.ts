@@ -38,6 +38,8 @@ export type ChatSummary = {
 
 export type Chat = ChatSummary & ChatSettings & { messages: Message[] };
 
+export type MessageRole = "user" | "assistant" | "tool" | "summary";
+
 export type MessageStatus =
   | "pending"
   | "running"
@@ -59,7 +61,7 @@ export type MessageStats = {
 export type Message = {
   id: number;
   chatId: string;
-  role: "user" | "assistant" | "tool";
+  role: MessageRole;
   content: string;
   html: string | null;
   reasoning: string;
@@ -138,7 +140,7 @@ type ChatRow = {
 type MessageRow = {
   id: number;
   chatId: string;
-  role: "user" | "assistant" | "tool";
+  role: MessageRole;
   content: string;
   reasoning: string;
   status: MessageStatus;
@@ -345,7 +347,7 @@ export class ChatStore {
       // a reply still streaming is rendered as the runner renders it: no
       // diagram until it is done (src/markdown.ts)
       html:
-        row.role === "assistant"
+        row.role === "assistant" || row.role === "summary"
           ? renderMarkdown(row.content, row.status === "streaming")
           : null,
       reasoning: row.reasoning,
@@ -486,7 +488,7 @@ export class ChatStore {
 
   addMessage(
     chatId: string,
-    role: "user" | "assistant" | "tool",
+    role: MessageRole,
     fields: AddMessageFields = {},
   ): Message {
     const createdAt = fields.createdAt ?? this.now();
@@ -502,7 +504,7 @@ export class ChatStore {
 
   private insertMessage(
     chatId: string,
-    role: "user" | "assistant" | "tool",
+    role: MessageRole,
     fields: AddMessageFields,
     createdAt: number,
   ): number {
@@ -591,7 +593,8 @@ export class ChatStore {
         prompt_tokens = $promptTokens, cached_tokens = $cachedTokens,
         generated = $generated, prefill_ms = $prefillMs,
         decode_ms = $decodeMs, tokenize_ms = $tokenizeMs
-        WHERE id = $id AND role = 'assistant' AND status = 'streaming'`)
+        WHERE id = $id AND role IN ('assistant', 'summary')
+          AND status = 'streaming'`)
       .run({
         id,
         status: fields.status,
@@ -718,7 +721,8 @@ export class ChatStore {
     return this.db.transaction(() => {
       let repaired = this.db
         .query(`UPDATE messages SET status = 'interrupted', finished_at = $at
-          WHERE role = 'assistant' AND status = 'streaming'`)
+          WHERE role IN ('assistant', 'summary')
+          AND status = 'streaming'`)
         .run({ at: finishedAt }).changes;
       repaired += this.db
         .query(`UPDATE messages SET status = 'interrupted', content = $content,

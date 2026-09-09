@@ -98,8 +98,10 @@ Deploy when asked, then say what is now running there.
    layer, are logged, and are disabled when the engine URL is not local.
    The chat runner is the only other engine caller: it posts to
    `/v1/chat/completions` (always streaming, so the engine cancels the slot
-   when mlx-spy aborts) only when a user sends a message, and a message
-   naming a non-resident model cold-loads it on purpose. The chat tools
+   when mlx-spy aborts) only when a user sends a message or asks for a
+   summary (`/compact`), plus one summary round after a reply that fills
+   the model's window; a message naming a non-resident model cold-loads
+   it on purpose. The chat tools
    (`src/tools/`) are the only other network callers: `webfetch` reads what
    the model asks for, the engine included (the user's decision), and
    refuses only this host's loopback addresses; `websearch` posts the
@@ -155,7 +157,9 @@ src/chats.ts         ChatStore: chats and messages over the same sqlite file
 src/chat.ts          ChatRunner: the one send in flight, rounds of engine
                      requests with tool calls between them, partial reply
                      written every 250 ms or 2 KB, deltas and rendered HTML
-                     on /ws, stop from any tab, regenerate, edit
+                     on /ws, stop from any tab, regenerate, edit; compaction
+                     (a summary round after a reply that fills the window,
+                     or on demand) and the next request from the summary
 src/tools.ts, src/tools/
                      the tool registry the runner executes: get_current_time,
                      webfetch (with the network guard), websearch; pure parts
@@ -215,7 +219,8 @@ src/ui/chat/         the Chat page. Pure and tested on the recordings in
                      Header.tsx, ModelPicker.tsx, Settings.tsx, Thread.tsx
                      (the scroll stickiness), Reply.tsx, UserRow.tsx,
                      Think.tsx, Tool.tsx, Work.tsx, Composer.tsx,
-                     Stats.tsx, Context.tsx, Empty.tsx
+                     Summary.tsx (the compaction fold), Stats.tsx,
+                     Context.tsx, Empty.tsx
 src/ui/style.css     follows the engine's own console (its tokens: #131314
                      page, #1e1f20 cards, #0f1216 inset tiles, 10px uppercase
                      labels, bold mono values)

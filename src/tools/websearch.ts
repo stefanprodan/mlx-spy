@@ -323,7 +323,7 @@ export async function searchWeb(
 export const websearchTool: ToolDef = {
   name: "websearch",
   description:
-    "Search the web. Describe the page you want in a sentence rather than keywords; set domain to limit the results to one site. Returns titles, URLs and excerpts; call webfetch on a result's URL to read the whole page. The current year is {{year}}. You MUST use this year when searching for recent information.",
+    "Search the web. Describe the page you want in a sentence rather than keywords; set domain to limit the results to one site. Returns titles, URLs and excerpts; call webfetch on a result's URL to read the whole page. You get at most three searches per turn, so make each one count and do not repeat a query in other words. The current year is {{year}}. You MUST use this year when searching for recent information.",
   parameters: {
     type: "object",
     properties: {
