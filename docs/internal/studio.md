@@ -162,12 +162,12 @@ plist). Tell the user what changed; the flags are their policy.
 |---|---|
 | Binary | `~/.mlx-spy/bin/mlx-spy` |
 | launchd agent | label `com.stefanprodan.mlx-spy`, plist `~/Library/LaunchAgents/com.stefanprodan.mlx-spy.plist`, reference copy `scripts/com.stefanprodan.mlx-spy.plist` in this repo; `RunAtLoad` and `KeepAlive` (5 s throttle), so it comes back on a crash and at login |
-| Arguments | `--engine http://127.0.0.1:11234 --listen 0.0.0.0:11235`, like the engine bound on every interface; the default db |
+| Arguments | `--engine http://127.0.0.1:11234 --listen 0.0.0.0:11235 --model-dir /Users/stefanprodan/models`, like the engine bound on every interface; the default db; downloads land in the engine's own model directory (set 2026-09-09) |
 | URL | `http://$STUDIO_HOST:11235` from the tailnet; `http://127.0.0.1:11235` on the box |
 | Database | `~/.mlx-spy/history.sqlite` (WAL mode, so `-shm` and `-wal` files sit next to it) |
 | Log | `~/.mlx-spy/mlx-spy.log` (stdout and stderr of the agent, appended) |
 | Working dir | `~/.mlx-spy` |
-| Secrets | `~/.mlx-spy/secrets/` (mode 700, files mode 600): `exa.key` and `firecrawl.key`, each holding the bare API key; the boot log's `exa key:` and `firecrawl key:` lines name the file found, or `none` |
+| Secrets | `~/.mlx-spy/secrets/` (mode 700, files mode 600): `exa.key` and `firecrawl.key`, each holding the bare API key, and `hf.key` (a Hugging Face token, for gated repos and faster downloads; written from the shell's `HF_TOKEN` on 2026-09-09); the boot log's `exa key:`, `firecrawl key:` and `hf key:` lines name the file found, or `none` |
 
 Checks:
 
@@ -190,6 +190,21 @@ runs `launchctl kickstart -k gui/$(id -u)/com.stefanprodan.mlx-spy`, then
 polls `/api/snapshot` until the new process answers (about 45 s, most of
 it the 62 MB upload). Exit code 0 with the version printed means the deploy
 is verified; anything else prints the log tail.
+
+A change to mlx-spy's own flags is a plist change, and a kickstart does
+not reread a plist: edit `scripts/com.stefanprodan.mlx-spy.plist`, scp it
+to `~/Library/LaunchAgents/`, then bootout, wait for the process to exit,
+and bootstrap (verified 2026-09-09 when `--model-dir` was added):
+
+```sh
+scp -q scripts/com.stefanprodan.mlx-spy.plist $STUDIO_SSH:~/Library/LaunchAgents/com.stefanprodan.mlx-spy.plist
+ssh -o BatchMode=yes $STUDIO_SSH 'launchctl bootout gui/$(id -u)/com.stefanprodan.mlx-spy; for i in $(seq 1 30); do pgrep -x mlx-spy >/dev/null || break; sleep 1; done; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.stefanprodan.mlx-spy.plist'
+```
+
+A model downloaded from the Monitor page lands in `~/models/<owner>/<name>`
+and mlx-spy asks the engine to rescan when it completes, so it shows in
+the list without an engine restart. The residency policy above still
+applies: never load a third large model.
 
 Manually, the same three steps:
 

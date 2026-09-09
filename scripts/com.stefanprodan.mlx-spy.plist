@@ -11,6 +11,8 @@
 		<string>http://127.0.0.1:11234</string>
 		<string>--listen</string>
 		<string>0.0.0.0:11235</string>
+		<string>--model-dir</string>
+		<string>/Users/stefanprodan/models</string>
 	</array>
 	<key>WorkingDirectory</key>
 	<string>/Users/stefanprodan/.mlx-spy</string>

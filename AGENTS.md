@@ -86,8 +86,9 @@ Deploy when asked, then say what is now running there.
    path and cold-loads the default model: it undoes API unloads, evicts the
    model a client just loaded and halves decode speed during a request.
    The adapter uses only endpoints answered before the load step:
-   `/health`, `/metrics.json`, `/v1/models`. Anything new is verified the
-   same way in mlx-serve's `src/server.zig` first.
+   `/health`, `/metrics.json`, `/v1/models` and, once after a download,
+   `/v1/models/rescan`. Anything new is verified the same way in
+   mlx-serve's `src/server.zig` first.
 2. **The sampler is read-only.** `load`, `unload`, `restart` and
    `diskClear` run only from an explicit user action through the actions
    layer, are logged, and are disabled when the engine URL is not local.
@@ -99,6 +100,9 @@ Deploy when asked, then say what is now running there.
    the model asks for, the engine included (the user's decision), and
    refuses only this host's loopback addresses; `websearch` posts the
    model's query to `mcp.exa.ai` or `api.firecrawl.dev`, the chat's choice.
+   The pull runner (`src/pull.ts`) downloads from `huggingface.co` into
+   `--model-dir` only when a user asks for a repo; the engine takes no
+   part in the download and is asked to rescan when it is complete.
 3. **No spawns on the monitor path.** Host numbers come from FFI, directory
    sizes from recursive stat. The only spawns are the two local-only
    actions: `launchctl kickstart -k gui/<uid>/<label>` for "free" and the
@@ -112,9 +116,10 @@ Deploy when asked, then say what is now running there.
 
 ```
 src/main.ts          entry: CLI parsing (--engine, --listen, --db, --retention,
-                     --hot-cache-max, --disk-cache-max, --once, -h, -v); wires
-                     sampler, history and server; dev VERSION from package.json,
-                     release VERSION injected at build time
+                     --model-dir, --hot-cache-max, --disk-cache-max, --once,
+                     -h, -v); wires sampler, history, runners and server; dev
+                     VERSION from package.json, release VERSION injected at
+                     build time
 src/engine/types.ts  the Engine interface and the normalised metric types
 src/engine/openai.ts the OpenAI chat completions wire, shared by every engine:
                      buildChatBody, parseSse, chatEvents, ToolCallTracker,
@@ -134,6 +139,14 @@ src/sampler.ts       the 1 Hz loop; carries epoch, counters and the last
 src/history.ts       ring buffer (1 h) plus bun:sqlite: samples (7 day
                      retention, bucketed series() for uPlot), models (ids and
                      the favorite flag), requests (the last 50)
+src/hub.ts           the Hugging Face Hub: parseRepoId, parseRepoFiles (pure,
+                     tested on a recorded body), the resolve URL, fetchRepo
+src/pulls.ts         PullStore: pulls and pull_files over the same sqlite
+                     file; the rows are the resume state
+src/pull.ts          PullRunner: the download queue (one at a time), Range
+                     resume into <file>.mlx-spy-part, sha256 while writing, retries,
+                     cancel, remove, resume at start; progress on /ws;
+                     tested against a fake Hub in test/pull.test.ts
 src/chats.ts         ChatStore: chats and messages over the same sqlite file
 src/chat.ts          ChatRunner: the one send in flight, rounds of engine
                      requests with tool calls between them, partial reply
@@ -151,16 +164,17 @@ src/actions.ts       load, unload, default, free, diskClear (local-only),
                      historyClear, favorite; one at a time, logged, last 50
 src/web.ts           Bun.serve: the page, /api/snapshot, /api/history,
                      /api/requests, POST /api/actions/<name>, /api/chats and
-                     sub-routes, /ws; development mode from MLX_SPY_DEV=1;
-                     handle() separate from serve() for tests
+                     /api/pulls with their sub-routes, /ws; development mode
+                     from MLX_SPY_DEV=1; handle() separate from serve() for
+                     tests
 src/ui/index.html    the shell: head, the header, page and footer roots,
                      the script tag; Bun bundles style.css and main.tsx
                      from it
 src/ui/main.tsx      entry: renders the shell and the page's root, opens
                      the store
 src/ui/store.ts      the WebSocket client and its signals (connection,
-                     snapshot, sample, models, event, busy); listen() for
-                     the chat's event routing
+                     snapshot, sample, models, event, busy, pulls); listen()
+                     for the chat's event routing
 src/ui/api.ts        api<T>(): one JSON call to this server
 src/ui/format.ts     gb, num, count, secs, tps, when, group (pure, tested)
 src/ui/icons.tsx     the inline SVGs as components
@@ -169,9 +183,11 @@ src/ui/shell/        Header.tsx, Footer.tsx, Pill.tsx, Confirm.tsx (the
 src/ui/monitor/      Monitor.tsx (the page: range, series and tile memory
                      signals), Tiles.tsx, Charts.tsx (uPlot in a ref),
                      Models.tsx, Runtime.tsx, RangePicker.tsx, RequestBar.tsx,
-                     Event.tsx; the pure, tested tiles.ts (seed/apply and
-                     the eight tiles), range.ts, series.ts, request.ts;
-                     actions.ts (runAction, confirmText, engine facts)
+                     Event.tsx, Pull.tsx (the download dialog and the rows
+                     in the models table); the pure, tested tiles.ts
+                     (seed/apply and the eight tiles), range.ts, series.ts,
+                     request.ts, pull.ts (the row copy); actions.ts
+                     (runAction, confirmText, engine facts)
 src/ui/requests/     Requests.tsx, Row.tsx
 src/ui/chat/         the Chat page. Pure and tested on the recordings in
                      test/fixtures/ws/: stream.ts (one streaming row:

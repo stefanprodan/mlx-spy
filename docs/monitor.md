@@ -28,7 +28,15 @@ same series.
   under the table; a success shows in the list or the uptime. Unload, the daily-driver toggle and a load into an empty
   engine run at once; loading next to a resident model asks first and
   shows the estimated engine memory after the load (its footprint now
-  plus the model's weights); the rest ask for confirmation.
+  plus the model's weights); the rest ask for confirmation. The Download
+  button in the section head asks for a Hugging Face repository
+  (`owner/name` or its URL) and fetches it into the model directory
+  (`--model-dir`); the pull is a row at the top of the table with the
+  bytes so far, the speed, the time left, a delete button (asks first;
+  stops the download and removes its files) and a pause button, which
+  becomes resume once it stopped. A finished download becomes the
+  model's own row once the engine lists it. A download that fails says
+  why under the table.
 - **Runtime**: the engine process (pid, RSS, CPU, GPU, weights) next to
   host facts (OS, chip, cores, GPU cores, memory, disk), plus Restart
   engine and Clear disk cache. Those two, and the process probes, only

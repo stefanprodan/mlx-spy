@@ -48,11 +48,20 @@ detached instance on `127.0.0.1:11236` against the engine named in
 The chat's `websearch` tool reads its provider keys from
 `../secrets/{exa,firecrawl}.key` relative to the binary's directory
 (`~/.local/secrets/` after `make install-bin`) and, when run from source,
-from `.preview/secrets/` in the repository, which is git-ignored. Each
+from `.preview/secrets/` in the repository, which is git-ignored. The
+model downloader reads a Hugging Face token from `hf.key` in the same
+directory, for gated repositories and the Hub's higher rate limits. Each
 file holds the bare key; the start log says `exa key: <path>` or `exa
-key: none`, and the same for firecrawl. The files are read once at start,
-so a change needs a restart, and a keyless check needs the file moved
-away.
+key: none`, and the same for firecrawl and hf. The files are read once at
+start, so a change needs a restart, and a keyless check needs the file
+moved away.
+
+Downloads land in `--model-dir`, `~/.mlx-spy/models` by default and
+`.preview/models/` for the preview; point it at the engine's own model
+directory for a downloaded model to be served. The downloader is tested
+against a fake Hub in `test/pull.test.ts`; a real pull of a small
+repository such as `Jundot/gemma-4-E2B-it-oQ4e-mtp` (3.9 GB) is the
+end-to-end check.
 
 ## Layout
 
