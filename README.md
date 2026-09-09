@@ -1,4 +1,12 @@
+<p align="center">
+  <a href="docs/screens/mlx-spy-monitor.png">
+    <img src="docs/screens/mlx-spy-banner.png" alt="mlx-spy monitor dashboard">
+  </a>
+</p>
+
 # mlx-spy
+
+[![test](https://github.com/stefanprodan/mlx-spy/actions/workflows/test.yml/badge.svg)](https://github.com/stefanprodan/mlx-spy/actions/workflows/test.yml)
 
 Monitoring, control and chat for LLM inference servers on Apple Silicon.
 
@@ -47,10 +55,6 @@ dependencies.
   starts on a loaded model so it never cold-loads by accident.
 - Markdown rendered on the server, code blocks with a copy button, edit
   and regenerate, chat list with rename and delete.
-
-![The Monitor page](docs/screens/monitor.png)
-
-![The Chat page](docs/screens/chat.png)
 
 ## Install
 

@@ -1,0 +1,49 @@
+name: test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-test-build:
+    name: Lint, test and build (macOS arm64)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: latest
+      - name: Verify architecture
+        run: test "$(uname -m)" = arm64
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Lint and type-check
+        run: make lint
+      - name: Check if working tree is dirty
+        run: |
+          if [[ $(git diff --stat) != '' ]]; then
+            git --no-pager diff
+            echo 'run make lint and commit changes'
+            exit 1
+          fi
+      - name: Test
+        run: make test
+      - name: Build
+        run: make build
+      - name: Smoke test binary
+        run: |
+          expected="v$(bun -e 'console.log(require("./package.json").version)')"
+          test "$(./bin/mlx-spy --version)" = "$expected"
+          ./bin/mlx-spy --help >/dev/null
