@@ -2,12 +2,9 @@
 #
 # Thin wrapper over the package.json scripts: each task runs the script of the
 # same name, so `make <task>` and `bun run <task>` are interchangeable. The
-# actual commands live in package.json, edit them there. (`install-bin` is
-# named to match its script: a script plainly named `install` would fire on
-# `bun install`.)
+# actual commands live in package.json, edit them there.
 
-# Exported so `make install-bin PREFIX=/usr/local` reaches the install-bin script.
-export PREFIX
+export PREFIX VERSION
 
 .DEFAULT_GOAL := help
 
@@ -29,7 +26,7 @@ test: ## Run tests
 lint: ## Format and lint with Biome, then type-check with tsc
 	@bun run lint
 
-build: ## Compile a standalone binary into bin/
+build: ## Compile a standalone binary into bin/ (release: VERSION=v1.2.3)
 	@bun run build
 
 clean: ## Stop the preview, remove its db and log, and the build artifacts

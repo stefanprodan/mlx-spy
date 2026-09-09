@@ -31,7 +31,8 @@ import { TOOLS } from "./tools.ts";
 import page from "./ui/index.html";
 import { DEFAULT_PORT, serve, tailscaleAddress } from "./web.ts";
 
-export const VERSION = `v${pkg.version}`;
+const buildVersion = process.env.MLX_SPY_BUILD_VERSION;
+export const VERSION = buildVersion || `v${pkg.version}`;
 
 const DEFAULT_ENGINE = "http://127.0.0.1:11234";
 const DEFAULT_DB = join(homedir(), ".mlx-spy", "history.sqlite");

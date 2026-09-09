@@ -104,7 +104,8 @@ Deploy when asked, then say what is now running there.
 ```
 src/main.ts          entry: CLI parsing (--engine, --listen, --db, --retention,
                      --hot-cache-max, --disk-cache-max, --once, -h, -v); wires
-                     sampler, history and server; VERSION from package.json
+                     sampler, history and server; dev VERSION from package.json,
+                     release VERSION injected at build time
 src/engine/types.ts  the Engine interface and the normalised metric types
 src/engine/openai.ts the OpenAI chat completions wire, shared by every engine:
                      buildChatBody, parseSse, chatEvents, ToolCallTracker,
@@ -210,8 +211,10 @@ events on `/ws` in every tab → `done` with the final row and its stats.
   browser client shares the tsconfig (lib includes DOM).
 - **Comments explain why, not what.** The engine caveats above are
   load-bearing where they appear in code; keep them.
-- **Version is single-sourced** in `package.json`; bump via
-  `bun pm version`.
+- **Development builds report `v0.0.0-dev`.** `package.json` stays at
+  `0.0.0-dev`; tagged releases inject `v<semver>` through
+  `make build VERSION=...` and verify the compiled binary. Do not edit the
+  package version for a release.
 - **Pure logic separate from I/O.** Parsers and rate math take plain data
   and are tested on fixtures; fetches and sleeps live in thin wrappers.
 - **UI copy is short and plain.** Labels are one or two words ("idle",

@@ -8,9 +8,20 @@ bun install --ignore-scripts
 make dev ARGS="--engine http://127.0.0.1:11234"   # live reload
 make lint                                         # Biome + tsc
 make test                                         # bun test
-make build                                        # standalone binary in bin/
+make build                                        # v0.0.0-dev binary in bin/
+make build VERSION=v1.2.3                         # inject a release version
 make install-bin                                  # build and install to ~/.local/bin
 ```
+
+`package.json` stays at `0.0.0-dev`. A normal source or binary build reports
+`v0.0.0-dev`; `make build VERSION=v1.2.3` uses Bun's build-time definition
+to embed `v1.2.3` without editing the package file.
+
+A pushed semantic-version tag such as `v1.2.3` runs the release workflow.
+It validates the tag, runs lint and tests, builds a native Darwin ARM64
+binary with the tag injected, verifies `mlx-spy --version`, then publishes
+an archive, SHA-256 checksum and build-provenance attestation. A version
+with a hyphen, such as `v1.2.3-rc.1`, becomes a prerelease.
 
 Useful flags while developing: `--listen 127.0.0.1:11299` to keep a second
 instance off the default port, `--db :memory:` to keep nothing, `--once`
