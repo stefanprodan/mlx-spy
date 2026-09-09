@@ -130,7 +130,10 @@ with `finishReason` `tool_loop`. A send that hits a limit (rounds, calls,
 time or result size) marks that round `tool_limit`, leaves its unrun calls
 as interrupted tool rows, and runs one answer round in which no call is
 run; the reply is that round, or the `tool_limit` round itself when the
-model called a tool anyway.
+model called a tool anyway. A round the engine cut while the model wrote
+its calls (`length`, or `length/repetition_loop`) keeps the calls on the
+row without tool rows: they were not run, the row stays in the chat, and
+later requests carry it without them.
 
 The runner appends a line with today's date in the host's timezone to
 the system prompt of every send, after `systemPrompt` or alone.

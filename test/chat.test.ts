@@ -767,6 +767,24 @@ describe("ChatRunner", () => {
     expect(
       s.store.get(s.chat.id)?.messages.filter((row) => row.role === "tool"),
     ).toEqual([]);
+    // the cut row stays in the transcript and leaves the wire: a call
+    // without a result would be a malformed history (gemma 4 looped on a
+    // websearch call twice in a row on the Studio, 2026-09-10, and the
+    // first row vanished at the next send)
+    s.runner.send(s.chat.id, "again");
+    await turn();
+    expect(s.store.get(s.chat.id)?.messages.map((row) => row.id)).toContain(
+      sent.message.id,
+    );
+    expect(s.engine.requests[1].messages.map((m) => m.role)).toEqual([
+      "system",
+      "user",
+      "user",
+    ]);
+    expect(s.logs.some((line) => line.includes("malformed"))).toBe(false);
+    s.runner.stop(s.chat.id);
+    s.engine.streams[1].end();
+    await turn();
     s.db.close();
   });
 
@@ -1051,6 +1069,17 @@ describe("ChatRunner", () => {
       kind: "done",
       message: { id: last.id },
     });
+    // the unrun call of the answer round is not sent back
+    s.runner.send(s.chat.id, "again");
+    await turn();
+    // the round is empty without its call, so it leaves the wire whole
+    const next = s.engine.requests.at(-1)!.messages;
+    expect(JSON.stringify(next)).not.toContain("call_more");
+    expect(JSON.stringify(next)).toContain("call_8");
+    expect(s.store.message(last.id)).not.toBeNull();
+    s.runner.stop(s.chat.id);
+    s.engine.streams.at(-1)!.end();
+    await turn();
     s.db.close();
   });
 

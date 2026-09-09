@@ -114,7 +114,9 @@ one tells the model to answer with text), after 24 calls, after 60 s
 spent in tools, or when the model repeats the same call three times in a
 row; the row then says so. Stop works during a call as it does during a
 reply. A call the model got wrong (an unknown tool, bad arguments) goes
-back to it as an error text, so it can correct itself.
+back to it as an error text, so it can correct itself. A call the engine
+cut short, or one made in the answer round after a limit, shows as "not
+run" in the fold and is left out of the next message's context.
 
 The tools go into the prompt, so the first message after a change to the
 set re-prefills and every message carries their tokens. The time itself

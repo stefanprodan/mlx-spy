@@ -9,6 +9,7 @@ import { render } from "preact-render-to-string";
 import { renderMarkdown } from "../../src/markdown.ts";
 import { state } from "../../src/ui/chat/store.ts";
 import { Row, Thread } from "../../src/ui/chat/Thread.tsx";
+import { Tool } from "../../src/ui/chat/Tool.tsx";
 import { groupRows } from "../../src/ui/chat/thread.ts";
 import { driveRecording, loadRecording } from "./ws.ts";
 
@@ -98,6 +99,17 @@ describe("thread markup", () => {
     expect(reply).toContain('<div class="md">');
     expect(reply).toContain('<div class="tail" hidden');
     expect(reply).toContain('<button type="button">Regenerate</button>');
+  });
+
+  test("a call without a result row reads not run", () => {
+    const h = render(
+      <Tool
+        call={{ id: "call_x", name: "websearch", arguments: '{"query":"q"}' }}
+        result={null}
+      />,
+    );
+    expect(h).toContain('<details class="tool"');
+    expect(h).toContain('<span class="td">not run</span>');
   });
 
   test("a repetition loop is named before the length it was reported as", () => {

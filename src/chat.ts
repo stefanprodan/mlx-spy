@@ -211,6 +211,15 @@ function finishReason(event: Extract<ChatEvent, { kind: "finish" }>): string {
     : event.reason;
 }
 
+// the calls of a round the engine cut (a length or a loop) or of the
+// answer round after a tool limit are stored without being run and have
+// no tool rows; they leave the row in the transcript and are dropped
+// from the wire, since a call without a result is a malformed history
+function ranCalls(messages: Message[], index: number): boolean {
+  const next = messages[index + 1];
+  return next !== undefined && next.role === "tool";
+}
+
 function lastSummary(messages: Message[], throughId: number): Message | null {
   let found: Message | null = null;
   for (const message of messages) {
@@ -771,29 +780,30 @@ export class ChatRunner {
         content: `${SUMMARY_LEAD}\n\n${summary.content}`,
       });
     }
-    for (const message of chat.messages) {
-      if (message.id > throughId) break;
+    chat.messages.forEach((message, index) => {
+      if (message.id > throughId) return;
       if (message.role === "summary" || message.id <= (summary?.id ?? 0)) {
-        continue;
+        return;
       }
+      const toolCalls =
+        message.toolCalls && ranCalls(chat.messages, index)
+          ? message.toolCalls
+          : null;
       if (
         message.content === "" &&
         message.reasoning === "" &&
-        message.toolCalls === null
+        toolCalls === null
       ) {
-        continue;
+        return;
       }
       if (message.role === "assistant") {
         messages.push({
           role: "assistant",
-          content:
-            message.toolCalls && message.content === ""
-              ? null
-              : message.content,
+          content: toolCalls && message.content === "" ? null : message.content,
           ...(reasoning && message.reasoning
             ? { reasoning: message.reasoning }
             : {}),
-          ...(message.toolCalls ? { toolCalls: message.toolCalls } : {}),
+          ...(toolCalls ? { toolCalls } : {}),
         });
       } else if (message.role === "tool") {
         messages.push({
@@ -804,7 +814,7 @@ export class ChatRunner {
       } else {
         messages.push({ role: "user", content: message.content });
       }
-    }
+    });
     return messages;
   }
 
@@ -1124,6 +1134,7 @@ export class ChatRunner {
       }
       const calls = message.toolCalls;
       if (!calls || calls.length === 0) continue;
+      if (!ranCalls(chat.messages, index)) continue;
       const rows = chat.messages.slice(index + 1, index + 1 + calls.length);
       const valid =
         rows.length === calls.length &&
