@@ -20,6 +20,10 @@ the engine reports shown in the composer.
   under it, the context the last reply used against the model's window.
   While a reply streams the line shows the live rate the monitor sees. A
   phone keeps the two rates and the cache share.
+- **Each chat keeps its own place in the prefix cache.** Every request
+  carries the chat id as `prompt_cache_key`. An engine that evicts its
+  hot cache per workload (mlx-serve 26.9.2 and later) then evicts a
+  batch job's own entries before it touches the conversation you are in.
 - **Reasoning is kept.** Thinking models show their reasoning in a
   collapsed block with the time it took; it is stored and sent back on
   later turns.
@@ -31,8 +35,11 @@ the engine reports shown in the composer.
   that line becomes the fold of the work
   (the reasoning, what the model said between calls, the calls and their
   results), "Worked for 5.6 s, 2 tool calls"; opened, each call shows its
-  argument, the time it took and its result. A send that ended on a call
-  (the tool limit, a stop) has no answer: its calls are in the fold and
+  argument, the time it took and its result. A send that hits the tool
+  limit (rounds, calls, time or result size) gets one more round, told to
+  answer, so it still ends with text; the calls that did not run are in
+  the fold as stopped and the fold's label ends with "tool limit". A send that ended on a stop has
+  no answer: its calls are in the fold and
   the reason stands where the answer would be. Text streams below the line
   as it arrives; with tools on it may still turn out to be a step rather
   than the answer, and then it folds in. Tools run without asking; every tool is on for a new chat and

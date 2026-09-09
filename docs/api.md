@@ -92,9 +92,12 @@ asked for calls and `finishReason` `tool_calls`, then one `tool` row per
 call with `toolCallId`, `toolName` and the result text in `content` (an
 error text when the call failed, `[Tool execution was interrupted]` when a
 stop or a restart cut it), then the next round. The last assistant row is
-the reply. A send that hit a limit ends with `finishReason` `tool_loop`
-(the same call three times in a row) or `tool_limit` (rounds, calls, time
-or result size).
+the reply. A send that repeats the same call three times in a row ends
+with `finishReason` `tool_loop`. A send that hits a limit (rounds, calls,
+time or result size) marks that round `tool_limit`, leaves its unrun calls
+as interrupted tool rows, and runs one answer round in which no call is
+run; the reply is that round, or the `tool_limit` round itself when the
+model called a tool anyway.
 
 Settings live on the chat and apply to the next message. `thinking` maps to
 the engine's `enable_thinking`; `reasoningEffort` is `low`, `medium`,

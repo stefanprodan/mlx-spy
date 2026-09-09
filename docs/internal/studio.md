@@ -52,7 +52,7 @@ the host key changed (a reinstall):
 
 | What | Value |
 |---|---|
-| Version | mlx-serve 26.9.1 from the Homebrew tap `ddalcu/mlx-serve`, binary `/opt/homebrew/bin/mlx-serve` |
+| Version | mlx-serve 26.9.2 from the Homebrew tap `ddalcu/mlx-serve`, binary `/opt/homebrew/bin/mlx-serve` |
 | launchd agent | label `com.ddalcu.mlx-serve`, plist `~/Library/LaunchAgents/com.ddalcu.mlx-serve.plist`, copy `scripts/com.ddalcu.mlx-serve.plist` in this repo (the Studio file is what runs; `RunAtLoad`, `KeepAlive`, 10 s throttle) |
 | Port | 11234, bound on `0.0.0.0`; from the MacBook `http://$STUDIO_HOST:11234` |
 | Models | checkpoints under `~/models/<org>/<name>` (shared with oMLX through the `~/.omlx/models` symlink); serve mode lists them all and ids are `<org>/<name>` |
@@ -152,6 +152,9 @@ plist). Tell the user what changed; the flags are their policy.
   the first resident by id.
 - Thinking is off by default on `/v1/chat/completions`; `enable_thinking`
   or `reasoning_effort` turns it on.
+- Since 26.9.2 the hot cache evicts per workload, keyed by
+  `prompt_cache_key`, else `metadata.user_id`, else the system prompt.
+  mlx-spy sends the chat id as the key, so its chats are one group each.
 
 ## mlx-spy on the Studio
 

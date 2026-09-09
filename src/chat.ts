@@ -135,6 +135,8 @@ type ActiveSend = {
   current: RoundState | null;
   tools: Promise<void> | null;
   signatures: string[];
+  // the round after a tool limit: no tools offered, the reply is the answer
+  answering: boolean;
 };
 
 type ToolExecutor = (
@@ -370,6 +372,7 @@ export class ChatRunner {
       current: null,
       tools: null,
       signatures: [],
+      answering: false,
     };
     this.active = send;
     // the started event carries round one's row; a row event before it
@@ -426,12 +429,28 @@ export class ChatRunner {
       while (send.terminal === null) {
         const round = send.current!;
         this.deps.log(
-          `chat ${send.chatId} round ${send.round} of ${MAX_ROUNDS}`,
+          send.answering
+            ? `chat ${send.chatId} answer round`
+            : `chat ${send.chatId} round ${send.round} of ${MAX_ROUNDS}`,
         );
         await this.consumeRound(send, round, this.request(send, lastInputId));
         if (send.terminal !== null) return;
         const calls = round.calls;
         const reason = round.finishReason?.split("/", 1)[0] ?? null;
+        if (send.answering && calls.length > 0) {
+          // the model called again after being told to answer: the send
+          // ends here rather than looping
+          const message = this.finishRound(
+            send,
+            round,
+            "done",
+            null,
+            calls,
+            "tool_limit",
+          );
+          if (message) this.complete(send, message);
+          return;
+        }
         if (calls.length === 0) {
           if (reason === "error") {
             this.fail(send, "engine generation failed");
@@ -486,13 +505,20 @@ export class ChatRunner {
           send.rows.push(row.id);
           this.publishRow(send.chatId, row);
         }
-        if (terminalReason !== null) {
+        if (terminalReason === "tool_loop") {
           this.interruptTools(send, "stopped");
-          if (terminalReason === "tool_loop") {
-            this.deps.log(`chat ${send.chatId} tool loop`);
-          }
+          this.deps.log(`chat ${send.chatId} tool loop`);
           this.complete(send, this.deps.store.message(round.messageId)!);
           return;
+        }
+        if (terminalReason === "tool_limit") {
+          // the calls are not run; the interrupted rows stay in the context
+          // so the answer round sees what was asked and that it did not run
+          this.interruptTools(send, "stopped");
+          this.deps.log(`chat ${send.chatId} tool limit`);
+          lastInputId = toolRows.at(-1)!.id;
+          this.answerRound(send);
+          continue;
         }
 
         const tools = Promise.all(
@@ -513,8 +539,10 @@ export class ChatRunner {
             "tool_limit",
           );
           if (message) this.publishRow(send.chatId, message);
-          this.complete(send, message ?? assistant);
-          return;
+          this.deps.log(`chat ${send.chatId} tool limit`);
+          lastInputId = toolRows.at(-1)!.id;
+          this.answerRound(send);
+          continue;
         }
         lastInputId = toolRows.at(-1)!.id;
         send.round++;
@@ -560,16 +588,18 @@ export class ChatRunner {
     }
   }
 
+  // One more round after a tool limit, told to answer, so the send ends
+  // with text instead of a cut reason where the answer would be.
+  private answerRound(send: ActiveSend) {
+    send.answering = true;
+    send.round++;
+    this.beginRound(send);
+  }
+
   private request(send: ActiveSend, throughId: number): ChatRequest {
     const chat = this.requireChat(send.chatId);
     const messages: ChatMessageIn[] = [];
-    let systemPrompt = send.policy.systemPrompt;
-    const lastRound = send.round === MAX_ROUNDS;
-    if (lastRound) {
-      systemPrompt = systemPrompt
-        ? `${systemPrompt}\n\n${EXHAUSTED}`
-        : EXHAUSTED;
-    }
+    const systemPrompt = send.policy.systemPrompt;
     if (systemPrompt !== "") {
       messages.push({ role: "system", content: systemPrompt });
     }
@@ -602,6 +632,18 @@ export class ChatRunner {
         messages.push({ role: "user", content: message.content });
       }
     }
+    // the nudge to answer goes at the end of the context, on the last tool
+    // result: an edit to the system prompt would change the token stream
+    // from the start and the engine would re-prefill the whole
+    // conversation (74 s at 43k tokens, seen 2026-09-09)
+    if (send.round >= MAX_ROUNDS || send.answering) {
+      const tail = messages.at(-1);
+      if (tail && tail.role === "tool") {
+        tail.content = `${tail.content}\n\n${EXHAUSTED}`;
+      } else {
+        messages.push({ role: "user", content: EXHAUSTED });
+      }
+    }
     return {
       model: send.policy.model,
       messages,
@@ -610,9 +652,13 @@ export class ChatRunner {
       temperature: send.policy.temperature,
       topP: send.policy.topP,
       maxTokens: send.policy.maxTokens,
-      // the tools stay in the last round too: a model that calls anyway
-      // must be parsed by the engine, so the runner can end the send with
-      // tool_limit instead of the raw call text becoming the answer
+      cacheKey: send.chatId,
+      // the tools stay in the last round and in the answer round: the
+      // template renders them at the top of the context, so dropping them
+      // (or tool_choice "none", which the engine treats the same) would
+      // re-prefill everything; and a call the model makes anyway must be
+      // parsed by the engine, so the round ends as tool_limit instead of
+      // the raw call text becoming the answer
       ...(send.policy.tools.length > 0 ? { tools: send.policy.tools } : {}),
     };
   }
@@ -763,6 +809,7 @@ export class ChatRunner {
     status: TerminalStatus,
     error: string | null,
     calls: ToolCall[] | null = null,
+    reason = round.finishReason,
   ): Message | null {
     try {
       this.deps.store.writeReply(round.messageId, {
@@ -771,7 +818,7 @@ export class ChatRunner {
       });
       const message = this.deps.store.finishReply(
         round.messageId,
-        this.finishFields(round, status, error),
+        this.finishFields(round, status, error, reason),
         calls,
       );
       if (message) {

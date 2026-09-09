@@ -216,6 +216,8 @@ async function calls(
   await turn();
 }
 
+const EXHAUSTED = "Tool calls are exhausted for this turn; answer with text.";
+
 const clock = (id: string, timezone = "UTC"): ToolCall => ({
   id,
   name: "get_current_time",
@@ -253,6 +255,7 @@ describe("ChatRunner", () => {
       temperature: 0.5,
       topP: 0.9,
       maxTokens: 100,
+      cacheKey: s.chat.id,
       messages: [
         { role: "system", content: "be concise" },
         { role: "user", content: "hello" },
@@ -873,7 +876,7 @@ describe("ChatRunner", () => {
     s.db.close();
   });
 
-  test("keeps the tools and adds the exhausted prompt on round eight", async () => {
+  test("keeps the tools and nudges on the last tool result on round eight", async () => {
     const s = setup();
     s.runner.update(s.chat.id, { toolsOff: [] });
     s.runner.send(s.chat.id, "keep going");
@@ -886,14 +889,136 @@ describe("ChatRunner", () => {
     expect(s.engine.requests).toHaveLength(8);
     // the tools stay so the engine parses a call the model makes anyway
     expect(s.engine.requests[7].tools).toHaveLength(3);
-    expect(s.engine.requests[7].messages[0]).toMatchObject({
-      role: "system",
-      content: expect.stringContaining(
-        "Tool calls are exhausted for this turn; answer with text.",
-      ),
-    });
+    // the system prompt is the cached prefix and must not change
+    expect(s.engine.requests[7].messages[0]).toEqual(
+      s.engine.requests[6].messages[0],
+    );
+    const tail = s.engine.requests[7].messages.at(-1)!;
+    expect(tail).toMatchObject({ role: "tool", toolCallId: "call_6" });
+    expect(tail.content).toStartWith('{"timezone":"Etc/GMT+6"');
+    expect(tail.content).toEndWith(`\n\n${EXHAUSTED}`);
+    expect(s.engine.requests[6].messages.at(-1)?.content).not.toContain(
+      "exhausted",
+    );
     s.engine.streams[7].push({ kind: "content", text: "final" });
     await finish(s.engine.streams[7]);
+    expect(s.store.get(s.chat.id)!.messages.at(-1)).toMatchObject({
+      role: "assistant",
+      status: "done",
+      content: "final",
+      finishReason: "stop",
+    });
+    s.db.close();
+  });
+
+  test("a call on round eight ends the round as tool_limit and an answer round follows", async () => {
+    const s = setup();
+    s.runner.update(s.chat.id, { toolsOff: [] });
+    s.runner.send(s.chat.id, "keep going");
+    await turn();
+    for (let round = 0; round < 8; round++) {
+      await calls(s.engine.streams[round], [
+        clock(`call_${round}`, `Etc/GMT${round === 0 ? "" : `+${round}`}`),
+      ]);
+    }
+    expect(s.engine.requests).toHaveLength(9);
+    const answer = s.engine.requests[8];
+    // the tools stay: the template renders them at the top of the context
+    expect(answer.tools).toHaveLength(3);
+    expect(answer.messages[0]).toEqual(s.engine.requests[7].messages[0]);
+    // the unrun call and its interrupted result are in the context, then
+    // the nudge
+    expect(answer.messages.slice(-2)).toEqual([
+      {
+        role: "assistant",
+        content: null,
+        toolCalls: [clock("call_7", "Etc/GMT+7")],
+      },
+      {
+        role: "tool",
+        toolCallId: "call_7",
+        content: `[Tool execution was interrupted]\n\n${EXHAUSTED}`,
+      },
+    ]);
+    expect(s.logs).toContain(`chat ${s.chat.id} tool limit`);
+    expect(s.logs).toContain(`chat ${s.chat.id} answer round`);
+    expect(s.runner.running()).toEqual({
+      chatId: s.chat.id,
+      messageId: s.store.get(s.chat.id)!.messages.at(-1)!.id,
+    });
+    s.engine.streams[8].push({ kind: "content", text: "the answer" });
+    await finish(s.engine.streams[8]);
+    const rows = s.store.get(s.chat.id)!.messages;
+    expect(rows.slice(-3)).toMatchObject([
+      { role: "assistant", finishReason: "tool_limit", status: "done" },
+      { role: "tool", status: "stopped" },
+      {
+        role: "assistant",
+        status: "done",
+        content: "the answer",
+        finishReason: "stop",
+      },
+    ]);
+    expect(s.events.at(-1)).toMatchObject({
+      kind: "done",
+      message: { id: rows.at(-1)!.id, content: "the answer" },
+    });
+    expect(s.runner.running()).toBeNull();
+    s.db.close();
+  });
+
+  test("too many calls in one round ends it as tool_limit and answers", async () => {
+    const s = setup();
+    s.runner.update(s.chat.id, { toolsOff: [] });
+    s.runner.send(s.chat.id, "all the zones");
+    await turn();
+    await calls(
+      s.engine.streams[0],
+      Array.from({ length: 9 }, (_, i) => clock(`call_${i}`, `Etc/GMT+${i}`)),
+    );
+    expect(s.engine.requests).toHaveLength(2);
+    expect(s.engine.requests[1].tools).toHaveLength(3);
+    expect(s.engine.requests[1].messages.at(-1)?.content).toEndWith(EXHAUSTED);
+    const rows = s.store.get(s.chat.id)!.messages;
+    expect(rows[1]).toMatchObject({ finishReason: "tool_limit" });
+    expect(rows.filter((row) => row.role === "tool")).toHaveLength(9);
+    expect(
+      rows
+        .filter((row) => row.role === "tool")
+        .every((row) => row.status === "stopped"),
+    ).toBe(true);
+    s.engine.streams[1].push({ kind: "content", text: "nine is too many" });
+    await finish(s.engine.streams[1]);
+    expect(s.store.get(s.chat.id)!.messages.at(-1)).toMatchObject({
+      content: "nine is too many",
+      finishReason: "stop",
+    });
+    s.db.close();
+  });
+
+  test("a call in the answer round ends the send as tool_limit", async () => {
+    const s = setup();
+    s.runner.update(s.chat.id, { toolsOff: [] });
+    s.runner.send(s.chat.id, "again");
+    await turn();
+    await calls(
+      s.engine.streams[0],
+      Array.from({ length: 9 }, (_, i) => clock(`call_${i}`, `Etc/GMT+${i}`)),
+    );
+    await calls(s.engine.streams[1], [clock("call_more")]);
+    expect(s.engine.requests).toHaveLength(2);
+    expect(s.runner.running()).toBeNull();
+    const last = s.store.get(s.chat.id)!.messages.at(-1)!;
+    expect(last).toMatchObject({
+      role: "assistant",
+      status: "done",
+      finishReason: "tool_limit",
+      toolCalls: [clock("call_more")],
+    });
+    expect(s.events.at(-1)).toMatchObject({
+      kind: "done",
+      message: { id: last.id },
+    });
     s.db.close();
   });
 
