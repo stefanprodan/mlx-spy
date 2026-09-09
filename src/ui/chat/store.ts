@@ -35,6 +35,7 @@ export const draft = signal<ChatSettings>({
   systemPrompt: "",
   thinking: true,
   reasoningEffort: null,
+  reasoningHistory: true,
   temperature: null,
   topP: null,
   maxTokens: null,
@@ -46,6 +47,8 @@ export const running = signal<Running>(null);
 export const note = signal<{ text: string; kind: string } | null>(null);
 // the registry, fetched once; the dialog lists it with a checkbox each
 export const tools = signal<{ name: string; description: string }[]>([]);
+// the engine host's timezone, for the date line the runner adds with a tool on
+export const hostTimezone = signal<string | null>(null);
 export const lastSample = signal<Sample | null>(null);
 // the think, tool and work blocks the user opened, by key, so a block
 // survives its row moving between the group and the reply

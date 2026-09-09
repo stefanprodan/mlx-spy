@@ -34,7 +34,7 @@ describe("renderMarkdown", () => {
     const html = renderMarkdown('`a<b&c`\n\n```ts\nconst x = "<y>&";\n```');
     expect(html).toContain("<code>a&lt;b&amp;c</code>");
     expect(html).toContain(
-      "<pre><code>const x = &quot;&lt;y&gt;&amp;&quot;;\n</code></pre>",
+      '<span class="hljs-string">&quot;&lt;y&gt;&amp;&quot;</span>;\n</code></pre>',
     );
     expect(html).not.toContain("&amp;lt;");
   });
@@ -47,6 +47,40 @@ describe("renderMarkdown", () => {
     const plain = renderMarkdown("```\nx\n```");
     expect(plain).toContain('<div class="code"><div class="ch"><button');
     expect(plain).not.toContain("data-lang");
+  });
+
+  test("fenced blocks are highlighted in a known language only", () => {
+    const ts = renderMarkdown("```ts\nconst a = 1 // c\n```");
+    expect(ts).toContain('<span class="hljs-keyword">const</span>');
+    expect(ts).toContain('<span class="hljs-comment">// c</span>');
+    // the language name is kept, the text stays as escaped by the renderer
+    const unknown = renderMarkdown("```nope\nlet a = 1 <b>\n```");
+    expect(unknown).toContain('data-lang="nope"');
+    expect(unknown).toContain("<pre><code>let a = 1 &lt;b&gt;\n</code></pre>");
+    // an entity the model wrote survives the unescape before the grammar
+    const ent = renderMarkdown("```html\n<p>a &lt; b</p>\n```");
+    expect(ent.replace(/<[^>]+>/g, "")).toContain("a &amp;lt; b");
+    expect(ent).not.toContain("<p>");
+    // a block with no language is left alone
+    expect(renderMarkdown("```\nconst a\n```")).not.toContain("hljs-");
+  });
+
+  test("a mermaid block is a diagram when the reply is done", () => {
+    const md = "```mermaid\ngraph LR\n  A --> B\n```";
+    const done = renderMarkdown(md);
+    expect(done).toContain('<div class="code" data-lang="mermaid">');
+    expect(done).toContain('<img class="diagram" alt="diagram" src="data:');
+    // the source stays for the Copy button, hidden
+    expect(done).toContain(
+      "<pre hidden><code>graph LR\n  A --&gt; B\n</code></pre>",
+    );
+    // while streaming, and when the library cannot draw it, a code block
+    const live = renderMarkdown(md, true);
+    expect(live).not.toContain("<img");
+    expect(live).toContain("<pre><code>graph LR");
+    const bad = renderMarkdown("```mermaid\npie title x\n  a: 1\n```");
+    expect(bad).not.toContain("<img");
+    expect(bad).toContain("<pre><code>pie title x");
   });
 
   test("links keep only http, https and mailto", () => {
@@ -98,7 +132,7 @@ describe("renderMarkdown", () => {
   test("a partial reply mid-stream still renders", () => {
     const html = renderMarkdown("Some **unclosed\n\n```ts\nconst x =");
     expect(html).toContain("<p>Some **unclosed</p>");
-    expect(html).toContain("<code>const x =");
+    expect(html.replace(/<[^>]+>/g, "")).toContain("const x =");
   });
 
   test("escapeHtml covers the four characters", () => {

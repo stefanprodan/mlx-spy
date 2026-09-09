@@ -3,6 +3,7 @@
 
 import type { ChatTool, ToolCall } from "./engine/types.ts";
 import type { SearchProvider } from "./tools/search/types.ts";
+import { formatCurrentTime, HOST_TIMEZONE } from "./tools/time.ts";
 import { webfetchTool } from "./tools/webfetch.ts";
 import { websearchTool } from "./tools/websearch.ts";
 
@@ -33,50 +34,7 @@ export type ToolDef = {
   run(args: Record<string, unknown>, ctx: ToolContext): Promise<string>;
 };
 
-export type CurrentTime = {
-  timezone: string;
-  datetime: string;
-  day_of_week: string;
-};
-
-const HOST_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-function part(
-  parts: Intl.DateTimeFormatPart[],
-  type: Intl.DateTimeFormatPartTypes,
-): string {
-  return parts.find((item) => item.type === type)?.value ?? "";
-}
-
-export function formatCurrentTime(
-  epochMs: number,
-  timezone: string,
-): CurrentTime {
-  let parts: Intl.DateTimeFormatPart[];
-  try {
-    parts = new Intl.DateTimeFormat("en-US", {
-      timeZone: timezone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hourCycle: "h23",
-      weekday: "long",
-      timeZoneName: "longOffset",
-    }).formatToParts(new Date(epochMs));
-  } catch {
-    throw new Error(`unknown timezone "${timezone}"`);
-  }
-  const offsetName = part(parts, "timeZoneName");
-  const offset = offsetName === "GMT" ? "+00:00" : offsetName.slice(3);
-  return {
-    timezone,
-    datetime: `${part(parts, "year")}-${part(parts, "month")}-${part(parts, "day")}T${part(parts, "hour")}:${part(parts, "minute")}:${part(parts, "second")}${offset}`,
-    day_of_week: part(parts, "weekday"),
-  };
-}
+export { type CurrentTime, formatCurrentTime } from "./tools/time.ts";
 
 function timezone(args: Record<string, unknown>): string {
   if (typeof args.timezone !== "string" || args.timezone === "") {
@@ -108,12 +66,17 @@ export const TOOLS: ToolDef[] = [
   websearchTool,
 ];
 
-export function toolSchemas(names?: string[]): ChatTool[] {
+// A description may carry {{year}}, filled at send time in the host's
+// timezone: a model searching for "the latest" tends to write the year its
+// weights end in, the date line in the system prompt notwithstanding
+// (seen 2026-09-09), so the year sits where the query is composed.
+export function toolSchemas(names?: string[], now = Date.now()): ChatTool[] {
   const enabled = names === undefined ? null : new Set(names);
+  const year = formatCurrentTime(now, HOST_TIMEZONE).datetime.slice(0, 4);
   return TOOLS.filter((tool) => enabled === null || enabled.has(tool.name)).map(
     ({ name, description, parameters }) => ({
       name,
-      description,
+      description: description.replaceAll("{{year}}", year),
       parameters,
     }),
   );

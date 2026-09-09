@@ -15,6 +15,11 @@ export type ChatSettings = {
   systemPrompt: string;
   thinking: boolean;
   reasoningEffort: string | null;
+  // send earlier rounds' reasoning back as reasoning_content on every
+  // assistant message (what OpenCode does, the default); off keeps the
+  // engine's prefix cache stable on a template that drops reasoning
+  // before the last user message
+  reasoningHistory: boolean;
   temperature: number | null;
   topP: number | null;
   maxTokens: number | null;
@@ -119,6 +124,7 @@ type ChatRow = {
   systemPrompt: string;
   thinking: number;
   reasoningEffort: string | null;
+  reasoningHistory: number;
   temperature: number | null;
   topP: number | null;
   maxTokens: number | null;
@@ -156,7 +162,8 @@ type MessageRow = {
 
 const CHAT_SELECT = `SELECT c.id, c.title, c.model,
   c.system_prompt AS systemPrompt, c.thinking,
-  c.reasoning_effort AS reasoningEffort, c.temperature,
+  c.reasoning_effort AS reasoningEffort,
+  c.reasoning_history AS reasoningHistory, c.temperature,
   c.top_p AS topP, c.max_tokens AS maxTokens, c.tools_off AS toolsOff,
   c.search, c.created_at AS createdAt, c.updated_at AS updatedAt,
   EXISTS(SELECT 1 FROM messages m
@@ -201,6 +208,7 @@ export class ChatStore {
       system_prompt TEXT NOT NULL DEFAULT '',
       thinking INTEGER NOT NULL DEFAULT 1,
       reasoning_effort TEXT,
+      reasoning_history INTEGER NOT NULL DEFAULT 1,
       temperature REAL,
       top_p REAL,
       max_tokens INTEGER,
@@ -229,6 +237,7 @@ export class ChatStore {
       tool_name TEXT
     )`);
     this.migrateColumns("chats", {
+      reasoning_history: "INTEGER NOT NULL DEFAULT 1",
       tools_off: "TEXT NOT NULL DEFAULT '[]'",
       search: "TEXT NOT NULL DEFAULT 'exa'",
     });
@@ -277,6 +286,7 @@ export class ChatStore {
       systemPrompt: row.systemPrompt,
       thinking: row.thinking === 1,
       reasoningEffort: row.reasoningEffort,
+      reasoningHistory: row.reasoningHistory === 1,
       temperature: row.temperature,
       topP: row.topP,
       maxTokens: row.maxTokens,
@@ -332,7 +342,12 @@ export class ChatStore {
       chatId: row.chatId,
       role: row.role,
       content: row.content,
-      html: row.role === "assistant" ? renderMarkdown(row.content) : null,
+      // a reply still streaming is rendered as the runner renders it: no
+      // diagram until it is done (src/markdown.ts)
+      html:
+        row.role === "assistant"
+          ? renderMarkdown(row.content, row.status === "streaming")
+          : null,
       reasoning: row.reasoning,
       status: row.status,
       error: row.error,
@@ -358,11 +373,11 @@ export class ChatStore {
     const now = this.now();
     this.db
       .query(`INSERT INTO chats (id, title, model, system_prompt, thinking,
-        reasoning_effort, temperature, top_p, max_tokens, tools_off,
-        search, created_at, updated_at)
+        reasoning_effort, reasoning_history, temperature, top_p, max_tokens,
+        tools_off, search, created_at, updated_at)
         VALUES ($id, $title, $model, $systemPrompt, $thinking,
-          $reasoningEffort, $temperature, $topP, $maxTokens, $toolsOff,
-          $search, $now, $now)`)
+          $reasoningEffort, $reasoningHistory, $temperature, $topP,
+          $maxTokens, $toolsOff, $search, $now, $now)`)
       .run({
         id,
         title,
@@ -370,6 +385,7 @@ export class ChatStore {
         systemPrompt: settings.systemPrompt,
         thinking: settings.thinking ? 1 : 0,
         reasoningEffort: settings.reasoningEffort,
+        reasoningHistory: settings.reasoningHistory ? 1 : 0,
         temperature: settings.temperature,
         topP: settings.topP,
         maxTokens: settings.maxTokens,
@@ -391,6 +407,7 @@ export class ChatStore {
         systemPrompt,
         thinking,
         reasoningEffort,
+        reasoningHistory,
         temperature,
         topP,
         maxTokens,
@@ -401,6 +418,7 @@ export class ChatStore {
       void systemPrompt;
       void thinking;
       void reasoningEffort;
+      void reasoningHistory;
       void temperature;
       void topP;
       void maxTokens;
@@ -436,6 +454,7 @@ export class ChatStore {
       ["systemPrompt", "system_prompt"],
       ["thinking", "thinking"],
       ["reasoningEffort", "reasoning_effort"],
+      ["reasoningHistory", "reasoning_history"],
       ["temperature", "temperature"],
       ["topP", "top_p"],
       ["maxTokens", "max_tokens"],
@@ -445,8 +464,9 @@ export class ChatStore {
     for (const [name, column] of names) {
       if (!(name in patch)) continue;
       columns.push(`${column} = $${name}`);
-      if (name === "thinking") values[name] = patch[name] ? 1 : 0;
-      else if (name === "toolsOff") {
+      if (name === "thinking" || name === "reasoningHistory") {
+        values[name] = patch[name] ? 1 : 0;
+      } else if (name === "toolsOff") {
         values[name] = JSON.stringify(patch[name] ?? []);
       } else values[name] = patch[name] ?? null;
     }

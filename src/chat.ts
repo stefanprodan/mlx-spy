@@ -25,8 +25,8 @@ import type {
 } from "./engine/types.ts";
 import { renderMarkdown } from "./markdown.ts";
 import type { SearchKeys, SearchProvider } from "./tools/search/types.ts";
+import { dateLine, HOST_TIMEZONE } from "./tools/time.ts";
 import {
-  formatCurrentTime,
   runTool,
   type SendBudget,
   TOOLS,
@@ -98,6 +98,7 @@ type FrozenPolicy = {
   systemPrompt: string;
   thinking: boolean;
   reasoningEffort: string | null;
+  reasoningHistory: boolean;
   temperature: number | null;
   topP: number | null;
   maxTokens: number | null;
@@ -342,12 +343,13 @@ export class ChatRunner {
     const enabled = TOOLS.map((tool) => tool.name).filter(
       (name) => !toolsOff.has(name),
     );
-    const tools = toolSchemas(enabled);
+    const tools = toolSchemas(enabled, this.now());
     const policy: FrozenPolicy = {
       model: chat.model,
-      systemPrompt: this.systemPrompt(chat.systemPrompt, tools.length > 0),
+      systemPrompt: this.systemPrompt(chat.systemPrompt),
       thinking: chat.thinking,
       reasoningEffort: chat.reasoningEffort,
+      reasoningHistory: chat.reasoningHistory,
       temperature: chat.temperature,
       topP: chat.topP,
       maxTokens: chat.maxTokens,
@@ -600,6 +602,13 @@ export class ChatRunner {
     const chat = this.requireChat(send.chatId);
     const messages: ChatMessageIn[] = [];
     const systemPrompt = send.policy.systemPrompt;
+    // on by default so the model rereads its own chain in a tool loop; a
+    // Qwen 3.5 or 3.6 template renders reasoning only for the turns after
+    // the last user message, so sending it for earlier turns changes how
+    // they render between one user turn and the next and the engine
+    // re-prefills from the first tool round of the previous turn (19.5 s
+    // at 22k tokens, seen 2026-09-09); a chat opts out to keep the cache
+    const reasoning = send.policy.reasoningHistory;
     if (systemPrompt !== "") {
       messages.push({ role: "system", content: systemPrompt });
     }
@@ -619,7 +628,9 @@ export class ChatRunner {
             message.toolCalls && message.content === ""
               ? null
               : message.content,
-          ...(message.reasoning ? { reasoning: message.reasoning } : {}),
+          ...(reasoning && message.reasoning
+            ? { reasoning: message.reasoning }
+            : {}),
           ...(message.toolCalls ? { toolCalls: message.toolCalls } : {}),
         });
       } else if (message.role === "tool") {
@@ -747,7 +758,7 @@ export class ChatRunner {
         kind: "html",
         chatId: send.chatId,
         messageId: round.messageId,
-        html: renderMarkdown(round.content),
+        html: renderMarkdown(round.content, true),
         htmlAt: round.htmlAt,
       });
     }
@@ -929,11 +940,10 @@ export class ChatRunner {
     );
   }
 
-  private systemPrompt(prompt: string, toolsEnabled: boolean): string {
-    if (!toolsEnabled) return prompt;
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const date = formatCurrentTime(this.now(), timezone);
-    const line = `Today's date: ${date.day_of_week}, ${date.datetime.slice(0, 10)}`;
+  // the date goes under the prompt on every send, tools or not (OpenCode
+  // does the same); a day, not a time, so the prefix holds until midnight
+  private systemPrompt(prompt: string): string {
+    const line = dateLine(this.now(), HOST_TIMEZONE);
     return prompt ? `${prompt}\n\n${line}` : line;
   }
 

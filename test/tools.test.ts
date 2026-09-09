@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { dateLine } from "../src/tools/time.ts";
 import {
   formatCurrentTime,
   runTool,
@@ -40,6 +41,13 @@ describe("formatCurrentTime", () => {
     expect(formatCurrentTime(now, "America/New_York").datetime).toBe(
       "2026-09-08T10:42:10-04:00",
     );
+    // the day rolls over with the zone
+    expect(dateLine(now, "Europe/Bucharest")).toBe(
+      "Today's date: Tuesday, 2026-09-08",
+    );
+    expect(dateLine(now, "Pacific/Auckland")).toBe(
+      "Today's date: Wednesday, 2026-09-09",
+    );
   });
 
   test("names an invalid timezone", () => {
@@ -57,6 +65,12 @@ describe("tool registry", () => {
       "websearch",
     ]);
     expect(toolSchemas([])).toEqual([]);
+    expect(toolSchemas(["websearch"], now)[0].description).toContain(
+      "The current year is 2026",
+    );
+    expect(toolSchemas(["websearch"], now)[0].description).not.toContain(
+      "{{year}}",
+    );
     const fetch = toolSchemas(["webfetch"])[0];
     expect(fetch.parameters).toMatchObject({
       required: ["url"],

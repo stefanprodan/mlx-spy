@@ -147,6 +147,7 @@ function setup(
     systemPrompt: "be concise",
     thinking: true,
     reasoningEffort: "low",
+    reasoningHistory: false,
     temperature: 0.5,
     topP: 0.9,
     maxTokens: 100,
@@ -257,7 +258,10 @@ describe("ChatRunner", () => {
       maxTokens: 100,
       cacheKey: s.chat.id,
       messages: [
-        { role: "system", content: "be concise" },
+        {
+          role: "system",
+          content: "be concise\n\nToday's date: Thursday, 1970-01-01",
+        },
         { role: "user", content: "hello" },
       ],
     });
@@ -549,6 +553,7 @@ describe("ChatRunner", () => {
       systemPrompt: "",
       thinking: false,
       reasoningEffort: null,
+      reasoningHistory: false,
       temperature: null,
       topP: null,
       maxTokens: null,
@@ -634,6 +639,33 @@ describe("ChatRunner", () => {
       "assistant",
     ]);
     expect(s.events.filter((event) => event.kind === "done")).toHaveLength(1);
+    s.db.close();
+  });
+
+  test("sends earlier reasoning back only when reasoningHistory is on", async () => {
+    const s = setup();
+    s.runner.send(s.chat.id, "hello");
+    await turn();
+    s.engine.streams[0].push({ kind: "reasoning", text: "hmm" });
+    s.engine.streams[0].push({ kind: "content", text: "hi" });
+    await finish(s.engine.streams[0]);
+    s.runner.send(s.chat.id, "again");
+    await turn();
+    expect(s.engine.requests[1].messages.at(-2)).toEqual({
+      role: "assistant",
+      content: "hi",
+    });
+    s.engine.streams[1].push({ kind: "content", text: "ok" });
+    await finish(s.engine.streams[1]);
+    s.runner.update(s.chat.id, { reasoningHistory: true });
+    s.runner.send(s.chat.id, "once more");
+    await turn();
+    expect(s.engine.requests[2].messages.at(-4)).toEqual({
+      role: "assistant",
+      content: "hi",
+      reasoning: "hmm",
+    });
+    await finish(s.engine.streams[2]);
     s.db.close();
   });
 
@@ -1022,14 +1054,15 @@ describe("ChatRunner", () => {
     s.db.close();
   });
 
-  test("adds the date only when at least one tool is enabled", async () => {
+  test("adds the date with the tools off and with them on", async () => {
     const off = setup();
+    off.runner.update(off.chat.id, { systemPrompt: "" });
     off.runner.send(off.chat.id, "off");
     await turn();
     expect(off.engine.requests[0]).not.toHaveProperty("tools");
     expect(off.engine.requests[0].messages[0]).toEqual({
       role: "system",
-      content: "be concise",
+      content: "Today's date: Thursday, 1970-01-01",
     });
     off.runner.stop(off.chat.id);
     off.engine.streams[0].end();

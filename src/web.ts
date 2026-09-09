@@ -18,7 +18,8 @@ import type { Pull } from "./pulls.ts";
 import type { Sample } from "./sample.ts";
 import type { Sampler } from "./sampler.ts";
 import { isSearchProvider, type SearchProvider } from "./tools/search/types.ts";
-import { TOOLS } from "./tools.ts";
+import { HOST_TIMEZONE } from "./tools/time.ts";
+import { TOOLS, toolSchemas } from "./tools.ts";
 
 export const DEFAULT_PORT = 11235;
 const SAMPLES_TOPIC = "samples";
@@ -268,6 +269,7 @@ function settings(value: Record<string, unknown>): ChatSettings {
     systemPrompt: stringField(value, "systemPrompt") ?? "",
     thinking: booleanField(value, "thinking") ?? true,
     reasoningEffort: effortField(value) ?? null,
+    reasoningHistory: booleanField(value, "reasoningHistory") ?? true,
     temperature: numberField(value, "temperature", 0, 2) ?? null,
     topP: numberField(value, "topP", 0, 1) ?? null,
     maxTokens:
@@ -284,6 +286,7 @@ function patch(value: Record<string, unknown>): ChatPatch {
   const systemPrompt = stringField(value, "systemPrompt");
   const thinking = booleanField(value, "thinking");
   const reasoningEffort = effortField(value);
+  const reasoningHistory = booleanField(value, "reasoningHistory");
   const temperature = numberField(value, "temperature", 0, 2);
   const topP = numberField(value, "topP", 0, 1);
   const maxTokens = numberField(
@@ -300,6 +303,9 @@ function patch(value: Record<string, unknown>): ChatPatch {
   if (systemPrompt !== undefined) result.systemPrompt = systemPrompt;
   if (thinking !== undefined) result.thinking = thinking;
   if (reasoningEffort !== undefined) result.reasoningEffort = reasoningEffort;
+  if (reasoningHistory !== undefined) {
+    result.reasoningHistory = reasoningHistory;
+  }
   if (temperature !== undefined) result.temperature = temperature;
   if (topP !== undefined) result.topP = topP;
   if (maxTokens !== undefined) result.maxTokens = maxTokens;
@@ -457,9 +463,13 @@ export async function handle(
       return json({ error: "method not allowed" }, 405);
     }
     if (url.pathname === "/api/tools") {
-      return json(
-        TOOLS.map(({ name, description }) => ({ name, description })),
-      );
+      return json({
+        timezone: HOST_TIMEZONE,
+        tools: toolSchemas().map(({ name, description }) => ({
+          name,
+          description,
+        })),
+      });
     }
     switch (url.pathname) {
       case "/api/snapshot":

@@ -19,6 +19,7 @@ import {
   draft,
   fail,
   fetchList,
+  hostTimezone,
   isStreaming,
   lastChat,
   lastSample,
@@ -191,9 +192,13 @@ export function boot() {
   // the first socket message on
   const startId = chatIdFromPath() ?? lastChat();
   loading = startId;
-  void api<{ name: string; description: string }[]>("/api/tools")
-    .then((list) => {
-      tools.value = list;
+  void api<{
+    timezone: string;
+    tools: { name: string; description: string }[];
+  }>("/api/tools")
+    .then((r) => {
+      hostTimezone.value = r.timezone;
+      tools.value = r.tools;
     })
     .catch(() => {});
   void fetchList().then(() => {

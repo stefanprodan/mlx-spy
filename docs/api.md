@@ -92,15 +92,15 @@ tools on can take several engine rounds. Bodies are JSON, at most 256 KB.
 | Route | Body | Answer |
 |---|---|---|
 | `GET /api/chats` | | `[{id, title, model, createdAt, updatedAt, streaming}]`, newest first |
-| `POST /api/chats` | `{model, title?, systemPrompt?, thinking?, reasoningEffort?, temperature?, topP?, maxTokens?, toolsOff?, search?}` | 201, the chat; the model must be one the engine lists |
+| `POST /api/chats` | `{model, title?, systemPrompt?, thinking?, reasoningEffort?, reasoningHistory?, temperature?, topP?, maxTokens?, toolsOff?, search?}` | 201, the chat; the model must be one the engine lists |
 | `GET /api/chats/<id>` | | the chat with its settings and messages in order, a streaming reply included with the text so far |
-| `PATCH /api/chats/<id>` | any of `title, model, systemPrompt, thinking, reasoningEffort, temperature, topP, maxTokens, toolsOff, search` | the updated chat; `model`, `toolsOff` and `search` answer 409 while the chat has a send running |
+| `PATCH /api/chats/<id>` | any of `title, model, systemPrompt, thinking, reasoningEffort, reasoningHistory, temperature, topP, maxTokens, toolsOff, search` | the updated chat; `model`, `toolsOff` and `search` answer 409 while the chat has a send running |
 | `DELETE /api/chats/<id>` | | `{ok: true}`; a streaming reply is stopped first |
 | `POST /api/chats/<id>/messages` | `{content}` | 202 `{user, message}`: the user row and the assistant row that starts streaming |
 | `POST /api/chats/<id>/regenerate` | | 202 `{user, message}`; the last reply is dropped and answered again |
 | `POST /api/chats/<id>/edit` | `{messageId, content}` | 202 `{user, message}`; that user message and everything after it are replaced |
 | `POST /api/chats/<id>/stop` | | `{ok: true}`, also when nothing runs; stops the engine round or the tool call that is running |
-| `GET /api/tools` | | the tool registry, `[{name, description}]` |
+| `GET /api/tools` | | `{timezone, tools: [{name, description}]}`, the tool registry and the host timezone of the date line the runner appends to every system prompt |
 
 A message is `{id, chatId, role, content, html, reasoning, status, error,
 finishReason, model, createdAt, finishedAt, ttftMs, thinkingMs, stats,
@@ -130,11 +130,20 @@ as interrupted tool rows, and runs one answer round in which no call is
 run; the reply is that round, or the `tool_limit` round itself when the
 model called a tool anyway.
 
+The runner appends a line with today's date in the host's timezone to
+the system prompt of every send, after `systemPrompt` or alone.
+
 Settings live on the chat and apply to the next message. `thinking` maps to
 the engine's `enable_thinking`; `reasoningEffort` is `low`, `medium`,
 `high`, `none` (an explicit off) or null for the engine default; the sampling fields are null for the
-engine defaults. Reasoning is stored and sent back to the engine on later
-turns as `reasoning_content`. `toolsOff` is the list of tool names the
+engine defaults. Reasoning is stored; `reasoningHistory` (default true)
+sends it back to the engine on later turns as `reasoning_content`, on
+every assistant message, so the model rereads its own chain during a
+tool loop. Turn it off to keep the engine's prefix cache stable on a
+Qwen 3.5 or 3.6 template: those render reasoning only for the turns
+after the last user message, so sending it changes how earlier turns
+render from one user turn to the next and the engine re-prefills from
+the first tool round of the previous turn. `toolsOff` is the list of tool names the
 chat does not offer the model; every tool is on when it is empty, and a
 name outside the registry is a 400. `search` is the provider `websearch`
 uses, `exa` (the default) or `firecrawl`; anything else, null included,

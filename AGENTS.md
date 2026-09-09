@@ -8,9 +8,13 @@ chat that streams through mlx-spy so replies survive the tab.
 
 - **Runtime:** Bun only, TypeScript run directly. No Node.
 - **Platform:** macOS on Apple Silicon. Host probes use `bun:ffi`.
-- **Zero runtime dependencies.** The devDependencies bundled into the page
-  at build time are uPlot, Preact, `@preact/signals` and
-  `preact-render-to-string` (tests only), exact pins. Do not add packages.
+- **Zero runtime dependencies.** The devDependencies bundled into the
+  binary at build time are uPlot, Preact and `@preact/signals` (the page),
+  highlight.js (the server, a curated language set) and beautiful-mermaid
+  (the server, mermaid to SVG); `preact-render-to-string` is for the
+  tests only. All exact pins. A new
+  package needs the user's explicit go-ahead in the conversation,
+  official npm only, and the 24 h cooldown below.
 - The roadmap is in `plans/`.
 
 ## The dev loop
@@ -156,10 +160,16 @@ src/tools.ts, src/tools/
                      the tool registry the runner executes: get_current_time,
                      webfetch (with the network guard), websearch; pure parts
                      tested
+src/tools/time.ts   the clock in a timezone and the date line of the
+                     system prompt; the page imports it for the placeholder
 src/tools/search/    the search providers: types.ts (the names and the key
                      type, no I/O), exa.ts and firecrawl.ts (build the
                      request, parse the answer; pure, tested on fixtures)
 src/markdown.ts      renderMarkdown(): the safety boundary for model output
+src/highlight.ts     highlight(): highlight.js with the languages it registers;
+                     the fenced blocks of a reply, on the server
+src/diagram.ts       renderDiagram(): a mermaid block to an SVG image, on the
+                     server, for a finished reply only
 src/actions.ts       load, unload, default, free, diskClear (local-only),
                      historyClear, favorite; one at a time, logged, last 50
 src/web.ts           Bun.serve: the page, /api/snapshot, /api/history,
