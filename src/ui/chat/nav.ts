@@ -20,9 +20,11 @@ import {
   fail,
   fetchList,
   isStreaming,
+  lastChat,
   lastSample,
   modelInfo,
   opened,
+  rememberChat,
   running,
   setCurrent,
   setNote,
@@ -58,6 +60,7 @@ export async function open(id: string, push: boolean) {
     const chat = await api<Chat>(`/api/chats/${encodeURIComponent(id)}`);
     if (token !== opening) return;
     setCurrent(chat);
+    rememberChat(id);
     if (push) history.pushState(null, "", `/chat/${encodeURIComponent(id)}`);
     setNote(null);
     const queued = pending;
@@ -78,6 +81,9 @@ export async function open(id: string, push: boolean) {
 
 export function showDraft(push: boolean) {
   opening++;
+  // a chosen draft (New chat, a deleted or missing chat) is the new
+  // starting point; a Back to /chat is not
+  if (push) rememberChat(null);
   loading = null;
   pending = [];
   state.value = null;
@@ -181,18 +187,26 @@ export function rememberList(closed: boolean) {
 export function boot() {
   let booted = false;
   let connected = false;
-  // buffer events for the chat in the URL from the first socket message on
-  loading = chatIdFromPath();
+  // the chat in the URL, else the one last used; buffer its events from
+  // the first socket message on
+  const startId = chatIdFromPath() ?? lastChat();
+  loading = startId;
   void api<{ name: string; description: string }[]>("/api/tools")
     .then((list) => {
       tools.value = list;
     })
     .catch(() => {});
   void fetchList().then(() => {
-    const id = chatIdFromPath();
-    if (!id) loading = null;
-    if (id) void open(id, false);
-    else if (models.value.length > 0) showDraft(false);
+    if (startId) {
+      // the remembered chat gets its URL, so a reload keeps it
+      if (!chatIdFromPath()) {
+        history.replaceState(null, "", `/chat/${encodeURIComponent(startId)}`);
+      }
+      void open(startId, false);
+    } else {
+      loading = null;
+      if (models.value.length > 0) showDraft(false);
+    }
     booted = true;
   });
   listen((msg) => {

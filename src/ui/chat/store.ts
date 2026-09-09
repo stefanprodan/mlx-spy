@@ -90,6 +90,22 @@ export function setOpen(key: string, on: boolean) {
   opened.value = next;
 }
 
+// the chat last used, so coming back to the page from the monitor (or a
+// new tab on /chat) shows it again; "New chat" and a deletion forget it
+export function rememberChat(id: string | null) {
+  try {
+    if (id === null) localStorage.removeItem("chat.last");
+    else localStorage.setItem("chat.last", id);
+  } catch {}
+}
+export function lastChat(): string | null {
+  try {
+    return localStorage.getItem("chat.last");
+  } catch {
+    return null;
+  }
+}
+
 export function upsert(c: ChatSummary) {
   chats.value = [c, ...chats.value.filter((x) => x.id !== c.id)].sort(
     (a, b) => b.updatedAt - a.updatedAt,
@@ -193,6 +209,7 @@ export async function send(content: string): Promise<boolean> {
     if (!current.value) {
       const chat = await api<Chat>("/api/chats", "POST", { ...draft.value });
       setCurrent(chat);
+      rememberChat(chat.id);
       history.pushState(null, "", `/chat/${encodeURIComponent(chat.id)}`);
       upsert({ ...chat, streaming: false });
     }
