@@ -11,6 +11,7 @@ import type { Chat, ChatSettings, ChatSummary, Message } from "../../chats.ts";
 import type { ModelInfo } from "../../engine/types.ts";
 import type { Sample } from "../../sample.ts";
 import { api } from "../api.ts";
+import { copyToClipboard } from "../clipboard.ts";
 import { models } from "../store.ts";
 import { type ChatState, type Running, stateOf } from "./events.ts";
 import { groupRows } from "./thread.ts";
@@ -157,6 +158,18 @@ export function fail(err: unknown, target = editor.value) {
 
 export function chatError(chatId: string, text: string) {
   setNote(text, "", editorOf(chatId));
+}
+
+export async function copy(content: string): Promise<boolean> {
+  const target = editor.value;
+  setNote(null, "", target);
+  try {
+    await copyToClipboard(content);
+    return true;
+  } catch (err) {
+    fail(err, target);
+    return false;
+  }
 }
 
 export function setOpen(key: string, on: boolean) {

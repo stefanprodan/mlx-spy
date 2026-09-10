@@ -60,8 +60,9 @@ describe("thread markup", () => {
     expect(h).toContain('<div class="code" data-lang="');
     expect(h).toContain('<div class="ch">');
     expect(h).toContain(
-      '<button type="button" class="copy">Copy</button></div><pre><code>',
+      '<button type="button" class="ibtn copy" title="Copy" aria-label="Copy block">',
     );
+    expect(h).toContain("</svg></button></div><pre><code>");
   });
 
   test("the draft shows the empty state instead of rows", () => {

@@ -1725,14 +1725,18 @@ details.tool.live > summary .spin {
 }
 .md .code .copy {
   margin-left: auto;
-  font-size: 11px;
-  color: var(--dim);
-  padding: 1px 7px;
-  border-radius: 5px;
 }
-.md .code .copy:hover {
-  background: #26282b;
-  color: var(--fg);
+.md .code .copied-icon {
+  display: none;
+}
+.md .code .copied .copy-icon {
+  display: none;
+}
+.md .code .copied .copied-icon {
+  display: block;
+}
+.md .code .copy.copied {
+  color: var(--green);
 }
 .md pre {
   margin: 0;
@@ -1757,6 +1761,113 @@ details.tool.live > summary .spin {
   padding: 8px 12px;
   box-sizing: border-box;
 }
+.md .code .expand {
+  margin-left: 4px;
+}
+
+dialog.diagram-viewer {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+}
+dialog.diagram-viewer[open] {
+  display: flex;
+  flex-direction: column;
+}
+.diagram-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.diagram-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.diagram-heading .wordmark {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.diagram-toolbar h2 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg);
+}
+.diagram-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.diagram-toolbar output {
+  min-width: 4ch;
+  text-align: center;
+  font: 12px var(--mono);
+  color: var(--dim);
+}
+.diagram-toolbar .ibtn {
+  width: 40px;
+  height: 40px;
+}
+.diagram-toolbar .btn {
+  min-height: 40px;
+}
+.diagram-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--inset);
+}
+.diagram-viewport:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.diagram-canvas {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  min-height: 100%;
+  padding: 16px;
+}
+.diagram-canvas img {
+  display: block;
+  flex-shrink: 0;
+  max-width: none;
+  margin: auto;
+}
+.diagram-canvas img[hidden] {
+  display: none;
+}
+@media (max-width: 760px) {
+  .diagram-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .diagram-controls {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+  .diagram-close {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
 /* highlight.js classes (src/highlight.ts) on the palette: four hues plus
    dim, so a block reads as code, not as a rainbow */
 .md .hljs-comment,

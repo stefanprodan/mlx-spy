@@ -43,7 +43,12 @@ describe("renderMarkdown", () => {
     const html = renderMarkdown("```python title=x\nprint(1)\n```");
     expect(html).toContain('<div class="code" data-lang="python">');
     expect(html).toContain('<span class="lang">python</span>');
-    expect(html).toContain('<button type="button" class="copy">Copy</button>');
+    expect(html).toContain(
+      '<button type="button" class="ibtn copy" title="Copy" aria-label="Copy block">',
+    );
+    expect(html).toContain('class="copy-icon"');
+    expect(html).toContain('class="copied-icon"');
+    expect(html).not.toContain(">Copy</button>");
     const plain = renderMarkdown("```\nx\n```");
     expect(plain).toContain('<div class="code"><div class="ch"><button');
     expect(plain).not.toContain("data-lang");
@@ -65,11 +70,32 @@ describe("renderMarkdown", () => {
     expect(renderMarkdown("```\nconst a\n```")).not.toContain("hljs-");
   });
 
+  test("copy controls stay icon-only on every kind of block", () => {
+    for (const md of [
+      "```\nplain text\n```",
+      "```ts\nconst n = 1;\n```",
+      "```unknown\nsome text\n```",
+      "```mermaid\ngraph LR\nA --> B\n```",
+      "```mermaid\npie title x\n  a: 1\n```",
+    ]) {
+      for (const streaming of [false, true]) {
+        const html = renderMarkdown(md, streaming);
+        expect(html.match(/aria-label="Copy block"/g)).toHaveLength(1);
+        expect(html).toContain('class="copy-icon"');
+        expect(html).toContain('class="copied-icon"');
+        expect(html).not.toContain(">Copy</button>");
+      }
+    }
+  });
+
   test("a mermaid block is a diagram when the reply is done", () => {
     const md = "```mermaid\ngraph LR\n  A --> B\n```";
     const done = renderMarkdown(md);
     expect(done).toContain('<div class="code" data-lang="mermaid">');
     expect(done).toContain('<img class="diagram" alt="diagram" src="data:');
+    expect(done).toContain('class="ibtn expand"');
+    expect(done).toContain('aria-label="Expand diagram"');
+    expect(done).toContain('aria-haspopup="dialog"');
     // the source stays for the Copy button, hidden
     expect(done).toContain(
       "<pre hidden><code>graph LR\n  A --&gt; B\n</code></pre>",
@@ -77,10 +103,29 @@ describe("renderMarkdown", () => {
     // while streaming, and when the library cannot draw it, a code block
     const live = renderMarkdown(md, true);
     expect(live).not.toContain("<img");
+    expect(live).not.toContain('class="ibtn expand"');
     expect(live).toContain("<pre><code>graph LR");
     const bad = renderMarkdown("```mermaid\npie title x\n  a: 1\n```");
     expect(bad).not.toContain("<img");
+    expect(bad).not.toContain('class="ibtn expand"');
     expect(bad).toContain("<pre><code>pie title x");
+  });
+
+  test("each rendered diagram gets its own expand control, other code does not", () => {
+    const html = renderMarkdown(
+      "```mermaid\ngraph LR\nA --> B\n```\n\n```ts\nconst n = 1;\n```\n\n```mermaid\nsequenceDiagram\nA->>B: hi\n```",
+    );
+    expect(html.match(/aria-label="Expand diagram"/g)).toHaveLength(2);
+    expect(html.match(/class="ibtn copy"/g)).toHaveLength(3);
+    expect(html.match(/<pre hidden>/g)).toHaveLength(2);
+    expect(renderMarkdown("```ts\nconst n = 1;\n```")).not.toContain(
+      'class="ibtn expand"',
+    );
+    expect(
+      renderMarkdown(
+        '<button class="expand">Fake</button><img class="diagram" src="https://example.com">',
+      ),
+    ).not.toContain("<button");
   });
 
   test("links keep only http, https and mailto", () => {

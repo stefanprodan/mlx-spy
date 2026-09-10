@@ -26,6 +26,7 @@ import {
   beginNavigation,
   chats,
   command,
+  copy,
   current,
   currentStreaming,
   draft,
@@ -87,6 +88,10 @@ function newDraft() {
 }
 
 const originalHistory = Object.getOwnPropertyDescriptor(globalThis, "history");
+const originalClipboard = Object.getOwnPropertyDescriptor(
+  navigator,
+  "clipboard",
+);
 const preconnect = globalThis.fetch.preconnect;
 const fetcher = (
   run: (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>,
@@ -104,6 +109,9 @@ afterEach(() => {
   if (originalHistory) {
     Object.defineProperty(globalThis, "history", originalHistory);
   } else Reflect.deleteProperty(globalThis, "history");
+  if (originalClipboard) {
+    Object.defineProperty(navigator, "clipboard", originalClipboard);
+  } else Reflect.deleteProperty(navigator, "clipboard");
   state.value = null;
   running.value = null;
   chats.value = [];
@@ -112,6 +120,25 @@ afterEach(() => {
 });
 
 describe("chat command ownership", () => {
+  test("a delayed copy failure stays with its originating chat", async () => {
+    const a = chat();
+    const b = chat(1);
+    const result = Promise.withResolvers<void>();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: mock(() => result.promise) },
+    });
+    select(a);
+    const copying = copy("A's text");
+    select(b);
+    setNote("B's note");
+    result.reject(new Error("Copy denied"));
+    expect(await copying).toBe(false);
+    expect(note.value?.text).toBe("B's note");
+    select(a);
+    expect(note.value?.text).toBe("Copy denied");
+  });
+
   test("A's delayed rejection preserves B's draft and keeps A's error in A", async () => {
     const a = chat();
     const b = chat(1);

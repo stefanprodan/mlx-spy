@@ -43,6 +43,10 @@ function unescapeHtml(s: string): string {
 }
 
 const SAFE_HREF = /^(https?:|mailto:)/i;
+const COPY_BLOCK =
+  '<button type="button" class="ibtn copy" title="Copy" aria-label="Copy block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="copy-icon" fill="none"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></g><path class="copied-icon" fill="none" d="m5 12 4 4L19 6"/></svg></button>';
+const EXPAND_DIAGRAM =
+  '<button type="button" class="ibtn expand" title="Full screen" aria-label="Expand diagram" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="none" d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>';
 
 // The info string is free text ("ts", "python title=x"); only its first
 // word is a language, and only a plain token is worth a data attribute.
@@ -61,11 +65,11 @@ function codeBlock(
 ): string {
   const lang = language(info);
   const label = lang ? `<span class="lang">${escapeHtml(lang)}</span>` : "";
-  const head = `<div class="ch">${label}<button type="button" class="copy">Copy</button></div>`;
+  const head = `<div class="ch">${label}${COPY_BLOCK}</div>`;
   if (lang === "mermaid" && diagrams) {
     const img = renderDiagram(unescapeHtml(text));
     if (img !== null) {
-      return `<div class="code" data-lang="mermaid">${head}${img}<pre hidden><code>${text}</code></pre></div>`;
+      return `<div class="code" data-lang="mermaid"><div class="ch">${label}${COPY_BLOCK}${EXPAND_DIAGRAM}</div>${img}<pre hidden><code>${text}</code></pre></div>`;
     }
   }
   const body = (lang && highlight(unescapeHtml(text), lang)) || text;
