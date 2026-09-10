@@ -18,7 +18,13 @@ import pkg from "../package.json";
 import { Actions } from "./actions.ts";
 import { ChatRunner } from "./chat.ts";
 import { ChatStore } from "./chats.ts";
-import { MlxServe, parseSize } from "./engine/mlxserve.ts";
+import { ConfigStore } from "./config.ts";
+import { MlxServe, mlxServeProvider, parseSize } from "./engine/mlxserve.ts";
+import {
+  Catalog,
+  DEFAULT_LIMIT as OPENROUTER_LIMIT,
+  OpenRouter,
+} from "./engine/openrouter.ts";
 import { History } from "./history.ts";
 import { createHostProbes } from "./host/index.ts";
 import { hostInfo } from "./host/info.ts";
@@ -61,12 +67,16 @@ const HELP = `\x1b[1mmlx-spy\x1b[0m - monitor and control an LLM inference serve
   --hot-cache-max <n>  hot cache budget per model, e.g. 16GB (default: read
                        from the engine's launchd plist when local)
   --disk-cache-max <n> SSD cache tier budget per model, e.g. 50GB (same)
+  --openrouter-concurrency <n>
+                       chats answered by OpenRouter at once (default:
+                       ${OPENROUTER_LIMIT}; the engine takes one)
   --once               print one JSON sample and exit
   -v, --version        show version
   -h, --help           show this help
-  Keys: ../secrets/{exa,firecrawl,hf}.key next to the binary
-                       (.preview/secrets/ from source); search is keyless
-                       and the Hub anonymous when absent; read at start
+  Keys: ../secrets/{exa,firecrawl,hf,openrouter}.key next to the binary
+                       (.preview/secrets/ from source); search is keyless,
+                       the Hub anonymous and OpenRouter absent from the
+                       chat when the file is missing; read at start
 
 \x1b[1mAPI:\x1b[0m
   GET /                        the dashboard
@@ -77,6 +87,9 @@ const HELP = `\x1b[1mmlx-spy\x1b[0m - monitor and control an LLM inference serve
                                read, update or delete a chat
   POST /api/chats/<id>/<name>  messages, regenerate, edit or stop
   GET /api/tools                available chat tools
+  GET /api/config               the hosted models added from the chat's
+                               Settings page; POST .../openrouter/refresh,
+                               check, models and DELETE .../models/<id>
   GET|POST /api/pulls          list downloads or start one (body {"repo"})
   GET|DELETE /api/pulls/<id>   read or forget a download
   POST /api/pulls/<id>/cancel  stop a download; its parts are kept
@@ -106,6 +119,7 @@ let retentionDays = DEFAULT_RETENTION_DAYS;
 let once = false;
 let hotMax: number | null = null;
 let diskMax: number | null = null;
+let openRouterLimit = OPENROUTER_LIMIT;
 const args = Bun.argv.slice(2);
 
 // --flag value and --flag=value both work
@@ -155,6 +169,13 @@ for (let i = 0; i < args.length; i++) {
     if (bytes === null) fail(`${name} expects <n>{KB,MB,GB} or off: ${v}`);
     if (name === "--hot-cache-max") hotMax = bytes;
     else diskMax = bytes;
+  } else if (name === "--openrouter-concurrency") {
+    const [v, j] = value(i);
+    i = j;
+    openRouterLimit = Number(v);
+    if (!Number.isSafeInteger(openRouterLimit) || openRouterLimit < 1) {
+      fail(`--openrouter-concurrency must be a positive integer: ${v}`);
+    }
   } else {
     fail(`unknown argument: ${arg}`);
   }
@@ -208,9 +229,11 @@ const log = (line: string) =>
 const searchDir = secretsDir();
 let searchKeys: SearchKeys;
 let hubToken: string | null;
+let openRouterKey: string | null;
 try {
   searchKeys = loadSearchKeys(searchDir);
   hubToken = loadKey(join(searchDir, "hf.key"));
+  openRouterKey = loadKey(join(searchDir, "openrouter.key"));
 } catch (error) {
   console.error(
     `error: ${error instanceof Error ? error.message : String(error)}`,
@@ -226,6 +249,11 @@ log(
   }`,
 );
 log(`hf key: ${hubToken === null ? "none" : join(searchDir, "hf.key")}`);
+log(
+  `openrouter key: ${
+    openRouterKey === null ? "none" : join(searchDir, "openrouter.key")
+  }`,
+);
 
 if (dbPath !== ":memory:") mkdirSync(dirname(dbPath), { recursive: true });
 const history = new History(dbPath, retentionDays);
@@ -243,10 +271,41 @@ if (repaired > 0) {
 }
 const sampler = new Sampler(engine, history, { log, probes, local });
 const actions = new Actions({ engine, sampler, history, local, log });
+const config = new ConfigStore(history.db);
+// OpenRouter is a chat provider only when its key is on disk; its saved
+// models are refreshed from the public catalog once at start (a miss keeps
+// their stored prices) and again whenever the config page opens
+const catalog = openRouterKey === null ? null : new Catalog();
+const openRouter =
+  openRouterKey === null
+    ? null
+    : new OpenRouter({
+        key: openRouterKey,
+        models: () => config.list("openrouter"),
+        limit: openRouterLimit,
+      });
+if (catalog) {
+  const saved = config.list("openrouter").length;
+  log(`openrouter models: ${saved} listed, ${openRouterLimit} at once`);
+  void catalog
+    .get(true)
+    .then((models) => {
+      const found = config.refresh("openrouter", models);
+      if (found < saved) {
+        log(`openrouter catalog: ${saved - found} listed models not in it`);
+      }
+    })
+    .catch((err) =>
+      log(`openrouter catalog: ${err instanceof Error ? err.message : err}`),
+    );
+}
 const chat = new ChatRunner({
   engine,
+  providers: {
+    mlxserve: mlxServeProvider(engine, () => sampler.currentModels()),
+    openrouter: openRouter,
+  },
   store: chats,
-  models: () => sampler.currentModels(),
   log,
   version: VERSION,
   searchKeys,
@@ -272,6 +331,8 @@ const web = serve(
     limits,
     host: await hostInfo(),
     modelDir,
+    config,
+    catalog,
   },
   { hostname, port },
   page,

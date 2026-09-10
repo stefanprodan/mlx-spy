@@ -15,7 +15,14 @@ import {
   type ChatWsEvent,
 } from "./chat.ts";
 import type { ChatPatch, ChatSettings } from "./chats.ts";
-import type { CacheLimits, Engine } from "./engine/types.ts";
+import type { ConfigStore, RemoteModel } from "./config.ts";
+import { type Catalog, CatalogError } from "./engine/openrouter.ts";
+import {
+  type CacheLimits,
+  type Engine,
+  isProviderId,
+  type ProviderId,
+} from "./engine/types.ts";
 import { type History, RANGES, type Range } from "./history.ts";
 import { diskSpace, type HostInfo } from "./host/info.ts";
 import { PullError, type PullRunner } from "./pull.ts";
@@ -58,16 +65,30 @@ export type WebDeps = {
   host: HostInfo | null;
   // where downloads land; null when the host cannot say (tests)
   modelDir: string | null;
+  // the hosted providers' model lists and OpenRouter's catalog; the
+  // catalog is null when no key was found, and the routes say so
+  config: ConfigStore;
+  catalog: Catalog | null;
   now?: () => number;
 };
 
 // handle() also serves old focused tests that do not exercise chat or
 // downloads. Production serve() requires both runners through WebDeps.
-type HandleDeps = Omit<WebDeps, "chat" | "pulls" | "modelDir"> & {
+type HandleDeps = Omit<
+  WebDeps,
+  "chat" | "pulls" | "modelDir" | "config" | "catalog"
+> & {
   chat?: ChatRunner;
   pulls?: PullRunner;
   modelDir?: string | null;
+  config?: ConfigStore;
+  catalog?: Catalog | null;
+  // serve() publishes the list on every change so every tab's picker
+  // follows the config page
+  onRemoteModels?: (models: RemoteModel[]) => void;
 };
+
+const EMPTY_LIMITS: Record<ProviderId, number> = { mlxserve: 1, openrouter: 0 };
 
 export function snapshot(deps: HandleDeps) {
   return {
@@ -87,9 +108,10 @@ export function snapshot(deps: HandleDeps) {
     disk: deps.sampler.currentDisk(),
     events: deps.actions.events,
     running: deps.actions.running(),
-    chatRuns: deps.chat?.runs() ?? { limit: 1, sends: [] },
+    chatRuns: deps.chat?.runs() ?? { limits: EMPTY_LIMITS, sends: [] },
     pulls: deps.pulls?.list() ?? [],
     modelDir: deps.modelDir ?? null,
+    remoteModels: deps.config?.list("openrouter") ?? [],
   };
 }
 
@@ -99,7 +121,8 @@ export type WsMessage =
   | { type: "event"; data: ActionEvent }
   | { type: "chat"; data: ChatWsEvent }
   | { type: "chatRuns"; data: ChatRuns }
-  | { type: "pull"; data: Pull };
+  | { type: "pull"; data: Pull }
+  | { type: "remoteModels"; data: RemoteModel[] };
 
 export function sameOrigin(req: Request): boolean {
   const origin = req.headers.get("origin");
@@ -269,8 +292,18 @@ function searchField(
   return field;
 }
 
+function providerField(value: Record<string, unknown>): ProviderId | undefined {
+  const field = value.provider;
+  if (field === undefined) return undefined;
+  if (!isProviderId(field)) {
+    throw new HttpError(400, "provider must be mlxserve or openrouter");
+  }
+  return field;
+}
+
 function settings(value: Record<string, unknown>): ChatSettings {
   return {
+    provider: providerField(value) ?? "mlxserve",
     model: stringField(value, "model", true)!,
     systemPrompt: stringField(value, "systemPrompt") ?? "",
     thinking: booleanField(value, "thinking") ?? true,
@@ -288,6 +321,7 @@ function settings(value: Record<string, unknown>): ChatSettings {
 function patch(value: Record<string, unknown>): ChatPatch {
   const result: ChatPatch = {};
   const title = stringField(value, "title");
+  const provider = providerField(value);
   const model = stringField(value, "model");
   const systemPrompt = stringField(value, "systemPrompt");
   const thinking = booleanField(value, "thinking");
@@ -305,6 +339,7 @@ function patch(value: Record<string, unknown>): ChatPatch {
   const toolsOff = toolsField(value);
   const search = searchField(value);
   if (title !== undefined) result.title = title;
+  if (provider !== undefined) result.provider = provider;
   if (model !== undefined) result.model = model;
   if (systemPrompt !== undefined) result.systemPrompt = systemPrompt;
   if (thinking !== undefined) result.thinking = thinking;
@@ -446,6 +481,85 @@ async function pullsRoute(req: Request, deps: HandleDeps): Promise<Response> {
   return json({ error: "method not allowed" }, 405);
 }
 
+// The config page's routes: the saved hosted models, checked against the
+// provider's catalog before they can be added, and refreshed from it
+// whenever the page opens. The key never leaves the server: `enabled`
+// says whether one was found.
+async function configRoute(req: Request, deps: HandleDeps): Promise<Response> {
+  const config = deps.config;
+  if (!config) return json({ error: "not found" }, 404);
+  const url = new URL(req.url);
+  const enabled = deps.catalog !== null && deps.catalog !== undefined;
+  const list = () => config.list("openrouter");
+  const changed = () => deps.onRemoteModels?.(list());
+  if (url.pathname === "/api/config") {
+    if (req.method !== "GET") return json({ error: "method not allowed" }, 405);
+    return json({
+      openrouter: {
+        enabled,
+        limit: deps.chat?.limits().openrouter ?? 0,
+        models: list(),
+      },
+    });
+  }
+  const match =
+    /^\/api\/config\/openrouter\/(refresh|check|models)(?:\/(.+))?$/.exec(
+      url.pathname,
+    );
+  if (!match) return json({ error: "not found" }, 404);
+  const [, operation, rest] = match;
+  const catalog = deps.catalog;
+  if (!catalog) return json({ error: "OpenRouter key missing" }, 404);
+  const fetchCatalog = async (fresh: boolean) => {
+    try {
+      return await catalog.get(fresh);
+    } catch (err) {
+      if (err instanceof CatalogError) throw new HttpError(502, err.message);
+      throw err;
+    }
+  };
+  if (operation === "refresh") {
+    if (req.method !== "POST")
+      return json({ error: "method not allowed" }, 405);
+    await body(req, true);
+    const models = await fetchCatalog(true);
+    config.refresh("openrouter", models);
+    changed();
+    return json({ models: list(), checkedAt: (deps.now ?? Date.now)() });
+  }
+  if (operation === "check" || (operation === "models" && rest === undefined)) {
+    if (req.method !== "POST")
+      return json({ error: "method not allowed" }, 405);
+    const value = await body(req);
+    const id = stringField(value, "id", true)!.trim();
+    const models = await fetchCatalog(false);
+    const model = models.get(id) ?? null;
+    // a wrong id is the check's ordinary answer, not an error
+    if (operation === "check") return json({ model });
+    if (!model) {
+      return json({ error: `${id} is not in the OpenRouter catalog` }, 404);
+    }
+    if (!config.add("openrouter", model)) {
+      return json({ error: `${id} is already in the list` }, 409);
+    }
+    changed();
+    return json(config.get("openrouter", id), 201);
+  }
+  if (req.method !== "DELETE")
+    return json({ error: "method not allowed" }, 405);
+  let id: string;
+  try {
+    id = decodeURIComponent(rest ?? "");
+  } catch {
+    return json({ error: "not found" }, 404);
+  }
+  if (!config.remove("openrouter", id)) {
+    return json({ error: "Model not found" }, 404);
+  }
+  changed();
+  return json({ ok: true });
+}
+
 export async function handle(
   req: Request,
   deps: HandleDeps,
@@ -468,6 +582,12 @@ export async function handle(
       url.pathname.startsWith("/api/pulls/")
     ) {
       return await pullsRoute(req, deps);
+    }
+    if (
+      url.pathname === "/api/config" ||
+      url.pathname.startsWith("/api/config/")
+    ) {
+      return await configRoute(req, deps);
     }
     if (req.method !== "GET") {
       return json({ error: "method not allowed" }, 405);
@@ -519,6 +639,10 @@ export function serve(
   listen: { hostname: string; port: number },
   page: HTMLBundle,
 ) {
+  const handleDeps: HandleDeps = {
+    ...deps,
+    onRemoteModels: (models) => publish({ type: "remoteModels", data: models }),
+  };
   const server = Bun.serve({
     hostname: listen.hostname,
     port: listen.port,
@@ -541,7 +665,7 @@ export function serve(
           ? undefined
           : new Response("websocket upgrade failed", { status: 400 });
       }
-      return handle(req, deps);
+      return handle(req, handleDeps);
     },
     websocket: {
       open(ws) {

@@ -15,14 +15,16 @@ import {
   type MessageStats,
   titleFrom,
 } from "./chats.ts";
-import type {
-  ChatEvent,
-  ChatMessageIn,
-  ChatRequest,
-  ChatTool,
-  Engine,
-  ModelInfo,
-  ToolCall,
+import {
+  type ChatEvent,
+  type ChatMessageIn,
+  type ChatProvider,
+  type ChatRequest,
+  type ChatTool,
+  type Engine,
+  PROVIDERS,
+  type ProviderId,
+  type ToolCall,
 } from "./engine/types.ts";
 import { renderMarkdown } from "./markdown.ts";
 import type { SearchKeys, SearchProvider } from "./tools/search/types.ts";
@@ -75,22 +77,25 @@ const SUMMARY_LEAD =
 
 type TerminalStatus = "done" | "stopped" | "interrupted" | "error";
 
-// the cap on sends in flight across chats; one until the engine's request
-// scheduling is established (plans/26.09.10-parallel-chats-plan.md, 7)
-const CHAT_CONCURRENCY = 1;
-
 // A send in flight, for the snapshot and the `chatRuns` socket message.
 // `firstMessageId` names the send across its rounds, `messageId` the row
 // being written now. `stopping` is a send that ended but whose cancelled
-// engine stream or tools have not settled: it still holds its slot.
+// engine stream or tools have not settled: it still holds its slot, on
+// the provider it runs on.
 export type RunningSend = {
   chatId: string;
+  provider: ProviderId;
   firstMessageId: number;
   messageId: number;
   phase: "running" | "stopping";
 };
 
-export type ChatRuns = { limit: number; sends: RunningSend[] };
+// the cap per provider (0 for a provider that is not configured) and the
+// sends holding a slot; a send counts against its own provider only
+export type ChatRuns = {
+  limits: Record<ProviderId, number>;
+  sends: RunningSend[];
+};
 
 export type ChatWsEvent =
   // deletedFrom: regenerate and edit removed that row and every later one
@@ -150,6 +155,7 @@ export class ChatError extends Error {
 }
 
 type FrozenPolicy = {
+  provider: ProviderId;
   model: string;
   systemPrompt: string;
   thinking: boolean;
@@ -208,9 +214,11 @@ type ToolExecutor = (
 ) => Promise<{ text: string; error: string | null }>;
 
 export type ChatRunnerDeps = {
+  // the engine's URL is what the tools need (webfetch may read it)
   engine: Engine;
+  // the chat providers by id; null for one that is not configured
+  providers: Record<ProviderId, ChatProvider | null>;
   store: ChatStore;
-  models: () => ModelInfo[];
   log: (line: string) => void;
   now?: () => number;
   version?: string;
@@ -222,6 +230,7 @@ function chatSummary(chat: Chat): ChatSummary {
   return {
     id: chat.id,
     title: chat.title,
+    provider: chat.provider,
     model: chat.model,
     createdAt: chat.createdAt,
     updatedAt: chat.updatedAt,
@@ -273,7 +282,6 @@ function callSignature(calls: ToolCall[]): string {
 export class ChatRunner {
   // the sends in flight by chat, cancelled ones included until they drain
   private readonly sends = new Map<string, ActiveSend>();
-  private readonly limit = CHAT_CONCURRENCY;
   private readonly listeners = new Set<(event: ChatWsEvent) => void>();
   private readonly runListeners = new Set<(runs: ChatRuns) => void>();
   private readonly now: () => number;
@@ -301,12 +309,33 @@ export class ChatRunner {
       if (!send.current) continue;
       sends.push({
         chatId: send.chatId,
+        provider: send.policy.provider,
         firstMessageId: send.firstMessageId,
         messageId: send.current.messageId,
         phase: send.terminal === null ? "running" : "stopping",
       });
     }
-    return { limit: this.limit, sends };
+    return { limits: this.limits(), sends };
+  }
+
+  limits(): Record<ProviderId, number> {
+    const limits = {} as Record<ProviderId, number>;
+    for (const id of PROVIDERS)
+      limits[id] = this.deps.providers[id]?.limit ?? 0;
+    return limits;
+  }
+
+  private provider(id: ProviderId): ChatProvider {
+    const provider = this.deps.providers[id];
+    if (!provider) {
+      throw new ChatError(
+        400,
+        id === "openrouter"
+          ? "OpenRouter key missing; add ../secrets/openrouter.key and restart"
+          : `${id} is not configured`,
+      );
+    }
+    return provider;
   }
 
   list(): ChatSummary[] {
@@ -318,7 +347,7 @@ export class ChatRunner {
   }
 
   create(settings: ChatSettings, title = ""): Chat {
-    this.validateModel(settings.model);
+    this.validateModel(settings.provider, settings.model);
     const chat = this.deps.store.create(settings, title);
     this.publish({ kind: "chat", chat: chatSettings(chat) });
     return chat;
@@ -328,6 +357,7 @@ export class ChatRunner {
     if (
       this.sends.has(id) &&
       (patch.model !== undefined ||
+        patch.provider !== undefined ||
         patch.toolsOff !== undefined ||
         patch.search !== undefined)
     ) {
@@ -336,7 +366,13 @@ export class ChatRunner {
         "Model, tools and search cannot change during a send",
       );
     }
-    if (patch.model !== undefined) this.validateModel(patch.model);
+    if (patch.model !== undefined || patch.provider !== undefined) {
+      const chat = this.requireChat(id);
+      this.validateModel(
+        patch.provider ?? chat.provider,
+        patch.model ?? chat.model,
+      );
+    }
     const chat = this.deps.store.update(id, patch);
     if (!chat) return null;
     const summary = chatSettings(chat);
@@ -349,10 +385,10 @@ export class ChatRunner {
     text: string,
     deletedFrom?: number,
   ): { user: Message; message: Message } {
-    this.admit(chatId);
     this.validateText(text);
     let chat = this.requireChat(chatId);
-    this.validateModel(chat.model);
+    this.admit(chat);
+    this.validateModel(chat.provider, chat.model);
     this.truncateMalformedHistory(chat);
     const titleChanged = chat.title === "" && chat.messages.length === 0;
     const user = this.deps.store.transaction(() => {
@@ -370,15 +406,15 @@ export class ChatRunner {
   }
 
   regenerate(chatId: string): { user: Message; message: Message } {
-    this.admit(chatId);
     const chat = this.requireChat(chatId);
+    this.admit(chat);
     const user = [...chat.messages]
       .reverse()
       .find((row) => row.role === "user");
     if (!user || chat.messages.at(-1)?.id === user.id) {
       throw new ChatError(400, "The last message is not an assistant reply");
     }
-    this.validateModel(chat.model);
+    this.validateModel(chat.provider, chat.model);
     const deletedFrom = this.deps.store.deleteAfterLastUser(chatId);
     if (deletedFrom === null) {
       throw new ChatError(400, "The last message is not an assistant reply");
@@ -389,9 +425,9 @@ export class ChatRunner {
   // a summary round on its own, from /compact in the composer: the next
   // reply starts from the summary the same way an automatic one does
   compact(chatId: string): { message: Message } {
-    this.admit(chatId);
     const chat = this.requireChat(chatId);
-    this.validateModel(chat.model);
+    this.admit(chat);
+    this.validateModel(chat.provider, chat.model);
     this.truncateMalformedHistory(chat);
     const current = this.requireChat(chatId);
     const last = current.messages.at(-1);
@@ -422,14 +458,14 @@ export class ChatRunner {
     messageId: number,
     content: string,
   ): { user: Message; message: Message } {
-    this.admit(chatId);
     this.validateText(content);
     const chat = this.requireChat(chatId);
+    this.admit(chat);
     const row = chat.messages.find((message) => message.id === messageId);
     if (row?.role !== "user") {
       throw new ChatError(400, "The message to edit must be a user message");
     }
-    this.validateModel(chat.model);
+    this.validateModel(chat.provider, chat.model);
     const user = this.deps.store.transaction(() => {
       this.deps.store.deleteFrom(chatId, messageId);
       return this.deps.store.addMessage(chatId, "user", {
@@ -498,6 +534,7 @@ export class ChatRunner {
     );
     const tools = toolSchemas(enabled, this.now());
     const policy: FrozenPolicy = {
+      provider: chat.provider,
       model: chat.model,
       systemPrompt: this.systemPrompt(chat.systemPrompt),
       thinking: chat.thinking,
@@ -759,13 +796,8 @@ export class ChatRunner {
     round: RoundState,
     request: ChatRequest,
   ): Promise<void> {
-    const chat = this.deps.engine.chat;
-    if (!chat) throw new Error(`${this.deps.engine.id} does not support chat`);
-    for await (const event of chat.call(
-      this.deps.engine,
-      request,
-      send.controller.signal,
-    )) {
+    const provider = this.provider(send.policy.provider);
+    for await (const event of provider.chat(request, send.controller.signal)) {
       if (send.terminal !== null) return;
       if (event.kind === "reasoning" || event.kind === "content") {
         this.delta(send, round, event);
@@ -795,7 +827,9 @@ export class ChatRunner {
   }
 
   private window(send: ActiveSend): number | null {
-    const info = this.deps.models().find((m) => m.id === send.policy.model);
+    const info = this.deps.providers[send.policy.provider]
+      ?.models()
+      .find((m) => m.id === send.policy.model);
     return info?.contextLength || null;
   }
 
@@ -1294,26 +1328,42 @@ export class ChatRunner {
   }
 
   // Admission, synchronous with the reservation that follows it: a chat
-  // takes one send at a time, and the cap counts cancelled sends until
-  // they drain. Nothing is written before it passes.
-  private admit(chatId: string) {
-    const blocking =
-      this.sends.get(chatId) ??
-      (this.sends.size >= this.limit
-        ? ([...this.sends.values()].find((send) => send.terminal !== null) ??
-          this.sends.values().next().value)
-        : undefined);
-    if (!blocking) return;
-    if (blocking.terminal !== null) {
+  // takes one send at a time, and each provider's cap counts its own
+  // sends, cancelled ones included until they drain. Nothing is written
+  // before it passes.
+  private admit(chat: Chat) {
+    const own = this.sends.get(chat.id);
+    if (own) {
+      if (own.terminal !== null) {
+        throw new ChatError(
+          409,
+          "Still cancelling the previous reply; try again in a moment",
+        );
+      }
+      throw new ChatError(409, `mlx-spy is already answering in ${chat.title}`);
+    }
+    const provider = chat.provider;
+    const limit = this.provider(provider).limit;
+    const peers = [...this.sends.values()].filter(
+      (send) => send.policy.provider === provider,
+    );
+    if (peers.length < limit) return;
+    if (peers.some((send) => send.terminal !== null)) {
       throw new ChatError(
         409,
         "Still cancelling the previous reply; try again in a moment",
       );
     }
-    const chat = this.deps.store.get(blocking.chatId);
+    if (provider === "mlxserve") {
+      const other = peers[0] ? this.deps.store.get(peers[0].chatId) : null;
+      throw new ChatError(
+        409,
+        `mlx-spy is already answering in ${other?.title || "another chat"}`,
+      );
+    }
     throw new ChatError(
       409,
-      `mlx-spy is already answering in ${chat?.title || "another chat"}`,
+      `OpenRouter: ${limit} chat${limit === 1 ? "" : "s"} running; try again in a moment`,
     );
   }
 
@@ -1345,10 +1395,16 @@ export class ChatRunner {
     return chat;
   }
 
-  private validateModel(id: string) {
-    if (this.deps.models().some((model) => model.id === id)) return;
+  private validateModel(provider: ProviderId, id: string) {
+    const models = this.provider(provider).models();
+    if (models.some((model) => model.id === id)) return;
     const name = id.split("/").at(-1) || id;
-    throw new ChatError(400, `${name} is not loaded anymore; pick a model`);
+    throw new ChatError(
+      400,
+      provider === "openrouter"
+        ? `${name} is not in the OpenRouter list; add it in Settings or pick a model`
+        : `${name} is not loaded anymore; pick a model`,
+    );
   }
 
   private validateText(text: string) {

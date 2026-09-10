@@ -7,6 +7,7 @@ import { type ChatSettings, ChatStore, titleFrom } from "../src/chats.ts";
 import type { ToolCall } from "../src/engine/types.ts";
 
 const defaults: ChatSettings = {
+  provider: "mlxserve",
   model: "org/model",
   systemPrompt: "",
   thinking: true,
@@ -49,6 +50,7 @@ const finish = (finishedAt = 1500) => ({
     prefillMs: null,
     decodeMs: null,
     tokenizeMs: null,
+    cost: null,
   },
 });
 
@@ -147,6 +149,7 @@ describe("ChatStore", () => {
       prefillMs: null,
       decodeMs: null,
       tokenizeMs: 1.5,
+      cost: null,
     };
     const done = store.finishReply(reply.id, {
       status: "done",
