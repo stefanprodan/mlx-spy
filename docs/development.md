@@ -56,11 +56,16 @@ The chat's `websearch` tool reads its provider keys from
 (`~/.local/secrets/` after `make install-bin`) and, when run from source,
 from `.preview/secrets/` in the repository, which is git-ignored. The
 model downloader reads a Hugging Face token from `hf.key` in the same
-directory, for gated repositories and the Hub's higher rate limits. Each
+directory, for gated repositories and the Hub's higher rate limits, and
+the chat's OpenRouter provider its API key from `openrouter.key` (absent,
+the picker has no OpenRouter group and the Settings page says so). Each
 file holds the bare key; the start log says `exa key: <path>` or `exa
-key: none`, and the same for firecrawl and hf. The files are read once at
-start, so a change needs a restart, and a keyless check needs the file
-moved away.
+key: none`, and the same for firecrawl, hf and openrouter. The files are
+read once at start, so a change needs a restart, and a keyless check
+needs the file moved away. The OpenRouter adapter is tested on frames
+recorded from the live API in `test/fixtures/openrouter/` (the public
+catalog, a tool-calling stream, a plain stream and a refused request);
+record new ones with `curl` and the key file, and never commit a key.
 
 Downloads land in `--model-dir`, `~/.mlx-spy/models` by default and
 `.preview/models/` for the preview; point it at the engine's own model

@@ -176,11 +176,61 @@ chat's tool rows like any call; search results are page content and are
 shown under the same "untrusted" label as fetched pages. Turn
 `websearch` off in the gear for a chat that should not search.
 
+## OpenRouter
+
+With an OpenRouter key on disk (`../secrets/openrouter.key` next to the
+binary, `.preview/secrets/` from source, read at start like the search
+keys), the picker gets a second group, **OpenRouter**, under the engine's
+models. Its models come from the Settings page, opened from the button at
+the foot of the chat list: paste a model id from openrouter.ai (say
+`nvidia/nemotron-3-super-120b-a12b:free`), Check looks it up in
+OpenRouter's public catalog and shows its price per million tokens in and
+out (or "free"), its context window and whether it supports tools and
+reasoning, and Add puts it in the list. The list is in mlx-spy's database
+and reaches every open tab. Every time the page opens, the prices and
+windows of the saved models are refreshed from the catalog; a model the
+catalog no longer lists stays, marked "not in catalog", and a catalog
+that does not answer leaves the rows as they were and says so on the
+prices line. Remove takes two clicks.
+
+A chat on a hosted model works like any other: the same tools, folds,
+compaction and history. What differs:
+
+- The conversation leaves this host: every message, the reasoning, the
+  tool results and the system prompt go to OpenRouter and its upstream
+  provider, an existing chat's history included the moment its model is
+  switched. The empty state and the picker say so. Free models may route
+  to providers that log or train on prompts; OpenRouter's account
+  settings can restrict that.
+- The numbers line shows the tokens, the cost of the send in dollars (or
+  "free") and the duration; there are no engine timings and no live rate,
+  since the engine's gauges are not this reply's. The cache share appears
+  only when the upstream reported cached tokens; most free endpoints do
+  not cache and would show a meaningless zero.
+- Reasoning arrives when the model streams it, and goes back on later
+  turns as OpenRouter's `reasoning` field. The generated count includes
+  the reasoning tokens.
+- OpenRouter runs many requests at once, so its chats have their own
+  cap: `--openrouter-concurrency` (4 by default) of them can answer at
+  the same time, while the engine still answers one. A local chat and a
+  hosted chat never wait for each other; the composer says "OpenRouter:
+  4 chats running" when the hosted cap is full.
+- A free endpoint that is rate limited upstream, or a key that is
+  rejected, ends the reply with OpenRouter's own message under it; there
+  is no automatic retry, Regenerate is the retry. Free models get 20
+  requests a minute and 1,000 a day on an account that has bought
+  credits (50 a day otherwise).
+- No prefix cache key is sent; OpenRouter caches per upstream on its own
+  and the cached share on the numbers line is what it reports.
+
+Without a key nothing changes: the Settings page says where the key
+goes, and the picker shows only the engine's models.
+
 ## Where it lives
 
-Chats are in the same SQLite file as the history
-(`~/.mlx-spy/history.sqlite` by default). Clearing the history keeps them.
-There is no retention cap; delete chats by hand.
+Chats and the list of hosted models are in the same SQLite file as the
+history (`~/.mlx-spy/history.sqlite` by default). Clearing the history
+keeps them. There is no retention cap; delete chats by hand.
 
 ## Not in this version
 

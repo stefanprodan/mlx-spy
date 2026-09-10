@@ -108,7 +108,12 @@ Deploy when asked, then say what is now running there.
    model's query to `mcp.exa.ai` or `api.firecrawl.dev`, the chat's choice.
    The pull runner (`src/pull.ts`) downloads from `huggingface.co` into
    `--model-dir` only when a user asks for a repo; the engine takes no
-   part in the download and is asked to rescan when it is complete.
+   part in the download and is asked to rescan when it is complete. The
+   OpenRouter provider (`src/engine/openrouter.ts`) posts to
+   `openrouter.ai` only for a send in a chat whose provider is OpenRouter
+   (the whole conversation leaves the host then), and reads its public
+   catalog once at start and whenever the chat's Settings page opens or
+   checks an id; never on a timer, never from the sampler.
 3. **No spawns on the monitor path.** Host numbers come from FFI, directory
    sizes from recursive stat. The only spawns are the two local-only
    actions: `launchctl kickstart -k gui/<uid>/<label>` for "free" and the
@@ -122,20 +127,29 @@ Deploy when asked, then say what is now running there.
 
 ```
 src/main.ts          entry: CLI parsing (--engine, --listen, --db, --retention,
-                     --model-dir, --hot-cache-max, --disk-cache-max, --once,
-                     -h, -v); wires sampler, history, runners and server; dev
+                     --model-dir, --hot-cache-max, --disk-cache-max,
+                     --openrouter-concurrency, --once, -h, -v); wires sampler,
+                     history, runners and server; dev
                      VERSION from package.json, release VERSION injected at
                      build time
 src/engine/types.ts  the Engine interface and the normalised metric types
-src/engine/openai.ts the OpenAI chat completions wire, shared by every engine:
-                     buildChatBody, parseSse, chatEvents, ToolCallTracker,
-                     streamChat (pure parts tested on recorded and hand-made
-                     frames)
+src/engine/openai.ts the OpenAI chat completions wire, shared by every
+                     provider: buildChatBody, parseSse, chatEvents,
+                     ToolCallTracker, streamChat (pure parts tested on
+                     recorded and hand-made frames)
+src/engine/openrouter.ts
+                     OpenRouter as a ChatProvider: the bearer key, the
+                     reasoning object, usage with cost, the public catalog
+                     (parseCatalog, Catalog with a one minute cache), the
+                     refused-request text; tested on recorded frames in
+                     test/fixtures/openrouter/
 src/engine/mlxserve.ts
                      mlx-serve adapter: parseMetrics/parseModels (pure, tested),
                      the HTTP client, load/unload, cache dir and log paths,
                      cacheLimits() from the LaunchAgent plist; its chat layer
-                     adds enable_thinking, reasoning_effort and timings
+                     adds enable_thinking, reasoning_effort and timings;
+                     mlxServeProvider() wraps it as the runner's engine
+                     provider with CHAT_LIMIT one
 src/sample.ts        Sample type; computeRates and buildSample (pure, tested);
                      takeSample does the I/O for --once
 src/requests.ts      trackRequests: the request in flight and the last
@@ -153,10 +167,16 @@ src/pull.ts          PullRunner: the download queue (one at a time), Range
                      resume into <file>.mlx-spy-part, sha256 while writing, retries,
                      cancel, remove, resume at start; progress on /ws;
                      tested against a fake Hub in test/pull.test.ts
-src/chats.ts         ChatStore: chats and messages over the same sqlite file
+src/chats.ts         ChatStore: chats (with their provider) and messages over
+                     the same sqlite file
+src/config.ts        ConfigStore: the remote_models table, the hosted models
+                     added from the chat's Settings page, refreshed from the
+                     provider's catalog
 src/chat.ts          ChatRunner: the sends in flight by chat (a registry
-                     under a cap of one, held through cancellation until
-                     the stream and tools drain), rounds of engine
+                     with a cap per provider, one for the engine and
+                     --openrouter-concurrency for OpenRouter, held through
+                     cancellation until the stream and tools drain), the
+                     chat's provider frozen per send, rounds of provider
                      requests with tool calls between them, partial reply
                      written every 250 ms or 2 KB, deltas and rendered HTML
                      on /ws, stop from any tab, regenerate, edit; compaction
@@ -179,18 +199,18 @@ src/diagram.ts       renderDiagram(): a mermaid block to an SVG image, on the
 src/actions.ts       load, unload, default, free, diskClear (local-only),
                      historyClear, favorite; one at a time, logged, last 50
 src/web.ts           Bun.serve: the page, /api/snapshot, /api/history,
-                     /api/requests, POST /api/actions/<name>, /api/chats and
-                     /api/pulls with their sub-routes, /ws; development mode
-                     from MLX_SPY_DEV=1; handle() separate from serve() for
-                     tests
+                     /api/requests, POST /api/actions/<name>, /api/chats,
+                     /api/pulls and /api/config with their sub-routes, /ws;
+                     development mode from MLX_SPY_DEV=1; handle() separate
+                     from serve() for tests
 src/ui/index.html    the shell: head, the header, page and footer roots,
                      the script tag; Bun bundles style.css and main.tsx
                      from it
 src/ui/main.tsx      entry: renders the shell and the page's root, opens
                      the store
 src/ui/store.ts      the WebSocket client and its signals (connection,
-                     snapshot, sample, models, event, busy, pulls); listen()
-                     for the chat's event routing
+                     snapshot, sample, models, remoteModels, event, busy,
+                     pulls); listen() for the chat's event routing
 src/ui/api.ts        api<T>(): one JSON call to this server
 src/ui/format.ts     gb, num, count, secs, tps, when, group (pure, tested)
 src/ui/icons.tsx     the inline SVGs as components
@@ -218,8 +238,12 @@ src/ui/chat/         the Chat page. Pure and tested on the recordings in
                      send, patch, regenerate),
                      nav.ts (open() with its token, showDraft, the socket
                      routing with the pending queue while a fetch is in
-                     flight, boot). Components: Chat.tsx, List.tsx,
-                     Header.tsx, ModelPicker.tsx, Settings.tsx, Thread.tsx
+                     flight, the /chat/config page, boot). Components:
+                     Chat.tsx, List.tsx, Config.tsx (the Settings page:
+                     the hosted models, checked against the catalog before
+                     they are added), Header.tsx, ModelPicker.tsx (the
+                     engine's models, then the OpenRouter group),
+                     Settings.tsx, Thread.tsx
                      (the scroll stickiness), Reply.tsx, UserRow.tsx,
                      Think.tsx, Tool.tsx, Work.tsx, Composer.tsx,
                      Summary.tsx (the compaction fold), Stats.tsx,
@@ -255,7 +279,10 @@ event on `/ws` that every tab shows. A chat message: composer →
 `POST /api/chats/<id>/messages` → `ChatRunner.send` → `{type: "chatRuns"}`
 with the slots, then `{type: "chat"}` events on `/ws` in every tab →
 `done` with the final row and its stats → `chatRuns` again once the slot
-is free. The page takes who is running from `chatRuns` alone.
+is free. The page takes who is running from `chatRuns` alone, per
+provider. A hosted model: the Settings page → `POST
+/api/config/openrouter/models` → `ConfigStore` → `{type: "remoteModels"}`
+on `/ws` → the picker in every tab.
 
 ## mlx-serve specifics worth knowing
 
