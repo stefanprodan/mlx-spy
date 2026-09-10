@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { Message } from "../../chats.ts";
-import { command, currentStreaming, running } from "./store.ts";
+import { command, copy, currentStreaming, running } from "./store.ts";
 
 // A user message with Copy and Edit; editing swaps the text for a
 // textarea and resends from that row (the server drops the rows after it).
@@ -18,10 +18,7 @@ export function UserRow({ message: m }: { message: Message }) {
       <div class="msg user" data-id={m.id}>
         {m.content}
         <span class="uacts">
-          <button
-            type="button"
-            onClick={() => void navigator.clipboard.writeText(m.content)}
-          >
+          <button type="button" onClick={() => void copy(m.content)}>
             Copy
           </button>
           <button

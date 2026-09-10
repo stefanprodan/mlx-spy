@@ -3,10 +3,11 @@
 
 import { useSignal } from "@preact/signals";
 import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
+import { Diagram } from "./Diagram.tsx";
 import { Empty } from "./Empty.tsx";
 import { Reply } from "./Reply.tsx";
 import { Summary } from "./Summary.tsx";
-import { current, tree } from "./store.ts";
+import { copy, current, tree } from "./store.ts";
 import type { Node } from "./thread.ts";
 import { UserRow } from "./UserRow.tsx";
 import { Work } from "./Work.tsx";
@@ -41,6 +42,7 @@ export function Thread() {
   const lastTop = useRef(0);
   const lastHeight = useRef(0);
   const jumpHidden = useSignal(true);
+  const diagram = useSignal<string | null>(null);
   const nodes = tree.value;
   const chat = current.value;
   // a new user or assistant row sticks the view to the bottom again; a
@@ -62,41 +64,60 @@ export function Thread() {
       jumpHidden.value = stick.current || gap < 80;
     };
     el.addEventListener("scroll", onScroll);
-    // code blocks arrive with a Copy button in their head, inside the
-    // server's HTML, so one delegated listener serves them all
-    const timers = new Set<ReturnType<typeof setTimeout>>();
-    const onClick = (ev: MouseEvent) => {
-      const b = (ev.target as HTMLElement).closest("button.copy");
+    // Block controls arrive inside the server's HTML, so one delegated
+    // listener serves Copy and the diagram's full-screen button.
+    const timers = new Map<Element, ReturnType<typeof setTimeout>>();
+    let listening = true;
+    const onClick = async (ev: MouseEvent) => {
+      if (!(ev.target instanceof Element)) return;
+      const b = ev.target.closest("button.copy, button.expand");
       if (!b) return;
+      if (b.matches("button.expand")) {
+        const image = b
+          .closest(".code")
+          ?.querySelector<HTMLImageElement>("img.diagram");
+        if (image) diagram.value = image.src;
+        return;
+      }
       const pre = b.closest(".code")?.querySelector("pre");
       if (!pre) return;
-      void navigator.clipboard.writeText(pre.textContent ?? "");
-      b.textContent = "Copied";
-      const t = setTimeout(() => {
-        timers.delete(t);
-        b.textContent = "Copy";
-      }, 1200);
-      timers.add(t);
+      if (!(await copy(pre.textContent ?? ""))) return;
+      if (!listening || !b.isConnected) return;
+      clearTimeout(timers.get(b));
+      b.classList.add("copied");
+      b.setAttribute("title", "Copied");
+      b.setAttribute("aria-label", "Copied");
+      timers.set(
+        b,
+        setTimeout(() => {
+          timers.delete(b);
+          b.classList.remove("copied");
+          b.setAttribute("title", "Copy");
+          b.setAttribute("aria-label", "Copy block");
+        }, 1200),
+      );
     };
     el.addEventListener("click", onClick);
     return () => {
+      listening = false;
       el.removeEventListener("scroll", onScroll);
       el.removeEventListener("click", onClick);
-      for (const t of timers) clearTimeout(t);
+      for (const t of timers.values()) clearTimeout(t);
     };
-  }, [jumpHidden]);
+  }, [diagram, jumpHidden]);
 
   // a chat opens at its end; a new row sticks the view to the bottom again
   const chatId = chat?.id ?? null;
   useLayoutEffect(() => {
     const el = scroll.current;
     if (!el) return;
+    diagram.value = null;
     stick.current = true;
     el.scrollTop = el.scrollHeight;
     lastTop.current = el.scrollTop;
     lastHeight.current = el.scrollHeight;
     jumpHidden.value = true;
-  }, [chatId, jumpHidden]);
+  }, [chatId, diagram, jumpHidden]);
   useLayoutEffect(() => {
     stick.current = true;
   }, [count]);
@@ -130,6 +151,15 @@ export function Thread() {
       >
         Jump to latest
       </button>
+      {diagram.value !== null && (
+        <Diagram
+          src={diagram.value}
+          title={chat?.title || "New chat"}
+          onClose={() => {
+            diagram.value = null;
+          }}
+        />
+      )}
     </>
   );
 }

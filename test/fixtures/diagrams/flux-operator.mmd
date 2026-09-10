@@ -1,0 +1,35 @@
+flowchart TD
+    OP["Flux Operator"] --> SC --> KC --> HC --> NC --> SW
+    OP --> SPA --> GRAPH --> ACTION --> METRICS
+    OP --> CMD --> CMD2 --> CMD3 --> CMD4 --> CMD5
+    OP --> T1 --> T2 --> T3 --> T4
+
+    subgraph flux["Flux Distribution"]
+        SC[source-controller]
+        KC[kustomize-controller]
+        HC[helm-controller]
+        NC[notification-controller]
+        SW[source-watcher]
+    end
+
+    subgraph wui["Web UI"]
+        SPA[Cluster Status]
+        GRAPH[GitOps Graphs]
+        ACTION[GitOps Actions]
+        METRICS[Workload Metrics]
+    end
+
+    subgraph cli["CLI"]
+        CMD[install]
+        CMD2[uninstall]
+        CMD3[build]
+        CMD4[reconcile]
+        CMD5[export]
+    end
+
+    subgraph mcp["MCP Server"]
+        T1[get_kubernetes_resources]
+        T2[patch / logs / events]
+        T3[diff / search_flux_docs]
+        T4[trace / reconcile_flux_resource]
+    end

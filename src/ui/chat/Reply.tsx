@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Message } from "../../chats.ts";
-import { regenerate, running } from "./store.ts";
+import { copy, regenerate, running } from "./store.ts";
 import { type Live, tail } from "./stream.ts";
 import { Think } from "./Think.tsx";
 import { Tool } from "./Tool.tsx";
@@ -39,10 +39,7 @@ function After({ message: m, last }: { message: Message; last: boolean }) {
       {cut && <span class={cut.err ? "st err" : "st"}>{cut.text}</span>}
       <span class="acts">
         {m.content !== "" && (
-          <button
-            type="button"
-            onClick={() => void navigator.clipboard.writeText(m.content)}
-          >
+          <button type="button" onClick={() => void copy(m.content)}>
             Copy
           </button>
         )}

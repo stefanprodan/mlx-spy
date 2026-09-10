@@ -60,6 +60,9 @@ the engine reports shown in the composer.
   sequence, state, class, ER and XY charts; Copy still copies the
   source). While the reply streams, and for a diagram the server cannot
   draw (pie, gantt, mindmap, a syntax error), the block stays code.
+  The full-screen icon beside Copy opens a larger view with the chat
+  title. Zoom in for detail and scroll to pan; Fit shows the whole
+  diagram again. Close it with the close button or Escape.
 
 ## Using it
 
@@ -86,6 +89,11 @@ the reply streams. Hover a reply for Copy and Regenerate, a message of your
 own for Copy and Edit; editing resends from that point and drops what came
 after. Click the title to rename a chat; the first message names it
 otherwise. Delete is in the gear.
+
+Code and Mermaid blocks have a copy icon in their header. It copies the
+block's source and briefly becomes a checkmark when the copy succeeds.
+Copy also works when you open mlx-spy over HTTP on another machine,
+where the browser does not expose its Clipboard API.
 
 Unsent text stays with its chat while you navigate within the page. It
 clears when the send is accepted, unless you have edited it meanwhile.
