@@ -1,4 +1,9 @@
 import { describe, expect, test } from "bun:test";
+import { parseMermaid } from "beautiful-mermaid";
+import {
+  parseMermaid as parseMermaidEsm,
+  renderMermaidSVG as renderMermaidSvgEsm,
+} from "../node_modules/beautiful-mermaid/dist/index.js";
 import {
   edgeCount,
   MAX_BYTES,
@@ -9,8 +14,94 @@ import {
 } from "../src/diagram.ts";
 
 const FLOW = "graph TD\n  A[Start] --> B{Decision}\n  B -->|Yes| C[End]";
+const FLUX = await Bun.file(
+  new URL("./fixtures/diagrams/flux-operator.mmd", import.meta.url),
+).text();
 
 describe("renderDiagram", () => {
+  test("later declarations replace forward-reference labels without losing subgraphs", () => {
+    const groups = {
+      flux: {
+        SC: "source-controller",
+        KC: "kustomize-controller",
+        HC: "helm-controller",
+        NC: "notification-controller",
+        SW: "source-watcher",
+      },
+      wui: {
+        SPA: "Cluster Status",
+        GRAPH: "GitOps Graphs",
+        ACTION: "GitOps Actions",
+        METRICS: "Workload Metrics",
+      },
+      cli: {
+        CMD: "install",
+        CMD2: "uninstall",
+        CMD3: "build",
+        CMD4: "reconcile",
+        CMD5: "export",
+      },
+      mcp: {
+        T1: "get_kubernetes_resources",
+        T2: "patch / logs / events",
+        T3: "diff / search_flux_docs",
+        T4: "trace / reconcile_flux_resource",
+      },
+    };
+    const graph = parseMermaid(FLUX);
+    const svg = renderDiagramSvg(FLUX);
+    expect(svg).not.toBeNull();
+    expect(graph.nodes.size).toBe(19);
+    expect(graph.subgraphs).toHaveLength(4);
+    const edges: [string, string][] = [];
+    for (const [group, labels] of Object.entries(groups)) {
+      const ids = Object.keys(labels);
+      expect(graph.subgraphs.find((s) => s.id === group)?.nodeIds).toEqual(ids);
+      let previous = "OP";
+      for (const [id, label] of Object.entries(labels)) {
+        expect(graph.nodes.get(id)?.label).toBe(label);
+        expect(svg).toContain(label);
+        expect(svg).not.toMatch(new RegExp(`>${id}</(?:text|tspan)>`));
+        edges.push([previous, id]);
+        previous = id;
+      }
+    }
+    expect(graph.nodes.get("OP")?.label).toBe("Flux Operator");
+    expect(graph.edges.map((edge) => [edge.source, edge.target])).toEqual(
+      edges,
+    );
+  });
+
+  test("the last explicit node declaration wins, but bare references do not", () => {
+    for (const [node, shape] of [
+      ["A[Last label]", "rectangle"],
+      ["A(Last label)", "rounded"],
+      ["A{Last label}", "diamond"],
+      ["A((Last label))", "circle"],
+    ] as const) {
+      const source = `graph LR\nA --> B\nA[First label]\n${node} --> C\nA --> D`;
+      expect(parseMermaid(source).nodes.get("A")).toEqual({
+        id: "A",
+        label: "Last label",
+        shape,
+      });
+      const svg = renderDiagramSvg(source);
+      expect(svg).toContain("Last label");
+      expect(svg).not.toContain("First label");
+    }
+  });
+
+  test("the ESM fallback has the same node registration fix as the Bun export", () => {
+    expect(parseMermaidEsm(FLUX)).toEqual(parseMermaid(FLUX));
+    expect(renderMermaidSvgEsm(FLUX)).toContain("source-controller");
+    const source = "graph LR\nA --> B\nA[First]\nA{Last} --> C\nA --> D";
+    expect(parseMermaidEsm(source).nodes.get("A")).toEqual({
+      id: "A",
+      label: "Last",
+      shape: "diamond",
+    });
+  });
+
   test("a flowchart becomes an image with an inline SVG", () => {
     const html = renderDiagram(FLOW);
     expect(html).toStartWith(

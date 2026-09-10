@@ -13,6 +13,10 @@ make build VERSION=v1.2.3                         # inject a release version
 make install-bin                                  # build and install to ~/.local/bin
 ```
 
+The install applies a tracked [beautiful-mermaid patch](beautiful-mermaid-patch.md)
+for flowchart labels declared after their first reference. That document
+records the patch's scope, maintenance workflow, and removal criteria.
+
 `package.json` stays at `0.0.0-dev`. A normal source or binary build reports
 `v0.0.0-dev`; `make build VERSION=v1.2.3` uses Bun's build-time definition
 to embed `v1.2.3` without editing the package file.

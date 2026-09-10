@@ -1,0 +1,34 @@
+diff --git a/dist/index.js b/dist/index.js
+index e7e087bcb6f29d0d8f36cd558e0183bc0f162fcb..5212478dcf32bad8d53b9416ff016c0e11b8a4d8 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -726,10 +726,7 @@ function consumeNode(text, graph, subgraphStack) {
+   return { id, remaining };
+ }
+ function registerNode(graph, subgraphStack, node) {
+-  const isNew = !graph.nodes.has(node.id);
+-  if (isNew) {
+-    graph.nodes.set(node.id, node);
+-  }
++  graph.nodes.set(node.id, node);
+   trackInSubgraph(subgraphStack, node.id);
+ }
+ function trackInSubgraph(subgraphStack, nodeId) {
+diff --git a/src/parser.ts b/src/parser.ts
+index 685835e3f1a9a480370ec8e1ff40b7356a3ed3c1..a7bf6168ce4ca941c50f3b2523f26810b9ac3837 100644
+--- a/src/parser.ts
++++ b/src/parser.ts
+@@ -610,10 +610,9 @@ function registerNode(
+   subgraphStack: MermaidSubgraph[],
+   node: MermaidNode
+ ): void {
+-  const isNew = !graph.nodes.has(node.id)
+-  if (isNew) {
+-    graph.nodes.set(node.id, node)
+-  }
++  // Bare references are registered only once by consumeNode.
++  // Explicit definitions must replace placeholder labels and shapes.
++  graph.nodes.set(node.id, node)
+   trackInSubgraph(subgraphStack, node.id)
+ }
+ 
