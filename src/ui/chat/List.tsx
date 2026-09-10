@@ -2,8 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { group, when } from "../format.ts";
-import { Plus } from "../icons.tsx";
-import { open, openDraft, showDraft } from "./nav.ts";
+import { Cloud, Plus, Sliders } from "../icons.tsx";
+import {
+  closeConfig,
+  configOpen,
+  open,
+  openConfig,
+  openDraft,
+  showDraft,
+} from "./nav.ts";
 import { chats, current, editor, localDrafts, runOf, short } from "./store.ts";
 
 // the chat list, grouped by day; on a phone it is a drawer
@@ -15,7 +22,8 @@ export function List({
   onPick: () => void;
 }) {
   const now = Date.now();
-  const cur = current.value?.id ?? null;
+  const config = configOpen.value;
+  const cur = config ? null : (current.value?.id ?? null);
   let lastGroup = "";
   const rows: preact.JSX.Element[] = [];
   if (localDrafts.value.length > 0) {
@@ -25,16 +33,24 @@ export function List({
         <button
           key={`draft-${d.id}`}
           type="button"
-          class={d.editor === editor.value ? "chat-row active" : "chat-row"}
+          class={
+            !config && d.editor === editor.value
+              ? "chat-row active"
+              : "chat-row"
+          }
           onClick={() => {
             onPick();
+            closeConfig();
             openDraft(d);
           }}
         >
           <span class="t">
             {d.editor.text.value.trim().slice(0, 80) || "New chat"}
           </span>
-          <span class="m">{short(d.settings.model)}</span>
+          <span class="m">
+            {d.settings.provider === "openrouter" && <Cloud />}
+            {short(d.settings.model)}
+          </span>
           <span class="w">{d.editor.pending.value ? "Sending" : "Unsent"}</span>
         </button>,
       );
@@ -53,12 +69,20 @@ export function List({
         class={c.id === cur ? "chat-row active" : "chat-row"}
         onClick={() => {
           onPick();
+          if (config) {
+            configOpen.value = false;
+            if (c.id === current.value?.id) {
+              history.pushState(null, "", `/chat/${encodeURIComponent(c.id)}`);
+              return;
+            }
+          }
           if (c.id !== cur) void open(c.id, true);
         }}
       >
         <span class="t">{c.title || "New chat"}</span>
         <span class="m">
           {runOf(c.id) !== null && <i class="dot" />}
+          {c.provider === "openrouter" && <Cloud />}
           {short(c.model)}
         </span>
         <span class="w">{when(c.updatedAt, now)}</span>
@@ -72,6 +96,7 @@ export function List({
         class="newchat"
         onClick={() => {
           onPick();
+          closeConfig();
           showDraft(true);
         }}
       >
@@ -81,6 +106,17 @@ export function List({
       <div class="chats">
         {rows.length === 0 ? <p class="none">No chats yet.</p> : rows}
       </div>
+      <button
+        type="button"
+        class={config ? "cfgbtn active" : "cfgbtn"}
+        onClick={() => {
+          onPick();
+          openConfig(true);
+        }}
+      >
+        <Sliders />
+        Settings
+      </button>
     </aside>
   );
 }

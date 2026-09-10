@@ -70,7 +70,7 @@ export function Settings({
   };
   // a model list with capabilities that leave out tool use is a hint, not
   // a gate: a plain /v1/models has no capabilities at all
-  const info = s.model ? modelInfo(s.model) : null;
+  const info = s.model ? modelInfo(s.provider, s.model) : null;
   const doubtful =
     info !== null &&
     info.capabilities.length > 0 &&
@@ -185,8 +185,9 @@ export function Settings({
             ))}
           </fieldset>
           <p class="hint" hidden={!doubtful || list.length === 0}>
-            The engine does not list tool use for this model; calls may not
-            work.
+            {s.provider === "openrouter"
+              ? "OpenRouter does not list tool use for this model; calls may not work."
+              : "The engine does not list tool use for this model; calls may not work."}
           </p>
           <p class="hint">
             Empty fields use the engine's defaults. Changes apply to the next

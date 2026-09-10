@@ -6,9 +6,10 @@
 
 import { useEffect, useState } from "preact/hooks";
 import { Composer } from "./Composer.tsx";
+import { Config } from "./Config.tsx";
 import { Header } from "./Header.tsx";
 import { List } from "./List.tsx";
-import { listClosed, rememberList } from "./nav.ts";
+import { configOpen, listClosed, rememberList } from "./nav.ts";
 import { Settings } from "./Settings.tsx";
 import { Thread } from "./Thread.tsx";
 
@@ -34,11 +35,15 @@ export function Chat({ frame }: { frame: HTMLElement }) {
   return (
     <>
       <List open={drawer} onPick={() => setDrawer(false)} />
-      <section class="conv">
-        <Header onList={onList} onSettings={() => setSettings(true)} />
-        <Thread />
-        <Composer />
-      </section>
+      {configOpen.value ? (
+        <Config onList={onList} />
+      ) : (
+        <section class="conv">
+          <Header onList={onList} onSettings={() => setSettings(true)} />
+          <Thread />
+          <Composer />
+        </section>
+      )}
       <Settings open={settings} onClose={() => setSettings(false)} />
     </>
   );

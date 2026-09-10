@@ -15,7 +15,7 @@ import { groupRows } from "../../src/ui/chat/thread.ts";
 import { driveRecording, loadRecording } from "./ws.ts";
 
 // the registry is known and idle, as after the socket's snapshot
-runs.value = { limit: 1, sends: [] };
+runs.value = { limits: { mlxserve: 1, openrouter: 0 }, sends: [] };
 const lines = await loadRecording("tools.ndjson");
 const run = driveRecording("tools.ndjson", lines);
 const html = (i: number) =>

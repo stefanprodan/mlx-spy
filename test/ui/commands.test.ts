@@ -72,6 +72,7 @@ const started = (await loadRecording("plain.ndjson")).flatMap((line) =>
     ? [line.data]
     : [],
 )[0];
+const idle = { mlxserve: 1, openrouter: 0 };
 let sequence = 0;
 function chat(index = 0): Chat {
   return {
@@ -84,15 +85,21 @@ const slot = (
   chatId: string,
   messageId: number,
   phase: "running" | "stopping" = "running",
-) => ({ chatId, firstMessageId: messageId, messageId, phase });
+) => ({
+  chatId,
+  provider: "mlxserve" as const,
+  firstMessageId: messageId,
+  messageId,
+  phase,
+});
 function select(value: Chat) {
   beginNavigation();
   setCurrent(value);
-  runs.value ??= { limit: 1, sends: [] };
+  runs.value ??= { limits: idle, sends: [] };
 }
 function newDraft() {
   beginNavigation();
-  runs.value ??= { limit: 1, sends: [] };
+  runs.value ??= { limits: idle, sends: [] };
   resetDraft();
   state.value = null;
   draft.value = { ...recorded[0] };
@@ -647,7 +654,7 @@ describe("chat command ownership", () => {
     expect(canSend.value).toBe(true);
     runs.value = null;
     expect(canSend.value).toBe(false);
-    runs.value = { limit: 1, sends: [] };
+    runs.value = { limits: idle, sends: [] };
     expect(canSend.value).toBe(true);
   });
 
@@ -668,7 +675,7 @@ describe("chat command ownership", () => {
 
   test("an unsaved terminal failure ends the reply before its slot is released", () => {
     const a = chat();
-    runs.value = { limit: 1, sends: [slot(a.id, 1)] };
+    runs.value = { limits: idle, sends: [slot(a.id, 1)] };
     chats.value = [{ ...a, streaming: true }];
     select(a);
     expect(currentStreaming.value).toBe(true);
@@ -690,14 +697,14 @@ describe("chat command ownership", () => {
     expect(canSend.value).toBe(false);
     expect(chats.value[0].streaming).toBe(false);
     expect(note.value?.text).toBe("tool failed (reply could not be saved)");
-    runs.value = { limit: 1, sends: [] };
+    runs.value = { limits: idle, sends: [] };
     expect(canSend.value).toBe(true);
   });
 
   test("a release while fetching frees the slot without touching the note", async () => {
     const a = chat();
     const b = chat(1);
-    runs.value = { limit: 1, sends: [slot(a.id, 1)] };
+    runs.value = { limits: idle, sends: [slot(a.id, 1)] };
     select(b);
     setNote("B's note");
     const response = Promise.withResolvers<Response>();
@@ -715,7 +722,7 @@ describe("chat command ownership", () => {
       reasoning: "",
       html: "",
     });
-    runs.value = { limit: 1, sends: [] };
+    runs.value = { limits: idle, sends: [] };
     expect(canSend.value).toBe(true);
     expect(note.value?.text).toBe("B's note");
     response.resolve(Response.json(a));
@@ -734,7 +741,7 @@ describe("chat command ownership", () => {
       fetcher(() => response.promise),
     );
     const opening = open(a.id, false);
-    runs.value = { limit: 1, sends: [slot(a.id, 1)] };
+    runs.value = { limits: idle, sends: [slot(a.id, 1)] };
     onChat({
       ...started,
       chat: a,
@@ -752,7 +759,7 @@ describe("chat command ownership", () => {
       reasoning: "",
       html: "",
     });
-    runs.value = { limit: 1, sends: [slot(b.id, 2)] };
+    runs.value = { limits: idle, sends: [slot(b.id, 2)] };
     onChat({
       ...started,
       chat: b,

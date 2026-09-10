@@ -10,7 +10,11 @@ import {
 } from "../../src/ui/chat/stats.ts";
 
 const t0 = new Date(2026, 8, 9, 10, 0, 0).getTime();
-const row = (id: number, role: Message["role"], over: Partial<Message> = {}) =>
+export const row = (
+  id: number,
+  role: Message["role"],
+  over: Partial<Message> = {},
+) =>
   ({
     id,
     chatId: "c",
@@ -32,13 +36,14 @@ const row = (id: number, role: Message["role"], over: Partial<Message> = {}) =>
     toolName: null,
     ...over,
   }) as Message;
-const stats = (generated: number): Message["stats"] => ({
+export const stats = (generated: number): Message["stats"] => ({
   promptTokens: 100,
   cachedTokens: 0,
   generated,
   prefillMs: 100,
   decodeMs: 1000,
   tokenizeMs: null,
+  cost: null,
 });
 const idle: LiveSample = {
   requestsRunning: 0,

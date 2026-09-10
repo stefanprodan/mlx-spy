@@ -12,6 +12,10 @@ import { n, sendRows } from "./store.ts";
 
 export type Item = { label: string; value: string; cls?: string };
 
+// a reply's cost: four decimals under a cent, else two
+export const usd = (v: number) =>
+  v < 0.01 ? `$${v.toFixed(4)}` : `$${v.toFixed(2)}`;
+
 export type LiveSample = {
   requestsRunning: number;
   requestsPrefilling: number;
@@ -106,7 +110,8 @@ export function doneStats(messages: Message[]): Item[] | null {
   if (typeof st.decodeMs === "number") {
     items.push({ label: "decode", value: tps(st.generated, st.decodeMs) });
   }
-  if (st.promptTokens > 0) {
+  // a hosted reply's zero is the upstream not caching at all, not a miss
+  if (st.promptTokens > 0 && !(st.cost !== null && st.cachedTokens === 0)) {
     items.push({
       label: "cache",
       value: `${Math.round((st.cachedTokens / st.promptTokens) * 100)}%`,
@@ -117,6 +122,12 @@ export function doneStats(messages: Message[]): Item[] | null {
     value: `${n(Math.max(generated, st.generated))} tok`,
     cls: "x",
   });
+  // a hosted reply's cost, summed over the send's rounds; a free model
+  // says so rather than showing nothing
+  if (st.cost !== null) {
+    const cost = rounds.reduce((sum, x) => sum + (x.stats?.cost ?? 0), 0);
+    items.push({ label: "", value: cost === 0 ? "free" : usd(cost) });
+  }
   if (last.finishedAt !== null) {
     items.push({
       label: "",

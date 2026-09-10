@@ -9,11 +9,12 @@
 import { computed, type Signal, signal } from "@preact/signals";
 import type { ChatRuns, RunningSend } from "../../chat.ts";
 import type { Chat, ChatSettings, ChatSummary, Message } from "../../chats.ts";
-import type { ModelInfo } from "../../engine/types.ts";
+import type { RemoteModel } from "../../config.ts";
+import type { ModelInfo, ProviderId } from "../../engine/types.ts";
 import type { Sample } from "../../sample.ts";
 import { api } from "../api.ts";
 import { copyToClipboard } from "../clipboard.ts";
-import { models } from "../store.ts";
+import { models, remoteModels } from "../store.ts";
 import { type ChatState, stateOf } from "./events.ts";
 import { groupRows } from "./thread.ts";
 
@@ -33,6 +34,7 @@ export const chats = signal<ChatSummary[]>([]);
 export const state = signal<ChatState | null>(null);
 // settings of the draft (nothing is created until the first message)
 export const draft = signal<ChatSettings>({
+  provider: "mlxserve",
   model: "",
   systemPrompt: "",
   thinking: true,
@@ -162,17 +164,44 @@ export const currentStreaming = computed(() => {
     !s.ended.has(run.messageId)
   );
 });
+// the slots of one provider taken and its cap; a send counts against the
+// provider its chat runs on, so a full engine does not stop a hosted chat
+export const slotsOf = (r: ChatRuns, provider: ProviderId) => ({
+  taken: r.sends.filter((run) => run.provider === provider).length,
+  limit: r.limits[provider] ?? 0,
+});
 // a send can start here: the slots are known, the chat holds none and
-// one is free
+// its provider has one free
 export const canSend = computed(() => {
   const r = runs.value;
-  return r !== null && currentRun.value === null && r.sends.length < r.limit;
+  if (r === null || currentRun.value !== null) return false;
+  const slots = slotsOf(r, settings.value.provider);
+  return slots.taken < slots.limit;
 });
 export const tree = computed(() =>
   state.value ? groupRows(state.value, toolsOn.value, currentRun.value) : [],
 );
-export const modelInfo = (id: string): ModelInfo | null =>
-  models.value.find((m) => m.id === id) ?? null;
+// A hosted model as the page's model-shaped code sees it: always "there",
+// no bytes, the catalog's window, tool use when the catalog lists it.
+export const remoteInfo = (m: RemoteModel): ModelInfo => ({
+  id: m.id,
+  loaded: true,
+  state: "remote",
+  bytesResident: 0,
+  bytesOnDisk: 0,
+  contextLength: m.contextLength,
+  capabilities: m.tools ? ["chat", "tool_use"] : ["chat"],
+});
+export const modelInfo = (
+  provider: ProviderId,
+  id: string,
+): ModelInfo | null => {
+  if (provider === "openrouter") {
+    const m = remoteModels.value.find((r) => r.id === id);
+    return m ? remoteInfo(m) : null;
+  }
+  return models.value.find((m) => m.id === id) ?? null;
+};
 export const loadedCount = () => models.value.filter((m) => m.loaded).length;
 
 export function setNote(text: string | null, kind = "", target = editor.value) {
@@ -265,20 +294,38 @@ export async function patch(p: Partial<ChatSettings> & { title?: string }) {
 
 // a resident model first, so a new chat never cold-loads by accident: the
 // daily driver if loaded, else the newest chat's model if loaded, else any
-// loaded one; with nothing resident the same order without the constraint
-export function defaultModel(): string {
+// loaded one; with nothing resident the same order without the constraint;
+// with no engine model at all, the newest chat's hosted model
+export function defaultModel(): { provider: ProviderId; model: string } {
   const list = models.value;
-  const last = chats.value[0]?.model;
+  const newest = chats.value[0];
+  const last = newest?.provider === "mlxserve" ? newest.model : undefined;
   const pick = (ok: (m: ModelInfo) => boolean) =>
     list.find((m) => ok(m) && m.favorite)?.id ??
     (last && list.find((m) => ok(m) && m.id === last)?.id) ??
     list.find(ok)?.id;
-  return pick((m) => m.loaded) ?? pick(() => true) ?? "";
+  const local = pick((m) => m.loaded) ?? pick(() => true);
+  if (local) return { provider: "mlxserve", model: local };
+  const remote =
+    (newest?.provider === "openrouter" &&
+      remoteModels.value.find((m) => m.id === newest.model)?.id) ||
+    remoteModels.value[0]?.id;
+  return remote
+    ? { provider: "openrouter", model: remote }
+    : { provider: "mlxserve", model: "" };
 }
 
-export function pickModel(m: ModelInfo) {
-  void patch({ model: m.id });
-  if (m.loaded) {
+// Send waits for the pair to be saved: a send racing the PATCH would run
+// on the provider the chat still had
+export function pickModel(provider: ProviderId, m: ModelInfo) {
+  const target = editor.value;
+  target.pending.value++;
+  void patch({ provider, model: m.id }).finally(() => {
+    target.pending.value--;
+  });
+  // a hosted model needs no loading; the empty transcript says where the
+  // conversation goes
+  if (provider === "openrouter" || m.loaded) {
     setNote(null);
     return;
   }

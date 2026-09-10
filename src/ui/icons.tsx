@@ -97,6 +97,57 @@ export const Lines = () => (
   </svg>
 );
 
+// a hosted model, next to its name in the list and the header
+export const Cloud = () => (
+  <svg class="cloud" viewBox="0 0 16 16" aria-label="OpenRouter">
+    <title>OpenRouter</title>
+    <path
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linejoin="round"
+      d="M4.5 12.5a3 3 0 0 1-.4-5.97A4 4 0 0 1 11.9 6.3 2.6 2.6 0 0 1 11.5 12.5z"
+    />
+  </svg>
+);
+
+// the config page
+export const Sliders = () => (
+  <svg viewBox="0 0 16 16" aria-hidden="true">
+    <path
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      d="M2 4h6M11 4h3M2 8h1M6 8h8M2 12h8M13 12h1"
+    />
+    <circle
+      cx="9.5"
+      cy="4"
+      r="1.5"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+    />
+    <circle
+      cx="4.5"
+      cy="8"
+      r="1.5"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+    />
+    <circle
+      cx="11.5"
+      cy="12"
+      r="1.5"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+    />
+  </svg>
+);
+
 export const Gear = () => (
   <svg
     viewBox="0 0 24 24"
