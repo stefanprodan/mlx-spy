@@ -103,12 +103,23 @@ export type ChatTool = {
 
 export type ToolCall = { id: string; name: string; arguments: string };
 
+// One item of OpenRouter's reasoning_details: reasoning.text (with the
+// signature an Anthropic upstream needs back), reasoning.summary or
+// reasoning.encrypted (OpenAI's opaque blob). Kept whole and sent back as
+// received, since the upstream verifies the sequence.
+export type ReasoningDetail = {
+  type: string;
+  index?: number;
+  [field: string]: unknown;
+};
+
 export type ChatMessageIn =
   | { role: "system" | "user"; content: string }
   | {
       role: "assistant";
       content: string | null;
       reasoning?: string;
+      reasoningDetails?: ReasoningDetail[];
       toolCalls?: ToolCall[];
     }
   | { role: "tool"; toolCallId: string; content: string };
@@ -130,6 +141,9 @@ export type ChatRequest = {
 
 export type ChatEvent =
   | { kind: "reasoning"; text: string }
+  // a streamed piece of reasoning_details; pieces with one index are one
+  // item (openrouter.ts mergeReasoningDetail)
+  | { kind: "reasoningDetail"; item: ReasoningDetail }
   | { kind: "content"; text: string }
   | {
       kind: "toolCallDelta";

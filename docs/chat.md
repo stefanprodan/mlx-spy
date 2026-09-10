@@ -208,8 +208,11 @@ compaction and history. What differs:
   only when the upstream reported cached tokens; most free endpoints do
   not cache and would show a meaningless zero.
 - Reasoning arrives when the model streams it, and goes back on later
-  turns as OpenRouter's `reasoning` field. The generated count includes
-  the reasoning tokens.
+  turns as OpenRouter's `reasoning_details` (the signed or encrypted
+  form a Claude or an OpenAI model needs to continue its chain through
+  a tool loop), or as the `reasoning` text when the model streamed only
+  that. Past reasoning off in the gear drops both. The generated count
+  includes the reasoning tokens.
 - OpenRouter runs many requests at once, so its chats have their own
   cap: `--openrouter-concurrency` (4 by default) of them can answer at
   the same time, while the engine still answers one. A local chat and a
@@ -220,8 +223,12 @@ compaction and history. What differs:
   is no automatic retry, Regenerate is the retry. Free models get 20
   requests a minute and 1,000 a day on an account that has bought
   credits (50 a day otherwise).
-- No prefix cache key is sent; OpenRouter caches per upstream on its own
-  and the cached share on the numbers line is what it reports.
+- Every request carries the chat id as OpenRouter's `session_id`, so
+  the turns of a chat are routed to the upstream that holds its cached
+  prefix, and marks the system prompt and the last two turns as cache
+  breakpoints, which an Anthropic upstream needs before it caches at
+  all (Gemini takes them too, the rest ignore them). The cached share
+  on the numbers line is what the upstream reports.
 
 Without a key nothing changes: the Settings page says where the key
 goes, and the picker shows only the engine's models.

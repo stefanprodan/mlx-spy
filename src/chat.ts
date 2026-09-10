@@ -15,6 +15,7 @@ import {
   type MessageStats,
   titleFrom,
 } from "./chats.ts";
+import { mergeReasoningDetail } from "./engine/openrouter.ts";
 import {
   type ChatEvent,
   type ChatMessageIn,
@@ -24,6 +25,7 @@ import {
   type Engine,
   PROVIDERS,
   type ProviderId,
+  type ReasoningDetail,
   type ToolCall,
 } from "./engine/types.ts";
 import { renderMarkdown } from "./markdown.ts";
@@ -173,6 +175,9 @@ type RoundState = {
   startedAt: number;
   content: string;
   reasoning: string;
+  // OpenRouter's structured reasoning, sent back with the text on the
+  // chat's next request
+  reasoningDetails: ReasoningDetail[];
   ttftMs: number | null;
   reasoningStartedAt: number | null;
   thinkingMs: number | null;
@@ -602,6 +607,7 @@ export class ChatRunner {
       startedAt,
       content: "",
       reasoning: "",
+      reasoningDetails: [],
       ttftMs: null,
       reasoningStartedAt: null,
       thinkingMs: null,
@@ -718,6 +724,7 @@ export class ChatRunner {
         this.deps.store.writeReply(round.messageId, {
           content: round.content,
           reasoning: round.reasoning,
+          reasoningDetails: round.reasoningDetails,
         });
         const toolRows = this.deps.store.finishToolGroup(
           round.messageId,
@@ -801,6 +808,11 @@ export class ChatRunner {
       if (send.terminal !== null) return;
       if (event.kind === "reasoning" || event.kind === "content") {
         this.delta(send, round, event);
+      } else if (event.kind === "reasoningDetail") {
+        round.reasoningDetails = mergeReasoningDetail(
+          round.reasoningDetails,
+          event.item,
+        );
       } else if (event.kind === "toolCallDelta") {
         this.touchTtft(round);
       } else if (event.kind === "toolCalls") {
@@ -902,12 +914,16 @@ export class ChatRunner {
         return;
       }
       if (message.role === "assistant") {
+        const details = reasoning
+          ? this.deps.store.reasoningDetails(message.id)
+          : null;
         messages.push({
           role: "assistant",
           content: toolCalls && message.content === "" ? null : message.content,
           ...(reasoning && message.reasoning
             ? { reasoning: message.reasoning }
             : {}),
+          ...(details ? { reasoningDetails: details } : {}),
           ...(toolCalls ? { toolCalls } : {}),
         });
       } else if (message.role === "tool") {
@@ -1067,6 +1083,7 @@ export class ChatRunner {
       this.deps.store.writeReply(round.messageId, {
         content: round.content,
         reasoning: round.reasoning,
+        reasoningDetails: round.reasoningDetails,
       })
     ) {
       round.lastWriteAt = now;
@@ -1111,6 +1128,7 @@ export class ChatRunner {
       this.deps.store.writeReply(round.messageId, {
         content: round.content,
         reasoning: round.reasoning,
+        reasoningDetails: round.reasoningDetails,
       });
       const message = this.deps.store.finishReply(
         round.messageId,

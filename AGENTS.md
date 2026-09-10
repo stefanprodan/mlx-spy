@@ -139,10 +139,12 @@ src/engine/openai.ts the OpenAI chat completions wire, shared by every
                      recorded and hand-made frames)
 src/engine/openrouter.ts
                      OpenRouter as a ChatProvider: the bearer key, the
-                     reasoning object, usage with cost, the public catalog
-                     (parseCatalog, Catalog with a one minute cache), the
-                     refused-request text; tested on recorded frames in
-                     test/fixtures/openrouter/
+                     reasoning object, usage with cost, the chat id as
+                     session_id, cache breakpoints on the messages,
+                     reasoning_details merged per reply and sent back,
+                     the public catalog (parseCatalog, Catalog with a one
+                     minute cache), the refused-request text; tested on
+                     recorded frames in test/fixtures/openrouter/
 src/engine/mlxserve.ts
                      mlx-serve adapter: parseMetrics/parseModels (pure, tested),
                      the HTTP client, load/unload, cache dir and log paths,

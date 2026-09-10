@@ -9,6 +9,7 @@ import type { Database } from "bun:sqlite";
 import {
   isProviderId,
   type ProviderId,
+  type ReasoningDetail,
   type ToolCall,
 } from "./engine/types.ts";
 import { renderMarkdown } from "./markdown.ts";
@@ -247,6 +248,7 @@ export class ChatStore {
       prefill_ms REAL, decode_ms REAL, ttft_ms REAL, tokenize_ms REAL,
       thinking_ms REAL,
       cost REAL,
+      reasoning_details TEXT,
       tool_calls TEXT,
       tool_call_id TEXT,
       tool_name TEXT
@@ -263,6 +265,7 @@ export class ChatStore {
       tool_calls: "TEXT",
       tool_call_id: "TEXT",
       tool_name: "TEXT",
+      reasoning_details: "TEXT",
     });
     this.db.run(
       "CREATE INDEX IF NOT EXISTS messages_chat ON messages (chat_id, id)",
@@ -570,13 +573,42 @@ export class ChatStore {
 
   writeReply(
     id: number,
-    fields: { content: string; reasoning: string },
+    fields: {
+      content: string;
+      reasoning: string;
+      reasoningDetails?: ReasoningDetail[];
+    },
   ): boolean {
     const result = this.db
-      .query(`UPDATE messages SET content = $content, reasoning = $reasoning
+      .query(`UPDATE messages SET content = $content, reasoning = $reasoning,
+        reasoning_details = $reasoningDetails
         WHERE id = $id AND status = 'streaming'`)
-      .run({ id, ...fields });
+      .run({
+        id,
+        content: fields.content,
+        reasoning: fields.reasoning,
+        reasoningDetails:
+          fields.reasoningDetails && fields.reasoningDetails.length > 0
+            ? JSON.stringify(fields.reasoningDetails)
+            : null,
+      });
     return result.changes > 0;
+  }
+
+  // The structured reasoning a hosted model streamed for a reply, for the
+  // next request of its chat; not part of the message the page gets, an
+  // encrypted item can be long and the page shows the text
+  reasoningDetails(id: number): ReasoningDetail[] | null {
+    const row = this.db
+      .query("SELECT reasoning_details AS json FROM messages WHERE id = $id")
+      .get({ id }) as { json: string | null } | null;
+    if (!row?.json) return null;
+    try {
+      const items = JSON.parse(row.json);
+      return Array.isArray(items) && items.length > 0 ? items : null;
+    } catch {
+      return null;
+    }
   }
 
   finishReply(
