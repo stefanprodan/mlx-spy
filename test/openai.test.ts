@@ -197,6 +197,7 @@ describe("OpenAI chat events", () => {
           prefillMs: null,
           decodeMs: null,
           tokenizeMs: null,
+          cost: null,
         },
       },
     ]);

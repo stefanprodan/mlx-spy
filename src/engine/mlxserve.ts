@@ -20,6 +20,7 @@ import type {
   CacheLimits,
   Capability,
   ChatEvent,
+  ChatProvider,
   ChatRequest,
   Engine,
   EngineMetrics,
@@ -152,6 +153,30 @@ export function chatEvents(json: string): ChatEvent[] {
       },
     };
   });
+}
+
+// The sends the engine takes at once: one. mlx-serve 26.9.2 serializes
+// generation for the Studio's MoE models (--max-concurrent is clamped to
+// one for them, plans/26.09.10-parallel-chats-plan.md, 7), so a second
+// send would only queue behind the first, silent until its first token.
+export const CHAT_LIMIT = 1;
+
+// The engine as the chat runner sees it: its chat method behind the
+// provider contract, with the sampler's current list as the models
+export function mlxServeProvider(
+  engine: Engine,
+  models: () => ModelInfo[],
+  limit = CHAT_LIMIT,
+): ChatProvider {
+  const chat = engine.chat;
+  if (!chat) throw new Error(`${engine.id} does not support chat`);
+  return {
+    id: "mlxserve",
+    limit,
+    models: () =>
+      models().map((m) => ({ id: m.id, contextLength: m.contextLength })),
+    chat: (req, signal) => chat.call(engine, req, signal),
+  };
 }
 
 export class MlxServe implements Engine {

@@ -188,6 +188,7 @@ describe("chat stream", () => {
           prefillMs: 914.624,
           decodeMs: 2318.088,
           tokenizeMs: 2.892,
+          cost: null,
         },
       },
     ]);
@@ -317,6 +318,7 @@ describe("chat stream", () => {
           prefillMs: 2,
           decodeMs: 4,
           tokenizeMs: null,
+          cost: null,
         },
       },
     ]);
@@ -352,6 +354,7 @@ describe("chat stream", () => {
           prefillMs: 12.5,
           decodeMs: 24.5,
           tokenizeMs: 1.5,
+          cost: null,
         },
       },
     ]);
