@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from "preact/hooks";
 import { doneStats, freshSend, liveStats, type SendMemory } from "./stats.ts";
-import { current, currentStreaming, lastSample, running } from "./store.ts";
+import { current, currentRun, currentStreaming, lastSample } from "./store.ts";
 
 export function Stats() {
   const streaming = currentStreaming.value;
@@ -22,7 +22,8 @@ export function Stats() {
   const messages = current.value?.messages ?? [];
   let items: ReturnType<typeof doneStats>;
   if (streaming) {
-    const send = running.value?.messageId ?? null;
+    // per send, not per round: a tool or summary round keeps the memory
+    const send = currentRun.value?.firstMessageId ?? null;
     if (memory.current.send !== send) {
       memory.current = { send, m: freshSend() };
     }

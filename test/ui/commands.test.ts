@@ -24,6 +24,7 @@ import {
 } from "../../src/ui/chat/nav.ts";
 import {
   beginNavigation,
+  canSend,
   chats,
   command,
   copy,
@@ -34,12 +35,15 @@ import {
   editor,
   localDrafts,
   note,
+  opened,
   patch,
   resetDraft,
-  running,
+  runOf,
+  runs,
   send,
   setCurrent,
   setNote,
+  setOpen,
   state,
 } from "../../src/ui/chat/store.ts";
 import { loadRecording } from "./ws.ts";
@@ -76,12 +80,19 @@ function chat(index = 0): Chat {
     messages: [],
   };
 }
+const slot = (
+  chatId: string,
+  messageId: number,
+  phase: "running" | "stopping" = "running",
+) => ({ chatId, firstMessageId: messageId, messageId, phase });
 function select(value: Chat) {
   beginNavigation();
   setCurrent(value);
+  runs.value ??= { limit: 1, sends: [] };
 }
 function newDraft() {
   beginNavigation();
+  runs.value ??= { limit: 1, sends: [] };
   resetDraft();
   state.value = null;
   draft.value = { ...recorded[0] };
@@ -113,7 +124,7 @@ afterEach(() => {
     Object.defineProperty(navigator, "clipboard", originalClipboard);
   } else Reflect.deleteProperty(navigator, "clipboard");
   state.value = null;
-  running.value = null;
+  runs.value = null;
   chats.value = [];
   resetDraft(false);
   localDrafts.value = [];
@@ -630,32 +641,63 @@ describe("chat command ownership", () => {
     expect(note.value?.text).toBe("A's rejected send");
   });
 
-  test("an unsaved terminal failure unlocks the chat without a done event", () => {
+  test("nothing is sent before the socket's snapshot names the slots", () => {
     const a = chat();
-    running.value = { chatId: a.id, messageId: 1 };
+    select(a);
+    expect(canSend.value).toBe(true);
+    runs.value = null;
+    expect(canSend.value).toBe(false);
+    runs.value = { limit: 1, sends: [] };
+    expect(canSend.value).toBe(true);
+  });
+
+  test("a done in another chat leaves this chat's work fold open", () => {
+    const a = chat();
+    const b = chat(1);
+    select(a);
+    setOpen(`work-${a.id}-1`, true);
+    setOpen(`work-${b.id}-2`, true);
+    const finished = { ...started.message, status: "done" as const };
+    onChat({ kind: "done", chat: b, message: { ...finished, chatId: b.id } });
+    expect(opened.value.has(`work-${a.id}-1`)).toBe(true);
+    expect(opened.value.has(`work-${b.id}-2`)).toBe(false);
+    onChat({ kind: "done", chat: a, message: { ...finished, chatId: a.id } });
+    expect(opened.value.has(`work-${a.id}-1`)).toBe(false);
+    opened.value = new Set();
+  });
+
+  test("an unsaved terminal failure ends the reply before its slot is released", () => {
+    const a = chat();
+    runs.value = { limit: 1, sends: [slot(a.id, 1)] };
     chats.value = [{ ...a, streaming: true }];
     select(a);
     expect(currentStreaming.value).toBe(true);
     onChat({
       kind: "error",
       chatId: a.id,
+      firstMessageId: 1,
       messageId: 1,
       error: "tool failed (reply could not be saved)",
       content: "",
       reasoning: "",
       html: "",
     });
-    expect(running.value).toBeNull();
+    // the transcript settles on the receipt; the slot is the server's to
+    // free once the cancelled work has drained
     expect(currentStreaming.value).toBe(false);
-    expect(state.value?.running).toBeNull();
+    expect(state.value?.ended.has(1)).toBe(true);
+    expect(runOf(a.id)).not.toBeNull();
+    expect(canSend.value).toBe(false);
     expect(chats.value[0].streaming).toBe(false);
     expect(note.value?.text).toBe("tool failed (reply could not be saved)");
+    runs.value = { limit: 1, sends: [] };
+    expect(canSend.value).toBe(true);
   });
 
-  test("an unsaved failure while fetching clears activity immediately", async () => {
+  test("a release while fetching frees the slot without touching the note", async () => {
     const a = chat();
     const b = chat(1);
-    running.value = { chatId: a.id, messageId: 1 };
+    runs.value = { limit: 1, sends: [slot(a.id, 1)] };
     select(b);
     setNote("B's note");
     const response = Promise.withResolvers<Response>();
@@ -666,17 +708,20 @@ describe("chat command ownership", () => {
     onChat({
       kind: "error",
       chatId: a.id,
+      firstMessageId: 1,
       messageId: 1,
       error: "tool failed (reply could not be saved)",
       content: "",
       reasoning: "",
       html: "",
     });
-    expect(running.value).toBeNull();
+    runs.value = { limit: 1, sends: [] };
+    expect(canSend.value).toBe(true);
     expect(note.value?.text).toBe("B's note");
     response.resolve(Response.json(a));
     await opening;
     expect(currentStreaming.value).toBe(false);
+    expect(state.value?.ended.has(1)).toBe(true);
     expect(note.value?.text).toBe("tool failed (reply could not be saved)");
   });
 
@@ -689,35 +734,38 @@ describe("chat command ownership", () => {
       fetcher(() => response.promise),
     );
     const opening = open(a.id, false);
+    runs.value = { limit: 1, sends: [slot(a.id, 1)] };
     onChat({
       ...started,
       chat: a,
       user: null,
       message: { ...started.message, chatId: a.id, id: 1 },
     });
-    expect(running.value?.chatId).toBe(a.id);
+    expect(runOf(a.id)?.phase).toBe("running");
     onChat({
       kind: "error",
       chatId: a.id,
+      firstMessageId: 1,
       messageId: 1,
       error: "tool failed (reply could not be saved)",
       content: "",
       reasoning: "",
       html: "",
     });
-    expect(running.value).toBeNull();
+    runs.value = { limit: 1, sends: [slot(b.id, 2)] };
     onChat({
       ...started,
       chat: b,
       user: null,
       message: { ...started.message, chatId: b.id, id: 2 },
     });
-    expect(running.value?.chatId).toBe(b.id);
+    expect(runOf(b.id)?.phase).toBe("running");
     response.resolve(Response.json(a));
     await opening;
     expect(current.value?.id).toBe(a.id);
-    expect(running.value?.chatId).toBe(b.id);
-    expect(state.value?.running?.chatId).toBe(b.id);
+    expect(runOf(b.id)?.phase).toBe("running");
+    expect(runOf(a.id)).toBeNull();
     expect(currentStreaming.value).toBe(false);
+    expect(canSend.value).toBe(false);
   });
 });

@@ -4,7 +4,7 @@
 import { group, when } from "../format.ts";
 import { Plus } from "../icons.tsx";
 import { open, openDraft, showDraft } from "./nav.ts";
-import { chats, current, editor, localDrafts, short } from "./store.ts";
+import { chats, current, editor, localDrafts, runOf, short } from "./store.ts";
 
 // the chat list, grouped by day; on a phone it is a drawer
 export function List({
@@ -58,7 +58,7 @@ export function List({
       >
         <span class="t">{c.title || "New chat"}</span>
         <span class="m">
-          {c.streaming && <i class="dot" />}
+          {runOf(c.id) !== null && <i class="dot" />}
           {short(c.model)}
         </span>
         <span class="w">{when(c.updatedAt, now)}</span>

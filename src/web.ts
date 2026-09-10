@@ -8,7 +8,12 @@
 import { networkInterfaces } from "node:os";
 import type { HTMLBundle } from "bun";
 import { ActionError, type ActionEvent, type Actions } from "./actions.ts";
-import { ChatError, type ChatRunner, type ChatWsEvent } from "./chat.ts";
+import {
+  ChatError,
+  type ChatRunner,
+  type ChatRuns,
+  type ChatWsEvent,
+} from "./chat.ts";
 import type { ChatPatch, ChatSettings } from "./chats.ts";
 import type { CacheLimits, Engine } from "./engine/types.ts";
 import { type History, RANGES, type Range } from "./history.ts";
@@ -82,7 +87,7 @@ export function snapshot(deps: HandleDeps) {
     disk: deps.sampler.currentDisk(),
     events: deps.actions.events,
     running: deps.actions.running(),
-    chat: deps.chat?.running() ?? null,
+    chatRuns: deps.chat?.runs() ?? { limit: 1, sends: [] },
     pulls: deps.pulls?.list() ?? [],
     modelDir: deps.modelDir ?? null,
   };
@@ -93,6 +98,7 @@ export type WsMessage =
   | { type: "sample"; data: Sample }
   | { type: "event"; data: ActionEvent }
   | { type: "chat"; data: ChatWsEvent }
+  | { type: "chatRuns"; data: ChatRuns }
   | { type: "pull"; data: Pull };
 
 export function sameOrigin(req: Request): boolean {
@@ -560,6 +566,9 @@ export function serve(
   const unsubscribeChat = deps.chat.onEvent((event) =>
     publish({ type: "chat", data: event }),
   );
+  const unsubscribeRuns = deps.chat.onRuns((runs) =>
+    publish({ type: "chatRuns", data: runs }),
+  );
   const unsubscribePulls = deps.pulls.onEvent((pull) =>
     publish({ type: "pull", data: pull }),
   );
@@ -569,6 +578,7 @@ export function serve(
       unsubscribe();
       unsubscribeEvents();
       unsubscribeChat();
+      unsubscribeRuns();
       unsubscribePulls();
       server.stop(true);
     },

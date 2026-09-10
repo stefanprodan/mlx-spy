@@ -27,8 +27,15 @@ export type LiveSample = {
 export type SendMemory = { rate: Item | null; tokens: number };
 export const freshSend = (): SendMemory => ({ rate: null, tokens: 0 });
 
+// The engine's gauges describe its one request at a time; with two in
+// flight (another client's next to this chat's) neither the rate nor the
+// live count is this send's, so the line keeps what it last knew
+// instead, as it does between rounds. Best-effort: the engine reports no
+// request ids, so one request is assumed to be this one.
+const own = (smp: LiveSample | null): LiveSample | null =>
+  smp && smp.requestsRunning === 1 ? smp : null;
+
 const rateOf = (smp: LiveSample): Item | null => {
-  if (smp.requestsRunning === 0) return null;
   if (smp.requestsPrefilling > 0 && smp.prefillTps) {
     return {
       label: "prefill",
@@ -60,12 +67,13 @@ export function liveStats(
   now: number,
 ): { items: Item[]; memory: SendMemory } {
   const rows = currentSend(messages);
+  const mine = own(smp);
   // the finished rounds' tokens plus the running request's, never less
   // than what was shown: the count only grows within a send
   const finished = rows.reduce((sum, x) => sum + (x.stats?.generated ?? 0), 0);
-  const inflight = smp && smp.requestsRunning > 0 ? smp.inflightTokens : 0;
+  const inflight = mine ? mine.inflightTokens : 0;
   const tokens = Math.max(memory.tokens, finished + inflight);
-  const rate = (smp && rateOf(smp)) ?? memory.rate;
+  const rate = (mine && rateOf(mine)) ?? memory.rate;
   const items: Item[] = [];
   if (rate) items.push(rate);
   if (tokens > 0) items.push({ label: "", value: `${n(tokens)} tok` });

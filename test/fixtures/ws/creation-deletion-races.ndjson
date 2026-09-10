@@ -1,5 +1,5 @@
 {"t":0,"note":"Preview: failed POST /api/chats after New chat and deleted chat during delayed GET. HTTP delays and creation rejection are tab-local; no inference. Draft/HTTP state is exercised in commands.test.ts."}
-{"t":1,"type":"snapshot","chat":null}
+{"t":1,"type":"snapshot","chatRuns":{"limit":1,"sends":[]}}
 {"t":17448,"type":"chat","data":{"kind":"chat","chat":{"id":"28785bd1-61f8-4942-b074-1379c2fbea9c","title":"REVIEW_DELETION_RACE_A","model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","systemPrompt":"","thinking":true,"reasoningEffort":null,"reasoningHistory":false,"temperature":null,"topP":null,"maxTokens":null,"toolsOff":[],"search":"exa","createdAt":1789032004354,"updatedAt":1789032004354,"streaming":false}}}
 {"t":17451,"type":"chat","data":{"kind":"chat","chat":{"id":"3f96303a-61e2-4027-935f-b457d176c370","title":"REVIEW_DELETION_RACE_B","model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","systemPrompt":"","thinking":true,"reasoningEffort":null,"reasoningHistory":false,"temperature":null,"topP":null,"maxTokens":null,"toolsOff":[],"search":"exa","createdAt":1789032004357,"updatedAt":1789032004357,"streaming":false}}}
 {"t":17908,"type":"chat","data":{"kind":"deleted","chatId":"28785bd1-61f8-4942-b074-1379c2fbea9c"}}

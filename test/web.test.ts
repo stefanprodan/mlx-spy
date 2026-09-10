@@ -349,9 +349,16 @@ describe("chat API", () => {
     const rows = (await sent.json()) as any;
     expect(rows.user.content).toBe("hello");
     expect(rows.message.status).toBe("streaming");
-    expect(snapshot(s.deps).chat).toEqual({
-      chatId: chat.id,
-      messageId: rows.message.id,
+    expect(snapshot(s.deps).chatRuns).toEqual({
+      limit: 1,
+      sends: [
+        {
+          chatId: chat.id,
+          firstMessageId: rows.message.id,
+          messageId: rows.message.id,
+          phase: "running",
+        },
+      ],
     });
 
     const conflict = await response(
@@ -369,7 +376,8 @@ describe("chat API", () => {
       "POST",
     );
     expect(await stopped.json()).toEqual({ ok: true });
-    expect(snapshot(s.deps).chat).toBeNull();
+    // the fake stream drains on abort, so the slot is already free
+    expect(snapshot(s.deps).chatRuns).toEqual({ limit: 1, sends: [] });
 
     // a stopped reply is nothing to summarize
     const compact = await response(

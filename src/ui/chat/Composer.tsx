@@ -6,16 +6,18 @@ import { SendStop } from "../icons.tsx";
 import { Context } from "./Context.tsx";
 import { Stats } from "./Stats.tsx";
 import {
+  canSend,
   chats,
   command,
   compact,
   current,
+  currentRun,
   currentStreaming,
   editDraft,
   editor,
   modelInfo,
   note,
-  running,
+  runs,
   send,
   settings,
   short,
@@ -28,17 +30,25 @@ export function Composer() {
   const draft = editor.value;
   const text = draft.text.value;
   const mine = currentStreaming.value;
-  const run = running.value;
-  const elsewhere = run !== null && !mine;
+  // this chat's slot after Stop or a failure, held until the cancelled
+  // work drains; no new send here until it is released
+  const stopping = currentRun.value?.phase === "stopping";
+  // every slot is taken by other chats; typing stays possible, sending not
+  const r = runs.value;
+  const elsewhere =
+    r !== null && currentRun.value === null && r.sends.length >= r.limit;
   const info = s.model ? modelInfo(s.model) : null;
-  const ready = info !== null && !elsewhere;
-  const placeholder = elsewhere
-    ? `Answering in ${chats.value.find((c) => c.id === run?.chatId)?.title || "another chat"}`
-    : info
-      ? `Message ${short(s.model)}`
-      : s.model
-        ? `${short(s.model)} is not on the engine; pick a model`
-        : "Pick a model";
+  const ready = info !== null && canSend.value;
+  const other = r?.sends.find((x) => x.chatId !== current.value?.id);
+  const placeholder = stopping
+    ? "Stopping"
+    : elsewhere
+      ? `Answering in ${chats.value.find((c) => c.id === other?.chatId)?.title || "another chat"}`
+      : info
+        ? `Message ${short(s.model)}`
+        : s.model
+          ? `${short(s.model)} is not on the engine; pick a model`
+          : "Pick a model";
 
   const grow = () => {
     const el = input.current;
@@ -80,7 +90,6 @@ export function Composer() {
           rows={2}
           placeholder={placeholder}
           aria-label="Message"
-          disabled={elsewhere}
           value={text}
           onInput={(ev) => {
             editDraft(ev.currentTarget.value);

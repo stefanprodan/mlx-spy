@@ -7,13 +7,14 @@
 // over the shared WebSocket, reduced into `state` by events.ts.
 
 import { computed, type Signal, signal } from "@preact/signals";
+import type { ChatRuns, RunningSend } from "../../chat.ts";
 import type { Chat, ChatSettings, ChatSummary, Message } from "../../chats.ts";
 import type { ModelInfo } from "../../engine/types.ts";
 import type { Sample } from "../../sample.ts";
 import { api } from "../api.ts";
 import { copyToClipboard } from "../clipboard.ts";
 import { models } from "../store.ts";
-import { type ChatState, type Running, stateOf } from "./events.ts";
+import { type ChatState, stateOf } from "./events.ts";
 import { groupRows } from "./thread.ts";
 
 export const MAX_MESSAGE = 256 * 1024;
@@ -43,8 +44,14 @@ export const draft = signal<ChatSettings>({
   toolsOff: [],
   search: "exa",
 });
-// the send in flight anywhere, from the snapshot and the events
-export const running = signal<Running>(null);
+// the sends in flight anywhere and the cap, from the socket's snapshot
+// and its `chatRuns` messages only: the server's registry is the one
+// source of who holds a slot, cancelled sends included until they drain.
+// Null until the snapshot arrives and again while reconnecting: nothing
+// is sent on a picture that may be stale
+export const runs = signal<ChatRuns | null>(null);
+export const runOf = (chatId: string): RunningSend | null =>
+  runs.value?.sends.find((run) => run.chatId === chatId) ?? null;
 type Note = { text: string; kind: string } | null;
 type Editor = {
   text: Signal<string>;
@@ -138,12 +145,31 @@ export const toolsOn = computed(() => {
   const off = settings.value.toolsOff ?? [];
   return tools.value.some((t) => !off.includes(t.name));
 });
-export const isStreaming = (chatId: string) => running.value?.chatId === chatId;
-export const currentStreaming = computed(
-  () => current.value !== null && running.value?.chatId === current.value.id,
+export const isStreaming = (chatId: string) =>
+  runOf(chatId)?.phase === "running";
+// the slot of the chat on screen, if it holds one
+export const currentRun = computed(() =>
+  current.value ? runOf(current.value.id) : null,
 );
+// the reply is being written here: Stop is the button and the clock runs
+export const currentStreaming = computed(() => {
+  const run = currentRun.value;
+  const s = state.value;
+  return (
+    run !== null &&
+    s !== null &&
+    run.phase === "running" &&
+    !s.ended.has(run.messageId)
+  );
+});
+// a send can start here: the slots are known, the chat holds none and
+// one is free
+export const canSend = computed(() => {
+  const r = runs.value;
+  return r !== null && currentRun.value === null && r.sends.length < r.limit;
+});
 export const tree = computed(() =>
-  state.value ? groupRows(state.value, toolsOn.value) : [],
+  state.value ? groupRows(state.value, toolsOn.value, currentRun.value) : [],
 );
 export const modelInfo = (id: string): ModelInfo | null =>
   models.value.find((m) => m.id === id) ?? null;
@@ -211,7 +237,7 @@ export async function fetchList() {
 }
 
 export function setCurrent(chat: Chat) {
-  state.value = stateOf(chat, running.value);
+  state.value = stateOf(chat);
 }
 
 export async function patch(p: Partial<ChatSettings> & { title?: string }) {
@@ -345,7 +371,7 @@ export async function send(content: string): Promise<boolean> {
 
 // "/compact" in the composer: a summary round on its own
 export async function compact() {
-  if (currentStreaming.value) return;
+  if (!canSend.value) return;
   if (!current.value) {
     setNote("Nothing to summarize yet.");
     return;
@@ -354,7 +380,7 @@ export async function compact() {
 }
 
 export async function regenerate() {
-  if (currentStreaming.value) return;
+  if (!canSend.value) return;
   await command("regenerate");
 }
 
