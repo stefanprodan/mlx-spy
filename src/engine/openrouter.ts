@@ -24,6 +24,7 @@ import type {
   ChatModel,
   ChatProvider,
   ChatRequest,
+  ReasoningDetail,
 } from "./types.ts";
 
 export const OPENROUTER_URL = "https://openrouter.ai/api/v1";
@@ -138,15 +139,107 @@ export class Catalog {
   }
 }
 
+// The breakpoints an Anthropic upstream caches at: the system prompt,
+// then the last two turns, so the previous turn's prefix is read while
+// this turn's is written. Only Claude models get them (OpenCode's rule;
+// the other upstreams cache on their own or not at all, and their wire
+// stays the plain one). A breakpoint needs the content as parts.
+export const CACHE_BREAKPOINTS = 2;
+export function takesCacheBreakpoints(model: string): boolean {
+  const id = model.toLowerCase();
+  return id.includes("claude") || id.includes("anthropic");
+}
+export function withCacheBreakpoints(
+  messages: Record<string, unknown>[],
+): Record<string, unknown>[] {
+  const marked = new Set<number>();
+  messages.forEach((m, i) => {
+    if (m.role === "system") marked.add(i);
+  });
+  let tail = CACHE_BREAKPOINTS;
+  for (let i = messages.length - 1; i >= 0 && tail > 0; i--) {
+    if (messages[i]!.role === "system") continue;
+    if (typeof messages[i]!.content !== "string") continue;
+    marked.add(i);
+    tail--;
+  }
+  return messages.map((m, i) =>
+    marked.has(i) && typeof m.content === "string"
+      ? {
+          ...m,
+          content: [
+            {
+              type: "text",
+              text: m.content,
+              cache_control: { type: "ephemeral" },
+            },
+          ],
+        }
+      : m,
+  );
+}
+
+// DeepSeek refuses a history where an assistant message has no reasoning
+// field at all (a turn with thinking off, or history with past reasoning
+// off), so every assistant message gets an empty one when it has none.
+export function withEmptyReasoning(
+  messages: Record<string, unknown>[],
+): Record<string, unknown>[] {
+  return messages.map((m) =>
+    m.role === "assistant" && !("reasoning" in m) && !("reasoning_details" in m)
+      ? { ...m, reasoning: "" }
+      : m,
+  );
+}
+
+// The stream repeats each item's index on every piece: the text grows
+// piece by piece and the signature lands on a late one, so pieces with
+// one index and type are merged into one item, in arrival order.
+export function mergeReasoningDetail(
+  items: ReasoningDetail[],
+  piece: ReasoningDetail,
+): ReasoningDetail[] {
+  const at = items.findIndex(
+    (item) =>
+      item.type === piece.type &&
+      typeof item.index === "number" &&
+      item.index === piece.index,
+  );
+  if (at < 0) return [...items, { ...piece }];
+  const merged: ReasoningDetail = { ...items[at]! };
+  for (const [field, value] of Object.entries(piece)) {
+    if (
+      (field === "text" || field === "summary" || field === "data") &&
+      typeof value === "string" &&
+      typeof merged[field] === "string"
+    ) {
+      merged[field] = `${merged[field]}${value}`;
+    } else if (value !== null && value !== undefined && value !== "") {
+      merged[field] = value;
+    }
+  }
+  return items.map((item, i) => (i === at ? merged : item));
+}
+
 // The request body: the shared wire, reasoning as OpenRouter's object,
-// usage asked for on the last frame, no prompt_cache_key (the prefix
-// cache key is an mlx-serve concept; OpenRouter caches per upstream on
-// its own and reports cached_tokens).
+// usage asked for on the last frame, the chat id as session_id (the
+// sticky routing key: every turn goes to the upstream that holds the
+// cached prefix; prompt_cache_key is only its fallback) and the
+// per-family message rules above.
 export function buildChatBody(req: ChatRequest): Record<string, unknown> {
   const body = buildOpenAiChatBody(req, { reasoningField: "reasoning" });
   delete body.prompt_cache_key;
   delete body.stream_options;
+  if (req.cacheKey) body.session_id = req.cacheKey;
   body.usage = { include: true };
+  let messages = body.messages as Record<string, unknown>[];
+  if (takesCacheBreakpoints(req.model)) {
+    messages = withCacheBreakpoints(messages);
+  }
+  if (req.model.toLowerCase().includes("deepseek")) {
+    messages = withEmptyReasoning(messages);
+  }
+  body.messages = messages;
   // "none" is an effort OpenRouter knows (an explicit off), so every set
   // effort goes through as is
   body.reasoning = req.thinking

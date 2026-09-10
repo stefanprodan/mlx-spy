@@ -11,8 +11,12 @@ import {
   Catalog,
   CatalogError,
   errorText,
+  mergeReasoningDetail,
   OpenRouter,
   parseCatalog,
+  takesCacheBreakpoints,
+  withCacheBreakpoints,
+  withEmptyReasoning,
 } from "../src/engine/openrouter.ts";
 import type { ChatEvent, ChatRequest } from "../src/engine/types.ts";
 
@@ -169,20 +173,21 @@ describe("OpenRouter catalog", () => {
 });
 
 describe("OpenRouter chat body", () => {
-  test("asks for usage, maps thinking to the reasoning object and drops the cache key", () => {
+  test("asks for usage, maps thinking to the reasoning object and sends the chat id as the session", () => {
     const body = buildChatBody(request) as any;
     expect(body.usage).toEqual({ include: true });
     expect(body.reasoning).toEqual({ enabled: true });
+    expect(body.session_id).toBe("chat-1");
     expect(body.prompt_cache_key).toBeUndefined();
     expect(body.stream_options).toBeUndefined();
     expect(body.stream).toBe(true);
     expect(body.tools).toHaveLength(1);
     // earlier reasoning goes back as OpenRouter's field, not mlx-serve's
-    expect(body.messages[2]).toEqual({
+    expect(body.messages[2]).toMatchObject({
       role: "assistant",
-      content: "hello",
       reasoning: "greet back",
     });
+    expect(body.messages[2].reasoning_content).toBeUndefined();
     expect(
       (buildChatBody({ ...request, reasoningEffort: "high" }) as any).reasoning,
     ).toEqual({ effort: "high" });
@@ -192,6 +197,144 @@ describe("OpenRouter chat body", () => {
     expect(
       (buildChatBody({ ...request, thinking: false }) as any).reasoning,
     ).toEqual({ exclude: true, enabled: false });
+    expect(
+      (buildChatBody({ ...request, cacheKey: null }) as any).session_id,
+    ).toBeUndefined();
+  });
+
+  test("marks the system prompt and the last two turns as cache breakpoints on Claude", () => {
+    const CLAUDE = "anthropic/claude-sonnet-4.5";
+    const body = buildChatBody({ ...request, model: CLAUDE }) as any;
+    const part = (text: string) => [
+      { type: "text", text, cache_control: { type: "ephemeral" } },
+    ];
+    expect(body.messages.map((m: any) => m.content)).toEqual([
+      part("be brief"),
+      "hi",
+      part("hello"),
+      part("what time is it?"),
+    ]);
+    // every other model gets the plain wire
+    expect(
+      (buildChatBody(request) as any).messages.map((m: any) => m.content),
+    ).toEqual(["be brief", "hi", "hello", "what time is it?"]);
+    expect(takesCacheBreakpoints("anthropic/claude-opus-4.7")).toBe(true);
+    expect(takesCacheBreakpoints("deepseek/deepseek-v4-flash-0731")).toBe(
+      false,
+    );
+    // the wire stays plain where nothing is marked; a tool result at
+    // the tail is marked like a user turn, a call without text is not
+    expect(
+      withCacheBreakpoints([
+        { role: "user", content: "run it" },
+        { role: "assistant", content: null, tool_calls: [{ id: "c1" }] },
+        { role: "tool", tool_call_id: "c1", content: "12:00" },
+      ]).map((m) => m.content),
+    ).toEqual([part("run it"), null, part("12:00")]);
+    expect(withCacheBreakpoints([])).toEqual([]);
+  });
+
+  test("gives DeepSeek an empty reasoning on every assistant turn that has none", () => {
+    const body = buildChatBody({
+      ...request,
+      model: "deepseek/deepseek-v4-flash-0731",
+      messages: [
+        { role: "user", content: "hi" },
+        { role: "assistant", content: "hello" },
+        { role: "user", content: "again" },
+        { role: "assistant", content: "hello again", reasoning: "greet" },
+        { role: "user", content: "once more" },
+      ],
+    }) as any;
+    expect(body.messages.map((m: any) => m.reasoning)).toEqual([
+      undefined,
+      "",
+      undefined,
+      "greet",
+      undefined,
+    ]);
+    // a message with the structured items is left alone; other models
+    // are not touched
+    expect(
+      withEmptyReasoning([
+        { role: "assistant", content: null, reasoning_details: [] },
+      ])[0]!.reasoning,
+    ).toBeUndefined();
+    expect((buildChatBody(request) as any).messages[2].reasoning).toBe(
+      "greet back",
+    );
+    expect(
+      (buildChatBody({ ...request, messages: [request.messages[2]!] }) as any)
+        .messages[0].reasoning,
+    ).toBe("greet back");
+  });
+
+  test("sends the structured reasoning back in place of the text when it has it", () => {
+    const details = [
+      {
+        type: "reasoning.text",
+        text: "greet back",
+        signature: "sig",
+        format: "anthropic-claude-v1",
+        index: 0,
+      },
+    ];
+    const body = buildChatBody({
+      ...request,
+      messages: [
+        { role: "user", content: "hi" },
+        {
+          role: "assistant",
+          content: "hello",
+          reasoning: "greet back",
+          reasoningDetails: details,
+        },
+        { role: "user", content: "again" },
+      ],
+    }) as any;
+    expect(body.messages[1].reasoning_details).toEqual(details);
+    expect(body.messages[1].reasoning).toBeUndefined();
+  });
+
+  test("merges the streamed pieces of one reasoning item", () => {
+    let items = mergeReasoningDetail([], {
+      type: "reasoning.text",
+      text: "The",
+      format: "unknown",
+      index: 0,
+    });
+    items = mergeReasoningDetail(items, {
+      type: "reasoning.text",
+      text: " user",
+      format: "unknown",
+      index: 0,
+    });
+    items = mergeReasoningDetail(items, {
+      type: "reasoning.text",
+      text: "",
+      signature: "sig",
+      index: 0,
+    });
+    items = mergeReasoningDetail(items, {
+      type: "reasoning.encrypted",
+      data: "blob",
+      id: "rs_1",
+      index: 1,
+    });
+    expect(items).toEqual([
+      {
+        type: "reasoning.text",
+        text: "The user",
+        format: "unknown",
+        signature: "sig",
+        index: 0,
+      },
+      { type: "reasoning.encrypted", data: "blob", id: "rs_1", index: 1 },
+    ]);
+    // an item without an index is its own
+    expect(
+      mergeReasoningDetail(items, { type: "reasoning.summary", summary: "s" }),
+    ).toHaveLength(3);
   });
 });
 
@@ -206,6 +349,16 @@ describe("OpenRouter stream", () => {
       .map((e) => (e as { text: string }).text)
       .join("");
     expect(reasoning.length).toBeGreaterThan(0);
+    // the structured items ride along, one piece per frame, and merge
+    // into the one item the model produced
+    const details = events
+      .filter((e) => e.kind === "reasoningDetail")
+      .map((e) => (e as Extract<ChatEvent, { kind: "reasoningDetail" }>).item);
+    expect(details.length).toBeGreaterThan(1);
+    const merged = details.reduce(mergeReasoningDetail, []);
+    expect(merged).toHaveLength(1);
+    expect(merged[0]).toMatchObject({ type: "reasoning.text", index: 0 });
+    expect(merged[0]!.text).toBe(reasoning);
     expect(events.filter((e) => e.kind === "content")).toHaveLength(0);
     const calls = events.find((e) => e.kind === "toolCalls");
     expect(calls).toBeDefined();

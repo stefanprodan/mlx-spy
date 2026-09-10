@@ -695,6 +695,53 @@ describe("ChatRunner", () => {
     s.db.close();
   });
 
+  test("keeps a hosted model's structured reasoning and sends it back with the text", async () => {
+    const s = setup();
+    s.runner.update(s.chat.id, { reasoningHistory: true });
+    s.runner.send(s.chat.id, "hello");
+    await turn();
+    const stream = s.engine.streams[0];
+    stream.push({ kind: "reasoning", text: "hm" });
+    stream.push({
+      kind: "reasoningDetail",
+      item: { type: "reasoning.text", text: "hm", index: 0 },
+    });
+    stream.push({ kind: "reasoning", text: "m" });
+    stream.push({
+      kind: "reasoningDetail",
+      item: { type: "reasoning.text", text: "m", signature: "sig", index: 0 },
+    });
+    stream.push({ kind: "content", text: "hi" });
+    await finish(stream);
+    const reply = s.store.get(s.chat.id)!.messages.at(-1)!;
+    expect(reply.reasoning).toBe("hmm");
+    expect(s.store.reasoningDetails(reply.id)).toEqual([
+      { type: "reasoning.text", text: "hmm", signature: "sig", index: 0 },
+    ]);
+    s.runner.send(s.chat.id, "again");
+    await turn();
+    expect(s.engine.requests[1].messages.at(-2)).toEqual({
+      role: "assistant",
+      content: "hi",
+      reasoning: "hmm",
+      reasoningDetails: [
+        { type: "reasoning.text", text: "hmm", signature: "sig", index: 0 },
+      ],
+    });
+    s.engine.streams[1].push({ kind: "content", text: "ok" });
+    await finish(s.engine.streams[1]);
+    // past reasoning off drops the items with the text
+    s.runner.update(s.chat.id, { reasoningHistory: false });
+    s.runner.send(s.chat.id, "once more");
+    await turn();
+    expect(s.engine.requests[2].messages.at(-4)).toEqual({
+      role: "assistant",
+      content: "hi",
+    });
+    await finish(s.engine.streams[2]);
+    s.db.close();
+  });
+
   test("starts calls in parallel and stores their rows in call order", async () => {
     const started: string[] = [];
     const releases: (() => void)[] = [];

@@ -3,7 +3,12 @@
 //
 // The OpenAI-compatible chat completions wire shared by engine adapters.
 
-import type { ChatEvent, ChatRequest, ToolCall } from "./types.ts";
+import type {
+  ChatEvent,
+  ChatRequest,
+  ReasoningDetail,
+  ToolCall,
+} from "./types.ts";
 
 export const CHAT_HEADERS_TIMEOUT_MS = 30_000;
 const CHAT_SILENCE_TIMEOUT_MS = 5 * 60_000;
@@ -51,7 +56,16 @@ export function buildChatBody(
             })),
           }
         : {}),
-      ...(message.reasoning ? { [reasoningField]: message.reasoning } : {}),
+      // OpenRouter takes the structured items in place of the text: the
+      // signature or the encrypted blob is what lets a Claude or an OpenAI
+      // model continue its chain across a tool round
+      ...(reasoningField === "reasoning" &&
+      message.reasoningDetails &&
+      message.reasoningDetails.length > 0
+        ? { reasoning_details: message.reasoningDetails }
+        : message.reasoning
+          ? { [reasoningField]: message.reasoning }
+          : {}),
     };
   });
   const body: Record<string, unknown> = {
@@ -125,9 +139,16 @@ export function chatEvents(json: string): ChatEvent[] {
   if (typeof delta?.reasoning_content === "string" && delta.reasoning_content) {
     events.push({ kind: "reasoning", text: delta.reasoning_content });
   } else if (typeof delta?.reasoning === "string" && delta.reasoning) {
-    // OpenRouter's name for the same delta (reasoning_details repeats it
-    // structured; the text is enough)
+    // OpenRouter's name for the same delta; reasoning_details below
+    // carries the structured form the next request sends back
     events.push({ kind: "reasoning", text: delta.reasoning });
+  }
+  if (Array.isArray(delta?.reasoning_details)) {
+    for (const item of delta.reasoning_details) {
+      if (typeof item?.type === "string") {
+        events.push({ kind: "reasoningDetail", item: item as ReasoningDetail });
+      }
+    }
   }
   if (typeof delta?.content === "string" && delta.content) {
     events.push({ kind: "content", text: delta.content });
