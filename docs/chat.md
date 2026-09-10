@@ -97,6 +97,10 @@ settings and any creation error, so you can return to it and retry.
 
 A reply that was cut shows why under it: `stopped`, `cut at max tokens`,
 `interrupted, mlx-spy restarted`, or the engine's error.
+An unexpected failure during tool execution or while saving its state
+ends the send with an error and cancels its unfinished calls; results
+already completed are kept.
+A new send waits until those cancelled calls have finished unwinding.
 
 A long chat is compacted before it outgrows the model's window. When a
 reply leaves less than 20k tokens of the window (the number in the

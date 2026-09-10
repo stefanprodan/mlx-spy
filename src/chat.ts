@@ -658,13 +658,13 @@ export class ChatRunner {
           continue;
         }
 
-        const tools = Promise.all(
-          calls.map((call, index) =>
-            this.executeCall(send, call, toolRows[index]),
-          ),
-        ).then(() => {});
-        send.tools = tools;
-        await tools;
+        const tools = calls.map((call, index) =>
+          this.executeCall(send, call, toolRows[index]),
+        );
+        // Reject promptly to abort siblings, but retain the lock until
+        // every launched call has settled, including abort-ignoring tools.
+        send.tools = Promise.allSettled(tools).then(() => {});
+        await Promise.all(tools);
         send.tools = null;
         if (send.terminal !== null) return;
         if (
@@ -688,6 +688,7 @@ export class ChatRunner {
     } catch (err) {
       if (send.terminal === null) this.fail(send, describe(err));
     } finally {
+      await send.tools;
       if (this.active === send) this.active = null;
       if (this.draining === send) this.draining = null;
     }
@@ -866,6 +867,7 @@ export class ChatRunner {
     call: ToolCall,
     row: Message,
   ): Promise<void> {
+    if (send.terminal !== null) return;
     const running = this.deps.store.writeTool(row.id, {
       status: "running",
       content: "",
@@ -873,6 +875,7 @@ export class ChatRunner {
       finishedAt: null,
     });
     if (running) this.publishRow(send.chatId, running);
+    if (send.terminal !== null) return;
     const startedAt = this.now();
     const result = await this.executeTool(call, {
       signal: send.controller.signal,
@@ -885,10 +888,10 @@ export class ChatRunner {
       },
       budget: send.budget,
     });
+    if (send.terminal !== null) return;
     const elapsed = Math.max(0, this.now() - startedAt);
     send.budget.toolMs += elapsed;
     send.budget.resultBytes += new TextEncoder().encode(result.text).byteLength;
-    if (send.terminal !== null) return;
     const message = this.deps.store.writeTool(row.id, {
       status: result.error === null ? "done" : "error",
       content: result.text,
@@ -1050,21 +1053,44 @@ export class ChatRunner {
   private fail(send: ActiveSend, error: string) {
     const round = send.current;
     if (!round || send.terminal !== null) return;
+    send.terminal = "error";
+    this.draining = send;
+    send.controller.abort();
+    this.deps.log(`chat ${send.chatId} error: ${error}`);
+    let message: Message | null = null;
     try {
-      const message = this.finishRound(send, round, "error", error);
-      if (!message) return;
-      send.terminal = "error";
-      if (this.active === send) this.active = null;
-      this.publish({
-        kind: "done",
-        chat: chatSummary(this.requireChat(send.chatId)),
-        message,
-      });
-      this.deps.log(`chat ${send.chatId} error: ${error}`);
+      message =
+        round.toolRows.length > 0
+          ? this.deps.store.failToolGroup(round.messageId, error)
+          : this.finishRound(send, round, "error", error);
+      if (!message) {
+        this.deps.log(
+          `chat ${send.chatId} finish failed: reply was not finalized`,
+        );
+      }
     } catch (err) {
       this.deps.log(`chat ${send.chatId} finish failed: ${describe(err)}`);
-      send.terminal = "error";
-      if (this.active === send) this.active = null;
+    }
+    this.interruptTools(send, "interrupted");
+    if (message) {
+      if (round.toolRows.length > 0) this.publishRow(send.chatId, message);
+      const chat = this.deps.store.get(send.chatId);
+      if (!chat) return;
+      this.publish({
+        kind: "done",
+        chat: chatSummary(chat),
+        message,
+      });
+    } else {
+      this.publish({
+        kind: "error",
+        chatId: send.chatId,
+        messageId: round.messageId,
+        error: `${error} (reply could not be saved)`,
+        content: round.content,
+        reasoning: round.reasoning,
+        html: renderMarkdown(round.content, true),
+      });
     }
   }
 
@@ -1090,15 +1116,26 @@ export class ChatRunner {
   }
 
   private interruptTools(send: ActiveSend, status: "stopped" | "interrupted") {
+    const failures: unknown[] = [];
     for (const row of send.current?.toolRows ?? []) {
-      const message = this.deps.store.writeTool(row.id, {
-        status,
-        content: TOOL_INTERRUPTED,
-        error: null,
-        finishedAt: this.now(),
-      });
-      if (message) this.publishRow(send.chatId, message);
+      try {
+        const message = this.deps.store.writeTool(row.id, {
+          status,
+          content: TOOL_INTERRUPTED,
+          error: null,
+          finishedAt: this.now(),
+        });
+        if (message) this.publishRow(send.chatId, message);
+      } catch (err) {
+        failures.push(err);
+        this.deps.log(
+          `chat ${send.chatId} tool ${row.toolCallId} interrupt failed: ${describe(err)}`,
+        );
+      }
     }
+    // A live send cannot continue with missing results; terminal cleanup
+    // remains best-effort without replacing the original failure.
+    if (send.terminal === null && failures.length > 0) throw failures[0];
   }
 
   private logFinish(send: ActiveSend, message: Message) {

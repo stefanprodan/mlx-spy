@@ -6,6 +6,7 @@ import type {
   CacheLimits,
   Capability,
   ChatEvent,
+  ChatMessageIn,
   ChatRequest,
   Engine,
   EngineMetrics,
@@ -13,6 +14,7 @@ import type {
   ToolCall,
 } from "../src/engine/types.ts";
 import { TOOLS, type ToolContext } from "../src/tools.ts";
+import { applyEvent, stateOf } from "../src/ui/chat/events.ts";
 
 const MODEL = "org/Qwen3.8-27B";
 const model: ModelInfo = {
@@ -854,6 +856,418 @@ describe("ChatRunner", () => {
     s.db.close();
   });
 
+  // Synthetic fault injection from the backend reproduction, not a
+  // recording from the preview: SQLite rejects only one tool transition.
+  test("fatal tool writes preserve the group and drain every aborted sibling", async () => {
+    for (const transition of ["running", "done"]) {
+      const first = Promise.withResolvers<{
+        text: string;
+        error: string | null;
+      }>();
+      const last = Promise.withResolvers<{
+        text: string;
+        error: string | null;
+      }>();
+      const signals: AbortSignal[] = [];
+      const s = setup([model], async (call, ctx) => {
+        signals.push(ctx.signal);
+        if (call.id === "waiting_1") return first.promise;
+        if (call.id === "waiting_2") return last.promise;
+        return { text: `result ${call.id}`, error: null };
+      });
+      try {
+        s.db.run(`CREATE TEMP TRIGGER injected_tool_failure
+          BEFORE UPDATE OF status ON messages
+          WHEN OLD.role = 'tool' AND OLD.tool_call_id = 'failure'
+            AND NEW.status = '${transition}'
+          BEGIN SELECT RAISE(ABORT, 'injected tool write failure'); END`);
+        s.runner.update(s.chat.id, { toolsOff: [] });
+        const sent = s.runner.send(s.chat.id, "clocks");
+        await turn();
+        const group = [
+          clock("success"),
+          clock("failure"),
+          clock("waiting_1"),
+          clock("waiting_2"),
+        ];
+        const stats = {
+          promptTokens: 12,
+          cachedTokens: 3,
+          generated: 4,
+          prefillMs: 10,
+          decodeMs: 20,
+          tokenizeMs: 1,
+        };
+        s.engine.streams[0].push({ kind: "content", text: "Checking." });
+        s.engine.streams[0].push({ kind: "reasoning", text: "Use clocks." });
+        s.engine.streams[0].push({ kind: "usage", stats });
+        await calls(s.engine.streams[0], group);
+        expect(s.runner.running()).toBeNull();
+        expect(signals.every((signal) => signal.aborted)).toBe(true);
+        expect(s.engine.signals[0].aborted).toBe(true);
+        expect(s.engine.requests).toHaveLength(1);
+        expect(s.store.message(sent.message.id)).toMatchObject({
+          status: "error",
+          error: "injected tool write failure",
+          content: "Checking.",
+          reasoning: "Use clocks.",
+          toolCalls: group,
+          finishReason: "tool_calls",
+          stats,
+        });
+        const rows = s.store.get(s.chat.id)!.messages;
+        expect(rows.slice(2).map((row) => row.status)).toEqual([
+          "done",
+          "interrupted",
+          "interrupted",
+          "interrupted",
+        ]);
+        expect(rows[2].content).toBe("result success");
+        expect(
+          rows
+            .slice(3)
+            .every(
+              (row) =>
+                row.content === "[Tool execution was interrupted]" &&
+                row.finishedAt !== null,
+            ),
+        ).toBe(true);
+        expect(s.events.filter((event) => event.kind === "done")).toMatchObject(
+          [
+            {
+              message: {
+                status: "error",
+                error: "injected tool write failure",
+              },
+            },
+          ],
+        );
+        expect(s.logs).toContain(
+          `chat ${s.chat.id} error: injected tool write failure`,
+        );
+        const terminalEvents = s.events.length;
+        const writeTool = s.store.writeTool.bind(s.store);
+        let lateWrites = 0;
+        s.store.writeTool = (...args) => {
+          lateWrites++;
+          return writeTool(...args);
+        };
+        s.runner.stop(s.chat.id);
+        s.runner.shutdown();
+        await rejects(
+          () => s.runner.send(s.chat.id, "too soon"),
+          409,
+          /Still cancelling/,
+        );
+        first.resolve({ text: "late first result", error: null });
+        await turn();
+        await rejects(
+          () => s.runner.send(s.chat.id, "still too soon"),
+          409,
+          /Still cancelling/,
+        );
+        last.resolve({ text: "late last result", error: null });
+        await turn();
+        expect(s.events).toHaveLength(terminalEvents);
+        expect(s.store.get(s.chat.id)!.messages).toEqual(rows);
+        expect(lateWrites).toBe(0);
+        const next = s.runner.send(s.chat.id, "after drain");
+        await turn();
+        expect(s.runner.running()?.messageId).toBe(next.message.id);
+        expect(s.engine.requests[1].messages.slice(2, 7)).toEqual([
+          { role: "assistant", content: "Checking.", toolCalls: group },
+          { role: "tool", toolCallId: "success", content: "result success" },
+          ...group.slice(1).map((call) => ({
+            role: "tool" as const,
+            toolCallId: call.id,
+            content: "[Tool execution was interrupted]",
+          })),
+        ]);
+        await finish(s.engine.streams[1]);
+      } finally {
+        first.resolve({ text: "cleanup", error: null });
+        last.resolve({ text: "cleanup", error: null });
+        s.runner.shutdown();
+        for (const stream of s.engine.streams) stream.end();
+        await turn();
+        s.db.close();
+      }
+    }
+  });
+
+  test("deleting a failed chat retains the lock until its tools drain", async () => {
+    const failure = Promise.withResolvers<never>();
+    const waiting = Promise.withResolvers<{ text: string; error: null }>();
+    const s = setup([model], async (call) =>
+      call.id === "failure" ? failure.promise : waiting.promise,
+    );
+    try {
+      s.runner.send(s.chat.id, "old");
+      await turn();
+      await calls(s.engine.streams[0], [clock("failure"), clock("waiting")]);
+      failure.reject(new Error("executor rejected"));
+      await turn();
+      expect(s.engine.signals[0].aborted).toBe(true);
+      expect(s.events.filter((event) => event.kind === "done")).toHaveLength(1);
+      expect(s.runner.remove(s.chat.id)).toBe(true);
+      expect(s.runner.get(s.chat.id)).toBeNull();
+      const nextChat = s.runner.create({ ...s.chat });
+      const beforeDrain = s.events.length;
+      await rejects(
+        () => s.runner.send(nextChat.id, "too soon"),
+        409,
+        /Still cancelling/,
+      );
+      s.runner.stop(s.chat.id);
+      s.runner.shutdown();
+      waiting.resolve({ text: "discarded result", error: null });
+      await turn();
+      expect(s.events).toHaveLength(beforeDrain);
+      const next = s.runner.send(nextChat.id, "replacement");
+      await turn();
+      await turn();
+      expect(s.runner.running()).toEqual({
+        chatId: nextChat.id,
+        messageId: next.message.id,
+      });
+      await finish(s.engine.streams[1]);
+    } finally {
+      waiting.resolve({ text: "cleanup", error: null });
+      failure.reject(new Error("cleanup"));
+      s.runner.shutdown();
+      for (const stream of s.engine.streams) stream.end();
+      await turn();
+      s.db.close();
+    }
+  });
+
+  test("stopped tools that reject early still drain before another send", async () => {
+    for (const action of ["stop", "remove", "shutdown"] as const) {
+      const rejected = Promise.withResolvers<never>();
+      const pending = Promise.withResolvers<{ text: string; error: null }>();
+      const s = setup([model], async (call) =>
+        call.id === "rejected" ? rejected.promise : pending.promise,
+      );
+      try {
+        s.runner.send(s.chat.id, "old");
+        await turn();
+        await calls(s.engine.streams[0], [clock("rejected"), clock("pending")]);
+        if (action === "shutdown") s.runner.shutdown();
+        else s.runner[action](s.chat.id);
+        expect(s.engine.signals[0].aborted).toBe(true);
+        const events = s.events.length;
+        rejected.reject(new Error("late abort rejection"));
+        await turn();
+        const next = s.runner.create({ ...s.chat });
+        await rejects(
+          () => s.runner.send(next.id, "too soon"),
+          409,
+          /Still cancelling/,
+        );
+        pending.resolve({ text: "late result", error: null });
+        await turn();
+        expect(s.events).toHaveLength(events + 1);
+        expect(s.events.filter((event) => event.kind === "done")).toHaveLength(
+          1,
+        );
+        s.runner.send(next.id, "after drain");
+        await turn();
+        await finish(s.engine.streams[1]);
+      } finally {
+        rejected.reject(new Error("cleanup"));
+        pending.resolve({ text: "cleanup", error: null });
+        s.runner.shutdown();
+        for (const stream of s.engine.streams) stream.end();
+        await turn();
+        s.db.close();
+      }
+    }
+  });
+
+  test("terminal stop and shutdown attempt every interruption despite write failures", async () => {
+    for (const action of ["stop", "shutdown"] as const) {
+      const pending = Promise.withResolvers<{ text: string; error: null }>();
+      const s = setup([model], async () => pending.promise);
+      try {
+        s.db.run(`CREATE TEMP TRIGGER injected_terminal_failure
+          BEFORE UPDATE OF status ON messages
+          WHEN OLD.role = 'tool'
+            AND OLD.tool_call_id IN ('failure_1', 'failure_2')
+            AND NEW.status IN ('stopped', 'interrupted')
+          BEGIN SELECT RAISE(ABORT, 'terminal write failed'); END`);
+        s.runner.send(s.chat.id, "clocks");
+        await turn();
+        await calls(s.engine.streams[0], [
+          clock("failure_1"),
+          clock("failure_2"),
+          clock("success"),
+        ]);
+        if (action === "stop") s.runner.stop(s.chat.id);
+        else s.runner.shutdown();
+        expect(s.runner.running()).toBeNull();
+        expect(s.engine.signals[0].aborted).toBe(true);
+        expect(s.engine.requests).toHaveLength(1);
+        const rows = s.store.get(s.chat.id)!.messages;
+        expect(rows.slice(2).map((row) => row.status)).toEqual([
+          "running",
+          "running",
+          action === "stop" ? "stopped" : "interrupted",
+        ]);
+        expect(rows.at(-1)).toMatchObject({
+          content: "[Tool execution was interrupted]",
+          finishedAt: 1000,
+        });
+        for (const id of ["failure_1", "failure_2"]) {
+          expect(s.logs).toContain(
+            `chat ${s.chat.id} tool ${id} interrupt failed: terminal write failed`,
+          );
+        }
+        expect(s.events.filter((event) => event.kind === "done")).toHaveLength(
+          1,
+        );
+        expect(s.events.filter((event) => event.kind === "error")).toHaveLength(
+          0,
+        );
+        const terminalEvents = s.events.length;
+        await rejects(
+          () => s.runner.send(s.chat.id, "too soon"),
+          409,
+          /Still cancelling/,
+        );
+        pending.resolve({ text: "late result", error: null });
+        await turn();
+        expect(s.store.get(s.chat.id)!.messages).toEqual(rows);
+        expect(s.events).toHaveLength(terminalEvents);
+        expect(s.engine.requests).toHaveLength(1);
+      } finally {
+        pending.resolve({ text: "cleanup", error: null });
+        s.runner.shutdown();
+        for (const stream of s.engine.streams) stream.end();
+        await turn();
+        s.db.close();
+      }
+    }
+  });
+
+  test("completed send cleanup cannot clear a replacement from its done listener", async () => {
+    const s = setup();
+    const replacements: number[] = [];
+    const unsubscribe = s.runner.onEvent((event) => {
+      if (event.kind !== "done" || replacements.length > 0) return;
+      replacements.push(s.runner.send(s.chat.id, "replacement").message.id);
+    });
+    s.runner.send(s.chat.id, "first");
+    await turn();
+    await finish(s.engine.streams[0]);
+    expect(replacements).toHaveLength(1);
+    expect(s.runner.running()?.messageId).toBe(replacements[0]);
+    unsubscribe();
+    await finish(s.engine.streams[1]);
+    s.db.close();
+  });
+
+  test("failure starting the answer round keeps a completed tool result", async () => {
+    const s = setup([model], async () => ({
+      text: "saved result",
+      error: null,
+    }));
+    const addMessage = s.store.addMessage.bind(s.store);
+    let rejectAnswer = true;
+    s.store.addMessage = (...args) => {
+      if (
+        args[1] === "assistant" &&
+        s.engine.requests.length === 1 &&
+        rejectAnswer
+      ) {
+        rejectAnswer = false;
+        throw new Error("answer row insert failed");
+      }
+      return addMessage(...args);
+    };
+    const sent = s.runner.send(s.chat.id, "clock");
+    await turn();
+    await calls(s.engine.streams[0], [clock("call_1")]);
+    expect(s.store.message(sent.message.id)).toMatchObject({
+      status: "error",
+      error: "answer row insert failed",
+      toolCalls: [clock("call_1")],
+    });
+    expect(s.store.lastMessage(s.chat.id)).toMatchObject({
+      role: "tool",
+      status: "done",
+      content: "saved result",
+    });
+    expect(s.events.filter((event) => event.kind === "done")).toHaveLength(1);
+    expect(s.engine.signals[0].aborted).toBe(true);
+    expect(s.runner.running()).toBeNull();
+    s.db.close();
+  });
+
+  test("logs the original failure before secondary finalization failures", async () => {
+    for (const blocked of ["assistant", "tool"]) {
+      const s = setup([model], async () => {
+        throw new Error("original executor failure");
+      });
+      const failToolGroup = s.store.failToolGroup.bind(s.store);
+      s.store.failToolGroup = (...args) => {
+        expect(s.logs).toContain(
+          `chat ${s.chat.id} error: original executor failure`,
+        );
+        return failToolGroup(...args);
+      };
+      s.db.run(`CREATE TEMP TRIGGER injected_secondary_failure
+        BEFORE UPDATE OF status ON messages
+        WHEN OLD.role = '${blocked}'
+          AND NEW.status IN ('error', 'interrupted')
+          AND (OLD.role = 'assistant' OR OLD.tool_call_id = 'call_1')
+        BEGIN SELECT RAISE(ABORT, 'secondary write failure'); END`);
+      const sent = s.runner.send(s.chat.id, "clock");
+      await turn();
+      await calls(s.engine.streams[0], [clock("call_1"), clock("call_2")]);
+      expect(s.logs[2]).toContain("error: original executor failure");
+      expect(
+        s.logs.some((line) => line.includes("secondary write failure")),
+      ).toBe(true);
+      expect(s.engine.signals[0].aborted).toBe(true);
+      expect(s.runner.running()).toBeNull();
+      expect(s.store.lastMessage(s.chat.id)?.status).toBe("interrupted");
+      expect(s.events.filter((event) => event.kind === "done")).toHaveLength(
+        blocked === "assistant" ? 0 : 1,
+      );
+      const errors = s.events.filter((event) => event.kind === "error");
+      expect(errors).toHaveLength(blocked === "assistant" ? 1 : 0);
+      if (blocked === "assistant") {
+        expect(errors[0]).toMatchObject({
+          chatId: s.chat.id,
+          messageId: sent.message.id,
+          error: "original executor failure (reply could not be saved)",
+        });
+      }
+      let page = stateOf(s.chat, null);
+      for (const event of s.events) {
+        page = applyEvent(page, event, 1000).state;
+      }
+      expect(page.running).toBeNull();
+      expect(
+        page.chat.messages.find((m) => m.id === sent.message.id),
+      ).toMatchObject({
+        status: "error",
+        error:
+          blocked === "assistant"
+            ? "original executor failure (reply could not be saved)"
+            : "original executor failure",
+      });
+      expect(s.store.message(sent.message.id)?.error).toBe(
+        blocked === "assistant" ? null : "original executor failure",
+      );
+      s.db.run("DROP TRIGGER injected_secondary_failure");
+      s.runner.send(s.chat.id, "next");
+      await turn();
+      await finish(s.engine.streams[1]);
+      s.db.close();
+    }
+  });
+
   test("uses repaired missing tool rows in the next valid request", async () => {
     const s = setup();
     const firstUser = s.store.addMessage(s.chat.id, "user", { content: "old" });
@@ -1045,6 +1459,128 @@ describe("ChatRunner", () => {
     });
     s.db.close();
   });
+
+  for (const reason of ["tool_limit", "tool_loop"]) {
+    for (const failureCount of [1, 2]) {
+      test(`${reason} interruption fails the send after ${failureCount} stopped write failures`, async () => {
+        const executed: string[] = [];
+        const s = setup([model], async (call) => {
+          executed.push(call.id);
+          return { text: `result ${call.id}`, error: null };
+        });
+        try {
+          const rounds = reason === "tool_limit" ? 1 : 3;
+          const group = Array.from(
+            { length: reason === "tool_limit" ? 9 : 4 },
+            (_, index) => clock(`last_${index}`, `Etc/GMT+${index}`),
+          );
+          const failed = group.slice(1, 1 + failureCount);
+          for (const call of failed) {
+            s.db.run(`CREATE TEMP TRIGGER injected_${call.id}
+              BEFORE UPDATE OF status ON messages
+              WHEN OLD.role = 'tool' AND OLD.tool_call_id = '${call.id}'
+                AND NEW.status = 'stopped'
+              BEGIN SELECT RAISE(ABORT, 'stopped write ${call.id} failed'); END`);
+          }
+          s.runner.update(s.chat.id, { toolsOff: [] });
+          s.runner.send(s.chat.id, "clocks");
+          await turn();
+          for (let round = 0; round < rounds - 1; round++) {
+            await calls(
+              s.engine.streams[round],
+              group.map((call, index) => ({
+                ...call,
+                id: `round_${round}_${index}`,
+              })),
+            );
+          }
+          const messageId = s.runner.running()!.messageId;
+          s.engine.streams[rounds - 1].push({
+            kind: "content",
+            text: "Checking.",
+          });
+          await calls(s.engine.streams[rounds - 1], group);
+          const error = `stopped write ${failed[0].id} failed`;
+          expect(s.runner.running()).toBeNull();
+          expect(s.engine.requests).toHaveLength(rounds);
+          expect(executed).toHaveLength((rounds - 1) * group.length);
+          expect(s.engine.signals.every((signal) => signal.aborted)).toBe(true);
+          expect(s.store.message(messageId)).toMatchObject({
+            status: "error",
+            error,
+            content: "Checking.",
+            finishReason: reason,
+            toolCalls: group,
+          });
+          expect(
+            s.events.filter((event) => event.kind === "done"),
+          ).toMatchObject([
+            { message: { id: messageId, status: "error", error } },
+          ]);
+          expect(
+            s.events.filter((event) => event.kind === "error"),
+          ).toHaveLength(0);
+          const rows = s.store
+            .get(s.chat.id)!
+            .messages.filter((row) => row.id > messageId);
+          expect(rows).toHaveLength(group.length);
+          expect(rows.map((row) => row.status)).toEqual(
+            group.map((call) =>
+              failed.includes(call) ? "interrupted" : "stopped",
+            ),
+          );
+          expect(
+            rows.every(
+              (row) =>
+                row.content === "[Tool execution was interrupted]" &&
+                row.finishedAt !== null,
+            ),
+          ).toBe(true);
+          for (const call of failed) {
+            expect(s.logs).toContain(
+              `chat ${s.chat.id} tool ${call.id} interrupt failed: stopped write ${call.id} failed`,
+            );
+          }
+          expect(s.logs).toContain(`chat ${s.chat.id} error: ${error}`);
+          expect(s.logs).not.toContain(`chat ${s.chat.id} answer round`);
+          await turn();
+          expect(s.engine.requests).toHaveLength(rounds);
+          for (const call of failed) {
+            s.db.run(`DROP TRIGGER injected_${call.id}`);
+          }
+          const next = s.runner.send(s.chat.id, "after recovery");
+          await turn();
+          expect(s.runner.running()?.messageId).toBe(next.message.id);
+          expect(s.engine.requests).toHaveLength(rounds + 1);
+          expect(
+            s.engine.requests[rounds].messages.slice(-group.length - 2, -1),
+          ).toEqual([
+            { role: "assistant", content: "Checking.", toolCalls: group },
+            ...group.map<ChatMessageIn>((call) => ({
+              role: "tool",
+              toolCallId: call.id,
+              content: "[Tool execution was interrupted]",
+            })),
+          ]);
+          s.engine.streams[rounds].push({
+            kind: "content",
+            text: "Recovered.",
+          });
+          await finish(s.engine.streams[rounds]);
+          expect(s.store.message(next.message.id)).toMatchObject({
+            status: "done",
+            content: "Recovered.",
+          });
+          expect(s.runner.running()).toBeNull();
+        } finally {
+          s.runner.shutdown();
+          for (const stream of s.engine.streams) stream.end();
+          await turn();
+          s.db.close();
+        }
+      });
+    }
+  }
 
   test("a call in the answer round ends the send as tool_limit", async () => {
     const s = setup();

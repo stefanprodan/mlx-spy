@@ -109,12 +109,13 @@ toolCalls, toolCallId, toolName}`. `role` is `user`, `assistant`, `tool`
 or `summary`. `html` is the server-rendered markdown of an assistant or
 summary row. `status` is
 `done`, `streaming`, `stopped` (the stop button), `interrupted` (mlx-spy
-was restarted mid-answer) or `error` (the engine's message in `error`); a
+was restarted mid-answer) or `error` (the failure message in `error`); a
 tool row also passes through `pending` and `running`. `stats` comes from
 the engine's usage chunk: `{promptTokens, cachedTokens, generated,
 prefillMs, decodeMs, tokenizeMs}`; the millisecond fields are null on an
-engine that reports no timings, and a stopped or failed reply has no
-stats. `ttftMs` is measured by mlx-spy from the request to the first token
+engine that reports no timings. A stopped or failed generation has no
+stats; a later failure during tool execution retains the completed
+engine round's stats. `ttftMs` is measured by mlx-spy from the request to the first token
 of any kind, and `thinkingMs` from the first reasoning token to the first
 content token.
 
@@ -134,6 +135,17 @@ model called a tool anyway. A round the engine cut while the model wrote
 its calls (`length`, or `length/repetition_loop`) keeps the calls on the
 row without tool rows: they were not run, the row stays in the chat, and
 later requests carry it without them.
+
+An unexpected failure executing or saving a tool result marks its
+owning assistant `error`, preserving its tool calls, text, reasoning and
+usage. Unfinished tools become `interrupted`, while finished results
+are kept. The socket emits the terminal assistant in `done`; new sends
+remain blocked until the cancelled tools finish unwinding.
+If even the assistant's error state cannot be saved, an `error` socket
+event ends the live send instead of a persisted `done`. It carries the
+original failure with "reply could not be saved" and the current text,
+reasoning and rendered HTML. Connected tabs stop displaying the send as
+running, but the unsaved state does not survive a reload.
 
 The runner appends a line with today's date in the host's timezone to
 the system prompt of every send, after `systemPrompt` or alone.
@@ -183,5 +195,6 @@ and `{type: "chat"}` for the chat:
 | `delta` | `chatId, messageId, content?, contentAt, reasoning?, reasoningAt` | text arrived; `*At` is the length of the buffer before it, so a client applies a delta only when it continues the text it has |
 | `html` | `chatId, messageId, html, htmlAt` | at most once a second: the reply rendered up to `htmlAt` characters |
 | `done` | `chat, message` | the send ended; `message` is its last assistant row with the terminal status, or the `summary` row when the send ended with a summary round |
+| `error` | `chatId, messageId, error, content, reasoning, html` | a terminal failure could not be saved; clear that chat's running state and display the unsaved error and partial reply |
 | `chat` | `chat` | a chat was created or its title or settings changed |
 | `deleted` | `chatId` | a chat was deleted |
