@@ -14,7 +14,9 @@ import {
   mergeReasoningDetail,
   OpenRouter,
   parseCatalog,
+  takesCacheBreakpoints,
   withCacheBreakpoints,
+  withEmptyReasoning,
 } from "../src/engine/openrouter.ts";
 import type { ChatEvent, ChatRequest } from "../src/engine/types.ts";
 
@@ -200,8 +202,9 @@ describe("OpenRouter chat body", () => {
     ).toBeUndefined();
   });
 
-  test("marks the system prompt and the last two turns as cache breakpoints", () => {
-    const body = buildChatBody(request) as any;
+  test("marks the system prompt and the last two turns as cache breakpoints on Claude", () => {
+    const CLAUDE = "anthropic/claude-sonnet-4.5";
+    const body = buildChatBody({ ...request, model: CLAUDE }) as any;
     const part = (text: string) => [
       { type: "text", text, cache_control: { type: "ephemeral" } },
     ];
@@ -211,6 +214,14 @@ describe("OpenRouter chat body", () => {
       part("hello"),
       part("what time is it?"),
     ]);
+    // every other model gets the plain wire
+    expect(
+      (buildChatBody(request) as any).messages.map((m: any) => m.content),
+    ).toEqual(["be brief", "hi", "hello", "what time is it?"]);
+    expect(takesCacheBreakpoints("anthropic/claude-opus-4.7")).toBe(true);
+    expect(takesCacheBreakpoints("deepseek/deepseek-v4-flash-0731")).toBe(
+      false,
+    );
     // the wire stays plain where nothing is marked; a tool result at
     // the tail is marked like a user turn, a call without text is not
     expect(
@@ -221,6 +232,41 @@ describe("OpenRouter chat body", () => {
       ]).map((m) => m.content),
     ).toEqual([part("run it"), null, part("12:00")]);
     expect(withCacheBreakpoints([])).toEqual([]);
+  });
+
+  test("gives DeepSeek an empty reasoning on every assistant turn that has none", () => {
+    const body = buildChatBody({
+      ...request,
+      model: "deepseek/deepseek-v4-flash-0731",
+      messages: [
+        { role: "user", content: "hi" },
+        { role: "assistant", content: "hello" },
+        { role: "user", content: "again" },
+        { role: "assistant", content: "hello again", reasoning: "greet" },
+        { role: "user", content: "once more" },
+      ],
+    }) as any;
+    expect(body.messages.map((m: any) => m.reasoning)).toEqual([
+      undefined,
+      "",
+      undefined,
+      "greet",
+      undefined,
+    ]);
+    // a message with the structured items is left alone; other models
+    // are not touched
+    expect(
+      withEmptyReasoning([
+        { role: "assistant", content: null, reasoning_details: [] },
+      ])[0]!.reasoning,
+    ).toBeUndefined();
+    expect((buildChatBody(request) as any).messages[2].reasoning).toBe(
+      "greet back",
+    );
+    expect(
+      (buildChatBody({ ...request, messages: [request.messages[2]!] }) as any)
+        .messages[0].reasoning,
+    ).toBe("greet back");
   });
 
   test("sends the structured reasoning back in place of the text when it has it", () => {

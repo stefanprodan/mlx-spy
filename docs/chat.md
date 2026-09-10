@@ -225,10 +225,12 @@ compaction and history. What differs:
   credits (50 a day otherwise).
 - Every request carries the chat id as OpenRouter's `session_id`, so
   the turns of a chat are routed to the upstream that holds its cached
-  prefix, and marks the system prompt and the last two turns as cache
-  breakpoints, which an Anthropic upstream needs before it caches at
-  all (Gemini takes them too, the rest ignore them). The cached share
-  on the numbers line is what the upstream reports.
+  prefix. On a Claude model the system prompt and the last two turns
+  are marked as cache breakpoints, which Anthropic needs before it
+  caches at all; other models get the plain wire. A DeepSeek model gets
+  an empty reasoning field on every earlier reply that has none, which
+  it insists on. The cached share on the numbers line is what the
+  upstream reports.
 
 Without a key nothing changes: the Settings page says where the key
 goes, and the picker shows only the engine's models.
