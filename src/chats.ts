@@ -6,11 +6,17 @@
 // the runner without owning the request to the engine.
 
 import type { Database } from "bun:sqlite";
-import type { ToolCall } from "./engine/types.ts";
+import {
+  isProviderId,
+  type ProviderId,
+  type ToolCall,
+} from "./engine/types.ts";
 import { renderMarkdown } from "./markdown.ts";
 import { isSearchProvider, type SearchProvider } from "./tools/search/types.ts";
 
 export type ChatSettings = {
+  // where the model runs; the pair is validated together and frozen per send
+  provider: ProviderId;
   model: string;
   systemPrompt: string;
   thinking: boolean;
@@ -30,6 +36,7 @@ export type ChatSettings = {
 export type ChatSummary = {
   id: string;
   title: string;
+  provider: ProviderId;
   model: string;
   createdAt: number;
   updatedAt: number;
@@ -56,6 +63,8 @@ export type MessageStats = {
   prefillMs: number | null;
   decodeMs: number | null;
   tokenizeMs: number | null;
+  // USD, from a hosted provider's usage; null for the engine
+  cost: number | null;
 };
 
 export type Message = {
@@ -122,6 +131,7 @@ export type WriteTool = {
 type ChatRow = {
   id: string;
   title: string;
+  provider: string;
   model: string;
   systemPrompt: string;
   thinking: number;
@@ -157,12 +167,13 @@ type MessageRow = {
   ttftMs: number | null;
   thinkingMs: number | null;
   tokenizeMs: number | null;
+  cost: number | null;
   toolCalls: string | null;
   toolCallId: string | null;
   toolName: string | null;
 };
 
-const CHAT_SELECT = `SELECT c.id, c.title, c.model,
+const CHAT_SELECT = `SELECT c.id, c.title, c.provider, c.model,
   c.system_prompt AS systemPrompt, c.thinking,
   c.reasoning_effort AS reasoningEffort,
   c.reasoning_history AS reasoningHistory, c.temperature,
@@ -177,7 +188,7 @@ const MESSAGE_SELECT = `SELECT id, chat_id AS chatId, role, content, reasoning,
   created_at AS createdAt, finished_at AS finishedAt,
   prompt_tokens AS promptTokens, cached_tokens AS cachedTokens, generated,
   prefill_ms AS prefillMs, decode_ms AS decodeMs, ttft_ms AS ttftMs,
-  thinking_ms AS thinkingMs, tokenize_ms AS tokenizeMs,
+  thinking_ms AS thinkingMs, tokenize_ms AS tokenizeMs, cost,
   tool_calls AS toolCalls, tool_call_id AS toolCallId,
   tool_name AS toolName FROM messages`;
 
@@ -206,6 +217,7 @@ export class ChatStore {
     this.db.run(`CREATE TABLE IF NOT EXISTS chats (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
+      provider TEXT NOT NULL DEFAULT 'mlxserve',
       model TEXT NOT NULL,
       system_prompt TEXT NOT NULL DEFAULT '',
       thinking INTEGER NOT NULL DEFAULT 1,
@@ -234,6 +246,7 @@ export class ChatStore {
       prompt_tokens INTEGER, cached_tokens INTEGER, generated INTEGER,
       prefill_ms REAL, decode_ms REAL, ttft_ms REAL, tokenize_ms REAL,
       thinking_ms REAL,
+      cost REAL,
       tool_calls TEXT,
       tool_call_id TEXT,
       tool_name TEXT
@@ -242,9 +255,11 @@ export class ChatStore {
       reasoning_history: "INTEGER NOT NULL DEFAULT 1",
       tools_off: "TEXT NOT NULL DEFAULT '[]'",
       search: "TEXT NOT NULL DEFAULT 'exa'",
+      provider: "TEXT NOT NULL DEFAULT 'mlxserve'",
     });
     this.migrateColumns("messages", {
       thinking_ms: "REAL",
+      cost: "REAL",
       tool_calls: "TEXT",
       tool_call_id: "TEXT",
       tool_name: "TEXT",
@@ -284,6 +299,7 @@ export class ChatStore {
     return {
       id: row.id,
       title: row.title,
+      provider: isProviderId(row.provider) ? row.provider : "mlxserve",
       model: row.model,
       systemPrompt: row.systemPrompt,
       thinking: row.thinking === 1,
@@ -338,6 +354,7 @@ export class ChatStore {
             prefillMs: row.prefillMs,
             decodeMs: row.decodeMs,
             tokenizeMs: row.tokenizeMs,
+            cost: row.cost,
           };
     return {
       id: row.id,
@@ -374,15 +391,16 @@ export class ChatStore {
     const id = crypto.randomUUID();
     const now = this.now();
     this.db
-      .query(`INSERT INTO chats (id, title, model, system_prompt, thinking,
-        reasoning_effort, reasoning_history, temperature, top_p, max_tokens,
-        tools_off, search, created_at, updated_at)
-        VALUES ($id, $title, $model, $systemPrompt, $thinking,
+      .query(`INSERT INTO chats (id, title, provider, model, system_prompt,
+        thinking, reasoning_effort, reasoning_history, temperature, top_p,
+        max_tokens, tools_off, search, created_at, updated_at)
+        VALUES ($id, $title, $provider, $model, $systemPrompt, $thinking,
           $reasoningEffort, $reasoningHistory, $temperature, $topP,
           $maxTokens, $toolsOff, $search, $now, $now)`)
       .run({
         id,
         title,
+        provider: settings.provider,
         model: settings.model,
         systemPrompt: settings.systemPrompt,
         thinking: settings.thinking ? 1 : 0,
@@ -452,6 +470,7 @@ export class ChatStore {
     };
     const names: [keyof ChatPatch, string][] = [
       ["title", "title"],
+      ["provider", "provider"],
       ["model", "model"],
       ["systemPrompt", "system_prompt"],
       ["thinking", "thinking"],
@@ -513,11 +532,12 @@ export class ChatStore {
       .query(`INSERT INTO messages (chat_id, role, content, reasoning, status,
         error, finish_reason, model, created_at, finished_at, prompt_tokens,
         cached_tokens, generated, prefill_ms, decode_ms, ttft_ms, tokenize_ms,
-        thinking_ms, tool_calls, tool_call_id, tool_name)
+        thinking_ms, cost, tool_calls, tool_call_id, tool_name)
         VALUES ($chatId, $role, $content, $reasoning, $status, $error,
           $finishReason, $model, $createdAt, $finishedAt, $promptTokens,
           $cachedTokens, $generated, $prefillMs, $decodeMs, $ttftMs,
-          $tokenizeMs, $thinkingMs, $toolCalls, $toolCallId, $toolName)`)
+          $tokenizeMs, $thinkingMs, $cost, $toolCalls, $toolCallId,
+          $toolName)`)
       .run({
         chatId,
         role,
@@ -537,6 +557,7 @@ export class ChatStore {
         ttftMs: fields.ttftMs ?? null,
         tokenizeMs: stats?.tokenizeMs ?? null,
         thinkingMs: fields.thinkingMs ?? null,
+        cost: stats?.cost ?? null,
         toolCalls:
           fields.toolCalls === undefined || fields.toolCalls === null
             ? null
@@ -592,7 +613,7 @@ export class ChatStore {
         thinking_ms = $thinkingMs, tool_calls = $toolCalls,
         prompt_tokens = $promptTokens, cached_tokens = $cachedTokens,
         generated = $generated, prefill_ms = $prefillMs,
-        decode_ms = $decodeMs, tokenize_ms = $tokenizeMs
+        decode_ms = $decodeMs, tokenize_ms = $tokenizeMs, cost = $cost
         WHERE id = $id AND role IN ('assistant', 'summary')
           AND status = 'streaming'`)
       .run({
@@ -611,6 +632,7 @@ export class ChatStore {
         prefillMs: stats?.prefillMs ?? null,
         decodeMs: stats?.decodeMs ?? null,
         tokenizeMs: stats?.tokenizeMs ?? null,
+        cost: stats?.cost ?? null,
       });
     return result.changes > 0;
   }

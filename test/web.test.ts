@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { ChatRunner } from "../src/chat.ts";
 import { ChatStore } from "../src/chats.ts";
+import { ConfigStore, type RemoteModel } from "../src/config.ts";
+import { mlxServeProvider } from "../src/engine/mlxserve.ts";
+import { Catalog } from "../src/engine/openrouter.ts";
 import type {
   CacheLimits,
   Capability,
@@ -80,8 +83,11 @@ function setup() {
   );
   const chat = new ChatRunner({
     engine,
+    providers: {
+      mlxserve: mlxServeProvider(engine, () => [model]),
+      openrouter: null,
+    },
     store,
-    models: () => [model],
     log() {},
   });
   const sampler = {
@@ -298,6 +304,7 @@ describe("chat API", () => {
       {
         id: chat.id,
         title: "test",
+        provider: "mlxserve",
         model: MODEL,
         createdAt: chat.createdAt,
         updatedAt: chat.updatedAt,
@@ -350,10 +357,11 @@ describe("chat API", () => {
     expect(rows.user.content).toBe("hello");
     expect(rows.message.status).toBe("streaming");
     expect(snapshot(s.deps).chatRuns).toEqual({
-      limit: 1,
+      limits: { mlxserve: 1, openrouter: 0 },
       sends: [
         {
           chatId: chat.id,
+          provider: "mlxserve",
           firstMessageId: rows.message.id,
           messageId: rows.message.id,
           phase: "running",
@@ -377,7 +385,10 @@ describe("chat API", () => {
     );
     expect(await stopped.json()).toEqual({ ok: true });
     // the fake stream drains on abort, so the slot is already free
-    expect(snapshot(s.deps).chatRuns).toEqual({ limit: 1, sends: [] });
+    expect(snapshot(s.deps).chatRuns).toEqual({
+      limits: { mlxserve: 1, openrouter: 0 },
+      sends: [],
+    });
 
     // a stopped reply is nothing to summarize
     const compact = await response(
@@ -598,6 +609,196 @@ describe("chat API", () => {
     ).toBe(200);
     await response(s.deps, `/api/chats/${chat.id}/stop`, "POST");
     await Bun.sleep(0);
+    s.history.close();
+  });
+});
+
+// The config page's routes against a fake catalog: an id is checked
+// before it can be added, a refresh reprices the rows, and a provider
+// without a key answers 404 while the page still loads.
+const catalogBody = await Bun.file(
+  new URL("./fixtures/openrouter/models.json", import.meta.url),
+).json();
+
+describe("config API", () => {
+  const FREE = "nvidia/nemotron-3-super-120b-a12b:free";
+  function setupConfig(withKey = true) {
+    const s = setup();
+    let fail = false;
+    let calls = 0;
+    const fetcher = (async () => {
+      calls++;
+      if (fail) throw new Error("ECONNRESET");
+      return Response.json(catalogBody);
+    }) as unknown as typeof fetch;
+    const config = new ConfigStore(s.history.db);
+    const published: RemoteModel[][] = [];
+    const deps = {
+      ...s.deps,
+      config,
+      catalog: withKey ? new Catalog(fetcher) : null,
+      onRemoteModels: (models: RemoteModel[]) => published.push(models),
+    } as unknown as WebDeps;
+    return {
+      ...s,
+      deps,
+      config,
+      published,
+      calls: () => calls,
+      setFail(value: boolean) {
+        fail = value;
+      },
+    };
+  }
+
+  test("check, add, list, refresh and remove a hosted model", async () => {
+    const s = setupConfig();
+    const empty = await response(s.deps, "/api/config");
+    expect(await empty.json()).toEqual({
+      openrouter: { enabled: true, limit: 0, models: [] },
+    });
+    const unknown = await response(
+      s.deps,
+      "/api/config/openrouter/check",
+      "POST",
+      { id: "nobody/nothing" },
+    );
+    expect(unknown.status).toBe(200);
+    expect(await unknown.json()).toEqual({ model: null });
+    expect(s.config.list("openrouter")).toEqual([]);
+    const unknownAdd = await response(
+      s.deps,
+      "/api/config/openrouter/models",
+      "POST",
+      { id: "nobody/nothing" },
+    );
+    expect(unknownAdd.status).toBe(404);
+    expect(((await unknownAdd.json()) as any).error).toMatch(
+      /not in the OpenRouter catalog/,
+    );
+    const checked = await response(
+      s.deps,
+      "/api/config/openrouter/check",
+      "POST",
+      { id: ` ${FREE} ` },
+    );
+    expect(checked.status).toBe(200);
+    expect(await checked.json()).toMatchObject({
+      model: { id: FREE, promptPrice: 0, tools: true },
+    });
+    expect(s.config.list("openrouter")).toEqual([]);
+    expect(s.calls()).toBe(1);
+    const added = await response(
+      s.deps,
+      "/api/config/openrouter/models",
+      "POST",
+      { id: FREE },
+    );
+    expect(added.status).toBe(201);
+    expect(await added.json()).toMatchObject({ id: FREE, missing: false });
+    expect(s.published).toHaveLength(1);
+    const again = await response(
+      s.deps,
+      "/api/config/openrouter/models",
+      "POST",
+      { id: FREE },
+    );
+    expect(again.status).toBe(409);
+    expect(snapshot(s.deps).remoteModels.map((m) => m.id)).toEqual([FREE]);
+    const refreshed = await response(
+      s.deps,
+      "/api/config/openrouter/refresh",
+      "POST",
+    );
+    expect(refreshed.status).toBe(200);
+    expect(((await refreshed.json()) as any).models).toHaveLength(1);
+    expect(s.calls()).toBe(2);
+    expect(s.published).toHaveLength(2);
+    const removed = await response(
+      s.deps,
+      `/api/config/openrouter/models/${encodeURIComponent(FREE)}`,
+      "DELETE",
+    );
+    expect(await removed.json()).toEqual({ ok: true });
+    expect(s.config.list("openrouter")).toEqual([]);
+    expect(
+      (
+        await response(
+          s.deps,
+          `/api/config/openrouter/models/${encodeURIComponent(FREE)}`,
+          "DELETE",
+        )
+      ).status,
+    ).toBe(404);
+    expect(s.published).toHaveLength(3);
+    s.history.close();
+  });
+
+  test("an unreachable catalog is a 502 that leaves the list alone", async () => {
+    const s = setupConfig();
+    await response(s.deps, "/api/config/openrouter/models", "POST", {
+      id: FREE,
+    });
+    s.setFail(true);
+    const refreshed = await response(
+      s.deps,
+      "/api/config/openrouter/refresh",
+      "POST",
+    );
+    expect(refreshed.status).toBe(502);
+    expect(((await refreshed.json()) as any).error).toMatch(/unreachable/);
+    expect(s.config.list("openrouter").map((m) => m.id)).toEqual([FREE]);
+    // a check reuses the catalog fetched a moment ago
+    const checked = await response(
+      s.deps,
+      "/api/config/openrouter/check",
+      "POST",
+      { id: FREE },
+    );
+    expect(checked.status).toBe(200);
+    s.history.close();
+  });
+
+  test("without a key the page loads disabled and the routes answer 404", async () => {
+    const s = setupConfig(false);
+    expect(await (await response(s.deps, "/api/config")).json()).toEqual({
+      openrouter: { enabled: false, limit: 0, models: [] },
+    });
+    expect(
+      (await response(s.deps, "/api/config/openrouter/refresh", "POST")).status,
+    ).toBe(404);
+    expect(
+      (
+        await response(s.deps, "/api/config/openrouter/models", "POST", {
+          id: FREE,
+        })
+      ).status,
+    ).toBe(404);
+    s.history.close();
+  });
+
+  test("a chat names its provider and the pair is validated", async () => {
+    const s = setupConfig();
+    const bad = await response(s.deps, "/api/chats", "POST", {
+      provider: "nope",
+      model: MODEL,
+    });
+    expect(bad.status).toBe(400);
+    const missing = await response(s.deps, "/api/chats", "POST", {
+      provider: "openrouter",
+      model: FREE,
+    });
+    expect(missing.status).toBe(400);
+    expect(((await missing.json()) as any).error).toMatch(
+      /OpenRouter key missing/,
+    );
+    const created = await response(s.deps, "/api/chats", "POST", {
+      model: MODEL,
+    });
+    expect(await created.json()).toMatchObject({
+      provider: "mlxserve",
+      model: MODEL,
+    });
     s.history.close();
   });
 });

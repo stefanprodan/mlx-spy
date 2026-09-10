@@ -3,10 +3,29 @@
 
 import { useEffect } from "preact/hooks";
 import { orderModels } from "../format.ts";
-import { models } from "../store.ts";
-import { gbOf, pickModel, settings } from "./store.ts";
+import { OpenRouterMark } from "../icons.tsx";
+import { models, remoteModels } from "../store.ts";
+import { openConfig } from "./nav.ts";
+import { gbOf, pickModel, remoteInfo, runs, settings } from "./store.ts";
 
-// the list under the model button: resident models first
+// a price per million tokens, in and out: "$0.30 / $1.20", or "free"
+export function priceLabel(
+  promptPrice: number | null,
+  completionPrice: number | null,
+): string {
+  if (promptPrice === null || completionPrice === null) return "";
+  if (promptPrice === 0 && completionPrice === 0) return "free";
+  const usd = (v: number) => `$${v < 10 ? v.toFixed(2) : v.toFixed(0)}`;
+  return `${usd(promptPrice)} / ${usd(completionPrice)}`;
+}
+
+const splitId = (id: string) => {
+  const slash = id.lastIndexOf("/");
+  return [slash > 0 ? id.slice(0, slash + 1) : "", id.slice(slash + 1)];
+};
+
+// the list under the model button: the engine's models, resident first,
+// then the hosted ones added on the Settings page
 export function ModelPicker({
   onClose,
   anchor,
@@ -16,6 +35,10 @@ export function ModelPicker({
 }) {
   const s = settings.value;
   const sorted = orderModels(models.value);
+  const remote = remoteModels.value;
+  // OpenRouter is configured when the server gives it a cap; a key with
+  // nothing added shows one line that opens the Settings page
+  const hosted = (runs.value?.limits.openrouter ?? 0) > 0;
   // a click outside or Escape closes it
   useEffect(() => {
     const onClick = (ev: MouseEvent) => {
@@ -37,34 +60,72 @@ export function ModelPicker({
   return (
     <div class="pop" role="listbox">
       {sorted.map((m) => {
-        const slash = m.id.lastIndexOf("/");
+        const [owner, name] = splitId(m.id);
         return (
           <button
             key={m.id}
             type="button"
             role="option"
-            class={m.id === s.model ? "on" : ""}
+            class={s.provider === "mlxserve" && m.id === s.model ? "on" : ""}
             onClick={() => {
               onClose();
-              pickModel(m);
+              pickModel("mlxserve", m);
             }}
           >
             <span class={m.loaded ? "dot up" : "dot"} />
             <span class="id">
-              <span class="owner">
-                {slash > 0 ? m.id.slice(0, slash + 1) : ""}
-              </span>
-              {m.id.slice(slash + 1)}
+              <span class="owner">{owner}</span>
+              {name}
             </span>
             <span class="size">
-              {m.loaded
-                ? gbOf(m.bytesResident)
-                : `${gbOf(m.bytesOnDisk)} on disk`}
+              {gbOf(m.loaded ? m.bytesResident : m.bytesOnDisk)}
             </span>
           </button>
         );
       })}
       {sorted.length === 0 && <p class="evict">The engine lists no models.</p>}
+      {hosted && <h4>OpenRouter</h4>}
+      {hosted &&
+        remote.map((m) => {
+          const [owner, name] = splitId(m.id);
+          return (
+            <button
+              key={`or-${m.id}`}
+              type="button"
+              role="option"
+              class={
+                s.provider === "openrouter" && m.id === s.model
+                  ? "on remote"
+                  : "remote"
+              }
+              onClick={() => {
+                onClose();
+                pickModel("openrouter", remoteInfo(m));
+              }}
+            >
+              <OpenRouterMark />
+              <span class="id" title={m.name}>
+                <span class="owner">{owner}</span>
+                {name}
+              </span>
+              <span class="size">
+                {priceLabel(m.promptPrice, m.completionPrice)}
+              </span>
+            </button>
+          );
+        })}
+      {hosted && remote.length === 0 && (
+        <button
+          type="button"
+          class="add"
+          onClick={() => {
+            onClose();
+            openConfig(true);
+          }}
+        >
+          Add models in Settings
+        </button>
+      )}
     </div>
   );
 }

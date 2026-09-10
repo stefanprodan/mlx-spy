@@ -15,7 +15,17 @@ const OVERSIZED_SSE_FRAME = "engine sent an oversized stream frame";
 const num = (value: unknown) =>
   typeof value === "number" && Number.isFinite(value) ? value : 0;
 
-export function buildChatBody(req: ChatRequest): Record<string, unknown> {
+export type ChatBodyOptions = {
+  // the field earlier reasoning goes back in on an assistant message:
+  // reasoning_content (mlx-serve, llama-server) or reasoning (OpenRouter)
+  reasoningField?: "reasoning_content" | "reasoning";
+};
+
+export function buildChatBody(
+  req: ChatRequest,
+  options: ChatBodyOptions = {},
+): Record<string, unknown> {
+  const reasoningField = options.reasoningField ?? "reasoning_content";
   const messages = req.messages.map((message) => {
     if (message.role === "tool") {
       return {
@@ -41,7 +51,7 @@ export function buildChatBody(req: ChatRequest): Record<string, unknown> {
             })),
           }
         : {}),
-      ...(message.reasoning ? { reasoning_content: message.reasoning } : {}),
+      ...(message.reasoning ? { [reasoningField]: message.reasoning } : {}),
     };
   });
   const body: Record<string, unknown> = {
@@ -114,6 +124,10 @@ export function chatEvents(json: string): ChatEvent[] {
   const delta = choice?.delta;
   if (typeof delta?.reasoning_content === "string" && delta.reasoning_content) {
     events.push({ kind: "reasoning", text: delta.reasoning_content });
+  } else if (typeof delta?.reasoning === "string" && delta.reasoning) {
+    // OpenRouter's name for the same delta (reasoning_details repeats it
+    // structured; the text is enough)
+    events.push({ kind: "reasoning", text: delta.reasoning });
   }
   if (typeof delta?.content === "string" && delta.content) {
     events.push({ kind: "content", text: delta.content });
@@ -144,11 +158,9 @@ export function chatEvents(json: string): ChatEvent[] {
           : null,
     });
   }
-  if (
-    body?.usage &&
-    Array.isArray(body?.choices) &&
-    body.choices.length === 0
-  ) {
+  // the usage chunk: choices empty on an OpenAI-shaped engine, one
+  // content-free choice repeating the finish on OpenRouter
+  if (body?.usage && typeof body.usage === "object") {
     const usage = body.usage;
     events.push({
       kind: "usage",
@@ -162,6 +174,7 @@ export function chatEvents(json: string): ChatEvent[] {
         prefillMs: null,
         decodeMs: null,
         tokenizeMs: null,
+        cost: typeof usage.cost === "number" ? usage.cost : null,
       },
     });
   }
@@ -295,6 +308,7 @@ export async function* streamChat(
   body: Record<string, unknown>,
   signal: AbortSignal,
   mapEvents: (json: string) => ChatEvent[] = chatEvents,
+  headers: Record<string, string> = {},
 ): AsyncIterable<ChatEvent> {
   const controller = new AbortController();
   const combined = AbortSignal.any([signal, controller.signal]);
@@ -306,7 +320,7 @@ export async function* streamChat(
   try {
     response = await fetch(url, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { ...headers, "content-type": "application/json" },
       body: JSON.stringify(body),
       signal: combined,
     });

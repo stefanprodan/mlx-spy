@@ -45,6 +45,9 @@ dependencies.
   in a fold and sent back on later turns.
 - Tools the model can call: `get_current_time`, `webfetch` and
   `websearch` (Exa or Firecrawl, keyless or with your key).
+- Hosted models from [OpenRouter](https://openrouter.ai) next to the
+  engine's, added by id on the chat's Settings page with their price;
+  several of those chats run at once while the engine answers one.
 - System prompt, temperature, top p and max tokens per chat.
 - Server-rendered markdown with copy buttons, edit, regenerate, rename and delete.
 

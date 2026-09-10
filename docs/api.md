@@ -13,12 +13,13 @@ from the dashboard's own host. Every JSON response carries
 | `GET /` | Monitor: tiles, charts, models, runtime |
 | `GET /requests` | The request in flight and the last 50 finished ones |
 | `GET /chat`, `GET /chat/<id>` | Chat |
+| `GET /chat/config` | The chat's Settings page (the hosted models) |
 
 ## Monitoring
 
 | Route | Answer |
 |---|---|
-| `GET /api/snapshot` | the latest sample, the model list, the engine's capabilities and cache budgets, host facts, the action log, the downloads and the model directory |
+| `GET /api/snapshot` | the latest sample, the model list, the engine's capabilities and cache budgets, host facts, the action log, the downloads, the model directory, the chat slots (`chatRuns`) and the hosted models (`remoteModels`) |
 | `GET /api/history?range=1h\|6h\|24h\|7d` | columnar series for the charts; 1h is raw seconds, longer ranges are bucket averages |
 | `GET /api/requests` | the last 50 finished or cancelled requests, newest first |
 
@@ -84,23 +85,26 @@ plus 1 GB, fails at start with the numbers in `error`.
 
 ## Chat
 
-The chat is server-owned: mlx-spy sends the request to the engine, writes
-the reply into its database as it streams, and the browser only watches.
-A chat takes one send at a time, and the server admits at most `limit`
-sends across chats (one, until the engine's request scheduling is
-established): a send, edit, regenerate or compact in a chat that holds a
-slot, or while every slot is taken, answers 409 with the title of the
-chat in the way. A stopped send holds its slot until its engine stream
-and tool calls have drained, and answers "Still cancelling" meanwhile.
-A send with tools on can take several engine rounds. Bodies are JSON, at
-most 256 KB.
+The chat is server-owned: mlx-spy sends the request to the chat's
+provider (the engine, or OpenRouter), writes the reply into its database
+as it streams, and the browser only watches. A chat takes one send at a
+time, and each provider admits at most its cap of sends across chats:
+one for the engine (its request scheduling serializes generation), and
+`--openrouter-concurrency` (4) for OpenRouter. A send, edit, regenerate
+or compact in a chat that holds a slot answers 409 with the chat's
+title; one while every slot of its provider is taken answers 409 with
+the title of the chat in the way (the engine) or "OpenRouter: 4 chats
+running". A stopped send holds its slot until its engine stream and tool
+calls have drained, and answers "Still cancelling" meanwhile. A send
+with tools on can take several engine rounds. Bodies are JSON, at most
+256 KB.
 
 | Route | Body | Answer |
 |---|---|---|
-| `GET /api/chats` | | `[{id, title, model, createdAt, updatedAt, streaming}]`, newest first |
-| `POST /api/chats` | `{model, title?, systemPrompt?, thinking?, reasoningEffort?, reasoningHistory?, temperature?, topP?, maxTokens?, toolsOff?, search?}` | 201, the chat; the model must be one the engine lists |
+| `GET /api/chats` | | `[{id, title, provider, model, createdAt, updatedAt, streaming}]`, newest first |
+| `POST /api/chats` | `{model, provider?, title?, systemPrompt?, thinking?, reasoningEffort?, reasoningHistory?, temperature?, topP?, maxTokens?, toolsOff?, search?}` | 201, the chat; `provider` is `mlxserve` (the default) or `openrouter`, and the model must be one that provider lists: the engine's list, or the hosted models added on the Settings page. 400 names a provider without a key |
 | `GET /api/chats/<id>` | | the chat with its settings and messages in order, a streaming reply included with the text so far |
-| `PATCH /api/chats/<id>` | any of `title, model, systemPrompt, thinking, reasoningEffort, reasoningHistory, temperature, topP, maxTokens, toolsOff, search` | the updated chat; `model`, `toolsOff` and `search` answer 409 while the chat has a send running |
+| `PATCH /api/chats/<id>` | any of `title, provider, model, systemPrompt, thinking, reasoningEffort, reasoningHistory, temperature, topP, maxTokens, toolsOff, search` | the updated chat; the provider and model pair is validated together; `provider`, `model`, `toolsOff` and `search` answer 409 while the chat has a send running |
 | `DELETE /api/chats/<id>` | | `{ok: true}`; a streaming reply is stopped first |
 | `POST /api/chats/<id>/messages` | `{content}` | 202 `{user, message}`: the user row and the assistant row that starts streaming |
 | `POST /api/chats/<id>/regenerate` | | 202 `{user, message}`; the last reply is dropped and answered again |
@@ -117,9 +121,11 @@ summary row. `status` is
 `done`, `streaming`, `stopped` (the stop button), `interrupted` (mlx-spy
 was restarted mid-answer) or `error` (the failure message in `error`); a
 tool row also passes through `pending` and `running`. `stats` comes from
-the engine's usage chunk: `{promptTokens, cachedTokens, generated,
-prefillMs, decodeMs, tokenizeMs}`; the millisecond fields are null on an
-engine that reports no timings. A stopped or failed generation has no
+the provider's usage chunk: `{promptTokens, cachedTokens, generated,
+prefillMs, decodeMs, tokenizeMs, cost}`; the millisecond fields are null
+on a provider that reports no timings, and `cost` (USD) is null on one
+that reports no price. On OpenRouter `generated` includes the reasoning
+tokens. A stopped or failed generation has no
 stats; a later failure during tool execution retains the completed
 engine round's stats. `ttftMs` is measured by mlx-spy from the request to the first token
 of any kind, and `thinkingMs` from the first reasoning token to the first
@@ -170,7 +176,8 @@ is the size of what it stood in for. A model whose context length is
 unknown never compacts on its own.
 
 Settings live on the chat and apply to the next message. `thinking` maps to
-the engine's `enable_thinking`; `reasoningEffort` is `low`, `medium`,
+the engine's `enable_thinking` (OpenRouter's `reasoning` object);
+`reasoningEffort` is `low`, `medium`,
 `high`, `none` (an explicit off) or null for the engine default; the sampling fields are null for the
 engine defaults. Reasoning is stored; `reasoningHistory` (default true)
 sends it back to the engine on later turns as `reasoning_content`, on
@@ -185,18 +192,42 @@ name outside the registry is a 400. `search` is the provider `websearch`
 uses, `exa` (the default) or `firecrawl`; anything else, null included,
 is a 400.
 
+## Config
+
+The chat's Settings page: the hosted models the picker offers under
+OpenRouter. The key itself never leaves the server; `enabled` says
+whether one was found at start. A model is looked up in OpenRouter's
+public catalog before it can be added, and a refresh reprices every
+saved row from it (the page does one each time it opens).
+
+| Route | Body | Answer |
+|---|---|---|
+| `GET /api/config` | | `{openrouter: {enabled, limit, models}}`; `limit` is the cap, `models` the saved rows |
+| `POST /api/config/openrouter/refresh` | | `{models, checkedAt}` after refreshing every row from the catalog; a row the catalog no longer lists is kept with `missing: true`. 502 when the catalog does not answer, the rows untouched |
+| `POST /api/config/openrouter/check` | `{id}` | `{model}`: the catalog entry `{id, name, contextLength, promptPrice, completionPrice, tools, reasoning}` (prices in USD per million tokens), or null when the catalog does not list it; nothing is saved |
+| `POST /api/config/openrouter/models` | `{id}` | 201, the saved row, after the same check; 409 when already saved |
+| `DELETE /api/config/openrouter/models/<id>` | | `{ok: true}`; the id is URL-encoded (it holds `/` and often `:`). A chat on that model keeps its history and refuses to send until the model is added again or changed |
+
+A saved row is `{provider, id, name, contextLength, promptPrice,
+completionPrice, tools, reasoning, addedAt, checkedAt, missing}`. Every
+route but the first answers 404 when no key was found. A check reuses a
+catalog fetched within the last minute; a refresh always fetches.
+
 ## WebSocket
 
 `WS /ws` sends `{type: "snapshot"}` on connect (the same body as
 `/api/snapshot`), then `{type: "sample"}` once a second, `{type: "event"}` when
 an action finishes in any tab, `{type: "pull"}` with the pull as `data`
 on every change of a download's state and twice a second while one runs,
-`{type: "chatRuns"}` whenever the chat slots change, and `{type: "chat"}`
-for the chat.
+`{type: "chatRuns"}` whenever the chat slots change, `{type: "remoteModels"}`
+with the whole hosted model list as `data` whenever the Settings page
+changes it, and `{type: "chat"}` for the chat.
 
 `chatRuns` (in the snapshot and as a message) is
-`{limit, sends: [{chatId, firstMessageId, messageId, phase}]}`: the cap
-and the sends holding a slot, in admission order. `firstMessageId` names
+`{limits: {mlxserve, openrouter}, sends: [{chatId, provider,
+firstMessageId, messageId, phase}]}`: the cap of each provider (0 for one
+without a key) and the sends holding a slot, in admission order; a send
+counts against its own provider only. `firstMessageId` names
 the send across its rounds, `messageId` the row it is writing now, and
 `phase` is `running` (generation, tools or a summary round) or
 `stopping` (the send ended but its cancelled engine stream or tools have

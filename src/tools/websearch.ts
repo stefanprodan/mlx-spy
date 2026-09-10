@@ -98,7 +98,7 @@ export function secretsDir(): string {
 }
 
 function keyError(path: string, message: string): never {
-  throw new Error(`search key ${path}: ${message}`);
+  throw new Error(`key file ${path}: ${message}`);
 }
 
 export function loadKey(path: string): string | null {

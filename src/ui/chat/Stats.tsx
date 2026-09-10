@@ -3,7 +3,13 @@
 
 import { useEffect, useRef, useState } from "preact/hooks";
 import { doneStats, freshSend, liveStats, type SendMemory } from "./stats.ts";
-import { current, currentRun, currentStreaming, lastSample } from "./store.ts";
+import {
+  current,
+  currentRun,
+  currentStreaming,
+  lastSample,
+  settings,
+} from "./store.ts";
 
 export function Stats() {
   const streaming = currentStreaming.value;
@@ -27,10 +33,11 @@ export function Stats() {
     if (memory.current.send !== send) {
       memory.current = { send, m: freshSend() };
     }
+    // the engine's gauges are not a hosted send's numbers
     const r = liveStats(
       memory.current.m,
       messages,
-      lastSample.value,
+      settings.value.provider === "mlxserve" ? lastSample.value : null,
       Date.now(),
     );
     memory.current.m = r.memory;

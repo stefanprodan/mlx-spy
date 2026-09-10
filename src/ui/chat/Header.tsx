@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useEffect, useRef, useState } from "preact/hooks";
-import { Caret, Gear, Lines } from "../icons.tsx";
+import { Caret, Gear, Lines, OpenRouterMark } from "../icons.tsx";
 import { ModelPicker } from "./ModelPicker.tsx";
 import { current, modelInfo, patch, settings, short } from "./store.ts";
 
@@ -65,18 +65,23 @@ export function Header({
 }) {
   const s = settings.value;
   const cur = current.value;
-  const info = s.model ? modelInfo(s.model) : null;
+  const info = s.model ? modelInfo(s.provider, s.model) : null;
+  const remote = s.provider === "openrouter";
   const [pop, setPop] = useState(false);
   const modelBtn = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     document.title = cur?.title ? `${cur.title} · mlx-spy` : "mlx-spy · chat";
   }, [cur?.title]);
   const modelTitle = info
-    ? info.loaded
-      ? `${s.model}, loaded`
-      : `${s.model}, not loaded`
+    ? remote
+      ? `${s.model} on OpenRouter`
+      : info.loaded
+        ? `${s.model}, loaded`
+        : `${s.model}, not loaded`
     : s.model
-      ? `${s.model} is not on the engine anymore`
+      ? remote
+        ? `${s.model} is not in the OpenRouter list anymore`
+        : `${s.model} is not on the engine anymore`
       : "";
   return (
     <div class="chead">
@@ -101,7 +106,11 @@ export function Header({
           title={modelTitle}
           onClick={() => setPop((p) => !p)}
         >
-          <i class={info?.loaded ? "dot up" : "dot"} />
+          {remote ? (
+            <OpenRouterMark />
+          ) : (
+            <i class={info?.loaded ? "dot up" : "dot"} />
+          )}
           <span class="name">{s.model ? short(s.model) : "pick a model"}</span>
           <Caret />
         </button>

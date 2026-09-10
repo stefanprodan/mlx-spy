@@ -10,6 +10,15 @@ import type { MessageStats } from "../chats.ts";
 
 export type EngineId = "mlxserve" | "omlx";
 
+// Where a chat's tokens come from: the engine mlx-spy monitors, or a
+// hosted provider that runs many requests at once. The monitor knows only
+// the engine; the chat runner knows every provider.
+export type ProviderId = "mlxserve" | "openrouter";
+export const PROVIDERS: readonly ProviderId[] = ["mlxserve", "openrouter"];
+export function isProviderId(value: unknown): value is ProviderId {
+  return value === "mlxserve" || value === "openrouter";
+}
+
 export type Capability =
   | "chat"
   | "load"
@@ -133,6 +142,24 @@ export type ChatEvent =
   | { kind: "finish"; reason: string; details: string | null }
   | { kind: "usage"; stats: MessageStats }
   | { kind: "error"; message: string };
+
+// A model a chat may name under a provider; the window is what compaction
+// and the context line use, null when the provider did not say.
+export type ChatModel = {
+  id: string;
+  contextLength: number | null;
+};
+
+// The contract the chat runner needs, narrower than Engine: the engine
+// adapter satisfies it through mlxServeProvider(); a hosted provider has
+// nothing else (no metrics, no load or unload, no cache dirs).
+export interface ChatProvider {
+  readonly id: ProviderId;
+  // sends this provider runs at once; admission counts against it
+  readonly limit: number;
+  models(): ChatModel[];
+  chat(req: ChatRequest, signal: AbortSignal): AsyncIterable<ChatEvent>;
+}
 
 export interface Engine {
   readonly id: EngineId;

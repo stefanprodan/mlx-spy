@@ -6,7 +6,7 @@ import { current, k, modelInfo, n, settings } from "./store.ts";
 // the last completed reply's prompt size against the model's window
 export function Context() {
   const s = settings.value;
-  const info = s.model ? modelInfo(s.model) : null;
+  const info = s.model ? modelInfo(s.provider, s.model) : null;
   const last = current.value?.messages
     .slice()
     .reverse()

@@ -1163,6 +1163,27 @@ tr.detail td {
   font-size: 12.5px;
   margin: 8px 12px;
 }
+/* the Settings page's button, pinned to the foot of the list */
+.cfgbtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: auto 4px 0;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--dim);
+  flex: 0 0 auto;
+}
+.cfgbtn:hover,
+.cfgbtn.active {
+  background: #26282b;
+  color: var(--fg);
+}
+.cfgbtn svg {
+  width: 14px;
+  height: 14px;
+}
 .chat-row {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -1367,6 +1388,40 @@ fieldset.seg {
   color: var(--amber);
   padding: 6px 10px 4px;
   line-height: 1.4;
+}
+/* a hosted model's mark next to its name */
+.ormark {
+  display: inline-block;
+  width: 15px;
+  height: 11px;
+  vertical-align: -1px;
+  margin-right: 5px;
+  color: #c8ff00; /* OpenRouter's brand lime */
+}
+.chead .model .ormark {
+  margin-right: 0;
+}
+/* the hosted group under the engine's models */
+.pop h4 {
+  margin: 6px 0 2px;
+  padding: 6px 10px 2px;
+  border-top: 1px solid var(--line);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.pop button .ormark {
+  width: 16px;
+  height: 12px;
+  margin: 0;
+}
+.pop button.add {
+  display: block;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--accent);
 }
 
 .scroll {
@@ -2170,6 +2225,188 @@ details.work .wb .md {
 }
 
 /* settings dialog */
+/* the Settings page: the hosted models */
+.config .chead .title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.cfg {
+  max-width: var(--col);
+  margin: 0 auto;
+}
+.cfg h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+.cfg h3 .status {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.cfg .none {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--dim);
+}
+.cfg code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg);
+}
+.cfg .addrow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.cfg .addrow input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--fg);
+  padding: 6px 10px;
+}
+.cfg .addrow input:focus {
+  outline: none;
+  border-color: #3d4350;
+}
+.cfg .err {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  color: #ff95a8;
+}
+.cfg .err[hidden] {
+  display: none;
+}
+.cfg .preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.cfg .preview .id {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cfg .preview .facts {
+  color: var(--dim);
+  font-size: 11px;
+  white-space: nowrap;
+}
+table.remote {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 12px;
+  margin-top: 6px;
+}
+table.remote th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--line-2);
+}
+table.remote td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--line-2);
+  vertical-align: middle;
+}
+table.remote td.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 320px;
+}
+table.remote td.price,
+table.remote td.ctx,
+table.remote td.caps {
+  color: var(--dim);
+  white-space: nowrap;
+}
+table.remote tr.missing td.price {
+  color: var(--amber);
+}
+table.remote td.act {
+  text-align: right;
+  width: 1%;
+}
+table.remote tr.blank td {
+  color: var(--faint);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 14px 8px;
+}
+@media (max-width: 760px) {
+  .config .chead .title {
+    display: inline;
+  }
+  .cfg .addrow input {
+    font-size: 16px;
+  }
+  /* each model is two lines: the whole id, then the price, the window
+     and Remove; the supports column stays off the card */
+  table.remote,
+  table.remote tbody {
+    display: block;
+  }
+  table.remote thead {
+    display: none;
+  }
+  table.remote tr {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line-2);
+  }
+  table.remote td {
+    border: 0;
+    padding: 2px 8px;
+  }
+  table.remote td.name {
+    grid-column: 1 / -1;
+    max-width: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  table.remote td.caps {
+    display: none;
+  }
+  table.remote tr.blank td {
+    grid-column: 1 / -1;
+  }
+  .cfg .preview {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .cfg .preview .facts {
+    grid-column: 1 / -1;
+    white-space: normal;
+  }
+}
+
 dialog.settings {
   max-width: 460px;
 }

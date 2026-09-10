@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
 import { ChatError, ChatRunner, type ChatWsEvent } from "../src/chat.ts";
 import { ChatStore } from "../src/chats.ts";
+import { mlxServeProvider } from "../src/engine/mlxserve.ts";
 import type {
   CacheLimits,
   Capability,
@@ -136,8 +137,11 @@ function setup(
   const logs: string[] = [];
   const runner = new ChatRunner({
     engine,
+    providers: {
+      mlxserve: mlxServeProvider(engine, () => models),
+      openrouter: null,
+    },
     store,
-    models: () => models,
     log: (line) => logs.push(line),
     now: () => now,
     runTool: executeTool,
@@ -145,6 +149,7 @@ function setup(
   });
   runner.onEvent((event) => events.push(event));
   const chat = runner.create({
+    provider: "mlxserve",
     model: MODEL,
     systemPrompt: "be concise",
     thinking: true,
@@ -197,6 +202,7 @@ async function finish(stream: DrivenStream) {
       prefillMs: 20,
       decodeMs: 30,
       tokenizeMs: 1,
+      cost: null,
     },
   });
   stream.end();
@@ -568,6 +574,7 @@ describe("ChatRunner", () => {
     await turn();
 
     const next = s.runner.create({
+      provider: "mlxserve",
       model: MODEL,
       systemPrompt: "",
       thinking: false,
@@ -914,6 +921,7 @@ describe("ChatRunner", () => {
           prefillMs: 10,
           decodeMs: 20,
           tokenizeMs: 1,
+          cost: null,
         };
         s.engine.streams[0].push({ kind: "content", text: "Checking." });
         s.engine.streams[0].push({ kind: "reasoning", text: "Use clocks." });
@@ -1805,6 +1813,7 @@ describe("ChatRunner", () => {
         prefillMs: 1,
         decodeMs: 1,
         tokenizeMs: 1,
+        cost: null,
       },
     });
     s.engine.streams[0].end();
@@ -1868,6 +1877,7 @@ describe("ChatRunner", () => {
         prefillMs: 1,
         decodeMs: 1,
         tokenizeMs: 1,
+        cost: null,
       },
     });
     g.engine.streams[0].end();
@@ -1917,10 +1927,11 @@ describe("chat runs", () => {
       "started",
     ]);
     expect(s.runner.runs()).toEqual({
-      limit: 1,
+      limits: { mlxserve: 1, openrouter: 0 },
       sends: [
         {
           chatId: s.chat.id,
+          provider: "mlxserve",
           firstMessageId: id,
           messageId: id,
           phase: "running",
@@ -1942,7 +1953,10 @@ describe("chat runs", () => {
     s.engine.streams[1].push({ kind: "content", text: "ten" });
     await finish(s.engine.streams[1]);
     expect(s.log.slice(-2)).toEqual(["done", "runs:"]);
-    expect(s.runner.runs()).toEqual({ limit: 1, sends: [] });
+    expect(s.runner.runs()).toEqual({
+      limits: { mlxserve: 1, openrouter: 0 },
+      sends: [],
+    });
     s.db.close();
   });
 
@@ -1959,6 +1973,7 @@ describe("chat runs", () => {
     expect(s.runner.runs().sends).toEqual([
       {
         chatId: s.chat.id,
+        provider: "mlxserve",
         firstMessageId: id,
         messageId: id,
         phase: "stopping",
@@ -2019,6 +2034,232 @@ describe("chat runs", () => {
     await turn();
     await finish(s.engine.streams[0]);
     expect(s.runner.runs().sends).toEqual([]);
+    s.db.close();
+  });
+});
+
+// Two providers: the engine's one slot and a hosted provider's own cap.
+// A send counts against the provider its chat runs on, and nothing else.
+describe("providers", () => {
+  const REMOTE = "org/remote:free";
+  function setupTwo(limit = 2) {
+    const now = 1000;
+    const db = new Database(":memory:", { strict: true });
+    const store = new ChatStore(
+      db,
+      () => now,
+      () => TOOLS.map((tool) => tool.name),
+    );
+    const engine = new FakeEngine();
+    const remote = new FakeEngine();
+    const events: ChatWsEvent[] = [];
+    const logs: string[] = [];
+    const runner = new ChatRunner({
+      engine,
+      providers: {
+        mlxserve: mlxServeProvider(engine, () => [model]),
+        openrouter: {
+          id: "openrouter",
+          limit,
+          models: () => [{ id: REMOTE, contextLength: 4000 }],
+          chat: (req, signal) => remote.chat(req, signal),
+        },
+      },
+      store,
+      log: (line) => logs.push(line),
+      now: () => now,
+    });
+    runner.onEvent((event) => events.push(event));
+    const settings = {
+      systemPrompt: "",
+      thinking: false,
+      reasoningEffort: null,
+      reasoningHistory: true,
+      temperature: null,
+      topP: null,
+      maxTokens: null,
+      toolsOff: TOOLS.map((tool) => tool.name),
+      search: "exa" as const,
+    };
+    const local = runner.create({
+      ...settings,
+      provider: "mlxserve",
+      model: MODEL,
+    });
+    const a = runner.create({
+      ...settings,
+      provider: "openrouter",
+      model: REMOTE,
+    });
+    const b = runner.create({
+      ...settings,
+      provider: "openrouter",
+      model: REMOTE,
+    });
+    const c = runner.create({
+      ...settings,
+      provider: "openrouter",
+      model: REMOTE,
+    });
+    return { db, store, engine, remote, runner, local, a, b, c, events, logs };
+  }
+
+  test("a local send and two hosted sends run together; the third hosted one waits", async () => {
+    const s = setupTwo();
+    s.runner.send(s.local.id, "one");
+    s.runner.send(s.a.id, "two");
+    s.runner.send(s.b.id, "three");
+    await turn();
+    expect(s.engine.requests).toHaveLength(1);
+    expect(s.remote.requests).toHaveLength(2);
+    expect(s.remote.requests[0].model).toBe(REMOTE);
+    expect(s.runner.runs().limits).toEqual({ mlxserve: 1, openrouter: 2 });
+    expect(s.runner.runs().sends.map((run) => run.provider)).toEqual([
+      "mlxserve",
+      "openrouter",
+      "openrouter",
+    ]);
+    await rejects(
+      () => s.runner.send(s.c.id, "four"),
+      409,
+      /OpenRouter: 2 chats running/,
+    );
+    // the engine's slot is full for a second local chat, not for hosted ones
+    const local2 = s.runner.create({
+      provider: "mlxserve",
+      model: MODEL,
+      systemPrompt: "",
+      thinking: false,
+      reasoningEffort: null,
+      reasoningHistory: true,
+      temperature: null,
+      topP: null,
+      maxTokens: null,
+      toolsOff: TOOLS.map((tool) => tool.name),
+      search: "exa",
+    });
+    await rejects(
+      () => s.runner.send(local2.id, "five"),
+      409,
+      /already answering in one/,
+    );
+    // a hosted reply ends: its slot frees, the local one is untouched
+    s.remote.streams[0].push({ kind: "content", text: "hi" });
+    await finish(s.remote.streams[0]);
+    expect(s.runner.runs().sends.map((run) => run.chatId)).toEqual([
+      s.local.id,
+      s.b.id,
+    ]);
+    expect(() => s.runner.send(s.c.id, "four")).not.toThrow();
+    await turn();
+    expect(s.remote.requests).toHaveLength(3);
+    for (const chat of [s.local, s.b, s.c]) s.runner.stop(chat.id);
+    s.engine.streams[0].end();
+    s.remote.streams[1].end();
+    s.remote.streams[2].end();
+    await turn();
+    expect(s.runner.runs().sends).toEqual([]);
+    s.db.close();
+  });
+
+  test("the provider and model pair is validated together and frozen per send", async () => {
+    const s = setupTwo();
+    await rejects(
+      () => s.runner.update(s.a.id, { model: MODEL }),
+      400,
+      /not in the OpenRouter list/,
+    );
+    await rejects(
+      () => s.runner.update(s.a.id, { provider: "mlxserve" }),
+      400,
+      /not loaded anymore/,
+    );
+    expect(
+      s.runner.update(s.a.id, { provider: "mlxserve", model: MODEL }),
+    ).toMatchObject({ provider: "mlxserve", model: MODEL });
+    s.runner.send(s.a.id, "hello");
+    await turn();
+    expect(s.engine.requests).toHaveLength(1);
+    await rejects(
+      () => s.runner.update(s.a.id, { provider: "openrouter", model: REMOTE }),
+      409,
+      /cannot change during a send/,
+    );
+    s.runner.stop(s.a.id);
+    s.engine.streams[0].end();
+    await turn();
+    s.db.close();
+  });
+
+  test("a hosted chat cannot send when the provider is not configured", async () => {
+    const s = setup();
+    // a chat saved while the key was there, sent after a start without it
+    s.store.create({
+      provider: "openrouter",
+      model: REMOTE,
+      systemPrompt: "",
+      thinking: false,
+      reasoningEffort: null,
+      reasoningHistory: true,
+      temperature: null,
+      topP: null,
+      maxTokens: null,
+      search: "exa",
+    });
+    const saved = s.store.list().find((c) => c.provider === "openrouter")!;
+    await rejects(
+      () => s.runner.send(saved.id, "hello"),
+      400,
+      /OpenRouter key missing/,
+    );
+    await rejects(
+      () =>
+        s.runner.create({
+          provider: "openrouter",
+          model: REMOTE,
+          systemPrompt: "",
+          thinking: false,
+          reasoningEffort: null,
+          reasoningHistory: true,
+          temperature: null,
+          topP: null,
+          maxTokens: null,
+          search: "exa",
+        }),
+      400,
+      /OpenRouter key missing/,
+    );
+    s.db.close();
+  });
+
+  test("a hosted reply's window comes from the provider and its cost is stored", async () => {
+    const s = setupTwo();
+    const sent = s.runner.send(s.a.id, "hello");
+    await turn();
+    s.remote.streams[0].push({ kind: "content", text: "hi" });
+    s.remote.streams[0].push({ kind: "finish", reason: "stop", details: null });
+    s.remote.streams[0].push({
+      kind: "usage",
+      stats: {
+        promptTokens: 3990,
+        cachedTokens: 0,
+        generated: 5,
+        prefillMs: null,
+        decodeMs: null,
+        tokenizeMs: null,
+        cost: 0.0012,
+      },
+    });
+    s.remote.streams[0].end();
+    await turn();
+    expect(s.store.message(sent.message.id)?.stats?.cost).toBe(0.0012);
+    // 3995 of a 4000 window: the summary round follows on the same provider
+    await turn();
+    expect(s.remote.requests).toHaveLength(2);
+    expect(s.remote.requests[1].messages.at(-1)?.content).toMatch(/Summarize/);
+    s.runner.stop(s.a.id);
+    s.remote.streams[1].end();
+    await turn();
     s.db.close();
   });
 });

@@ -103,6 +103,7 @@ export type DriveOptions = {
 };
 
 const fallbackSettings = (toolsOn: boolean): Omit<ChatSettings, "model"> => ({
+  provider: "mlxserve",
   systemPrompt: "",
   thinking: true,
   reasoningEffort: null,
@@ -135,7 +136,7 @@ export function driveRecording(
   const honorReload = options.honorReload ?? true;
   const toolsOn = recordingToolsOn(name, lines);
   let state: ChatState | null = options.initial ?? null;
-  let runs: ChatRuns = { limit: 1, sends: [] };
+  let runs: ChatRuns = { limits: { mlxserve: 1, openrouter: 0 }, sends: [] };
   let settings: (ChatSummary & ChatSettings) | null =
     options.initial?.chat ?? null;
   let pending: ChatLine[] | null = null;
@@ -164,7 +165,7 @@ export function driveRecording(
     if ("reconnect" in line || "closed" in line) {
       if (!honorReload) continue;
       state = null;
-      runs = { limit: 1, sends: [] };
+      runs = { limits: { mlxserve: 1, openrouter: 0 }, sends: [] };
       pending = null;
       continue;
     }

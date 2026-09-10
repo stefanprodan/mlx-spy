@@ -21,6 +21,7 @@ import {
   send,
   settings,
   short,
+  slotsOf,
 } from "./store.ts";
 
 // the textarea, the send/stop button and the lines around them
@@ -33,22 +34,33 @@ export function Composer() {
   // this chat's slot after Stop or a failure, held until the cancelled
   // work drains; no new send here until it is released
   const stopping = currentRun.value?.phase === "stopping";
-  // every slot is taken by other chats; typing stays possible, sending not
+  // every slot of this chat's provider is taken by other chats; typing
+  // stays possible, sending not
   const r = runs.value;
+  const slots = r ? slotsOf(r, s.provider) : null;
   const elsewhere =
-    r !== null && currentRun.value === null && r.sends.length >= r.limit;
-  const info = s.model ? modelInfo(s.model) : null;
+    slots !== null && currentRun.value === null && slots.taken >= slots.limit;
+  const info = s.model ? modelInfo(s.provider, s.model) : null;
   const ready = info !== null && canSend.value;
-  const other = r?.sends.find((x) => x.chatId !== current.value?.id);
+  const remote = s.provider === "openrouter";
+  const other = r?.sends.find(
+    (x) => x.chatId !== current.value?.id && x.provider === s.provider,
+  );
   const placeholder = stopping
     ? "Stopping"
-    : elsewhere
-      ? `Answering in ${chats.value.find((c) => c.id === other?.chatId)?.title || "another chat"}`
-      : info
-        ? `Message ${short(s.model)}`
-        : s.model
-          ? `${short(s.model)} is not on the engine; pick a model`
-          : "Pick a model";
+    : remote && slots !== null && slots.limit === 0
+      ? "OpenRouter key missing; see Settings"
+      : elsewhere
+        ? remote
+          ? `OpenRouter: ${slots.taken} chat${slots.taken === 1 ? "" : "s"} running`
+          : `Answering in ${chats.value.find((c) => c.id === other?.chatId)?.title || "another chat"}`
+        : info
+          ? "Message"
+          : s.model
+            ? remote
+              ? `${short(s.model)} is not in the OpenRouter list; pick a model`
+              : `${short(s.model)} is not on the engine; pick a model`
+            : "Pick a model";
 
   const grow = () => {
     const el = input.current;

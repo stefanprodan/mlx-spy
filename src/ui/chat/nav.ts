@@ -5,7 +5,7 @@
 // fetch from an earlier navigation, the draft, the history entries, and
 // the socket events routed into the state while a fetch is in flight.
 
-import { effect } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
 import type { ChatWsEvent } from "../../chat.ts";
 import type { Chat } from "../../chats.ts";
 import { api } from "../api.ts";
@@ -40,9 +40,26 @@ import {
 } from "./store.ts";
 import { workPrefix } from "./thread.ts";
 
+// the config page (the hosted models) replaces the conversation; the
+// chat selected stays as it was, so Back comes straight back to it
+export const CONFIG_PATH = "/chat/config";
+export const configOpen = signal(
+  typeof location !== "undefined" && location.pathname === CONFIG_PATH,
+);
+export function openConfig(push: boolean) {
+  configOpen.value = true;
+  if (push) history.pushState(null, "", CONFIG_PATH);
+}
+export function closeConfig() {
+  if (!configOpen.value) return;
+  configOpen.value = false;
+  const id = current.value?.id ?? null;
+  history.pushState(null, "", id ? `/chat/${encodeURIComponent(id)}` : "/chat");
+}
+
 export const chatIdFromPath = () => {
   const m = /^\/chat\/([^/]+)$/.exec(location.pathname);
-  if (!m) return null;
+  if (!m || m[1] === "config") return null;
   try {
     return decodeURIComponent(m[1]);
   } catch {
@@ -94,8 +111,8 @@ export function showDraft(push: boolean) {
   pending = [];
   state.value = null;
   const d = draft.value;
-  if (!d.model || !modelInfo(d.model)) {
-    draft.value = { ...d, model: defaultModel() };
+  if (!d.model || !modelInfo(d.provider, d.model)) {
+    draft.value = { ...d, ...defaultModel() };
   }
   if (push) history.pushState(null, "", "/chat");
   setNote(null);
@@ -234,8 +251,8 @@ export function rememberList(closed: boolean) {
 export function boot() {
   let booted = false;
   let connected = false;
-  // the chat in the URL, else the one last used; buffer its events from
-  // the first socket message on
+  // the chat in the URL, else the one last used (the config page opens
+  // over it); buffer its events from the first socket message on
   const startId = chatIdFromPath() ?? lastChat();
   const token = navigation;
   loading = startId;
@@ -254,8 +271,9 @@ export function boot() {
       return;
     }
     if (startId) {
-      // the remembered chat gets its URL, so a reload keeps it
-      if (!chatIdFromPath()) {
+      // the remembered chat gets its URL, so a reload keeps it; the
+      // config page keeps its own
+      if (!chatIdFromPath() && !configOpen.value) {
         history.replaceState(null, "", `/chat/${encodeURIComponent(startId)}`);
       }
       void open(startId, false);
@@ -293,8 +311,11 @@ export function boot() {
     }
   });
   window.addEventListener("popstate", () => {
+    configOpen.value = location.pathname === CONFIG_PATH;
+    if (configOpen.value) return;
     const id = chatIdFromPath();
-    if (id) void open(id, false);
-    else showDraft(false);
+    if (id) {
+      if (id !== current.value?.id) void open(id, false);
+    } else showDraft(false);
   });
 }
