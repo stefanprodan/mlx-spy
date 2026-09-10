@@ -1390,15 +1390,15 @@ fieldset.seg {
   line-height: 1.4;
 }
 /* a hosted model's mark next to its name */
-.cloud {
+.ormark {
   display: inline-block;
-  width: 11px;
+  width: 15px;
   height: 11px;
   vertical-align: -1px;
   margin-right: 5px;
-  color: var(--accent);
+  color: #c8ff00; /* OpenRouter's brand lime */
 }
-.chead .model .cloud {
+.chead .model .ormark {
   margin-right: 0;
 }
 /* the hosted group under the engine's models */
@@ -1412,8 +1412,8 @@ fieldset.seg {
   text-transform: uppercase;
   color: var(--faint);
 }
-.pop button .cloud {
-  width: 12px;
+.pop button .ormark {
+  width: 16px;
   height: 12px;
   margin: 0;
 }
@@ -2251,7 +2251,6 @@ details.work .wb .md {
   text-overflow: ellipsis;
   min-width: 0;
 }
-.cfg .hint,
 .cfg .none {
   margin: 0 0 14px;
   font-size: 13px;
@@ -2364,27 +2363,40 @@ table.remote tr.blank td {
   .config .chead .title {
     display: inline;
   }
-  table.remote th:nth-child(3),
-  table.remote td.ctx,
-  table.remote th:nth-child(4),
-  table.remote td.caps {
-    display: none;
-  }
   .cfg .addrow input {
     font-size: 16px;
   }
-  /* the id gives way so the price and Remove stay on the card */
-  table.remote {
-    table-layout: fixed;
+  /* each model is two lines: the whole id, then the price, the window
+     and Remove; the supports column stays off the card */
+  table.remote,
+  table.remote tbody {
+    display: block;
   }
-  table.remote th:nth-child(2) {
-    width: 96px;
+  table.remote thead {
+    display: none;
   }
-  table.remote th:last-child {
-    width: 84px;
+  table.remote tr {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line-2);
+  }
+  table.remote td {
+    border: 0;
+    padding: 2px 8px;
   }
   table.remote td.name {
+    grid-column: 1 / -1;
     max-width: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  table.remote td.caps {
+    display: none;
+  }
+  table.remote tr.blank td {
+    grid-column: 1 / -1;
   }
   .cfg .preview {
     grid-template-columns: minmax(0, 1fr) auto;

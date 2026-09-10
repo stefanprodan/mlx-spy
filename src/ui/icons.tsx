@@ -98,15 +98,17 @@ export const Lines = () => (
 );
 
 // a hosted model, next to its name in the list and the header
-export const Cloud = () => (
-  <svg class="cloud" viewBox="0 0 16 16" aria-label="OpenRouter">
+// OpenRouter's mark, from openrouter.ai/brand
+export const OpenRouterMark = () => (
+  <svg
+    class="ormark"
+    viewBox="19.82 17.199 365.556 258.298"
+    aria-label="OpenRouter"
+  >
     <title>OpenRouter</title>
     <path
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linejoin="round"
-      d="M4.5 12.5a3 3 0 0 1-.4-5.97A4 4 0 0 1 11.9 6.3 2.6 2.6 0 0 1 11.5 12.5z"
+      fill="currentColor"
+      d="M303.9475,17.19926c42.79734,0,77.48933,34.69327,77.48933,77.48933s-34.69199,77.48933-77.48933,77.48933l76.86166,76.86244c9.76367,9.76313,2.84903,26.45667-10.95697,26.45667h-220.88335c-71.32686,0-129.14889-57.82202-129.14889-129.14889S77.64197,17.19926,148.96884,17.19926h154.97866ZM148.96884,68.85881c-42.79607,0-77.48933,34.69327-77.48933,77.48933s34.69327,77.48933,77.48933,77.48933,77.48933-34.69327,77.48933-77.48933-34.69327-77.48933-77.48933-77.48933Z"
     />
   </svg>
 );

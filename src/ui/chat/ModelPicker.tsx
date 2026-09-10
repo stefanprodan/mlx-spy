@@ -3,7 +3,7 @@
 
 import { useEffect } from "preact/hooks";
 import { orderModels } from "../format.ts";
-import { Cloud } from "../icons.tsx";
+import { OpenRouterMark } from "../icons.tsx";
 import { models, remoteModels } from "../store.ts";
 import { openConfig } from "./nav.ts";
 import { gbOf, pickModel, remoteInfo, runs, settings } from "./store.ts";
@@ -103,7 +103,7 @@ export function ModelPicker({
                 pickModel("openrouter", remoteInfo(m));
               }}
             >
-              <Cloud />
+              <OpenRouterMark />
               <span class="id" title={m.name}>
                 <span class="owner">{owner}</span>
                 {name}

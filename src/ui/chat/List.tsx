@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { group, when } from "../format.ts";
-import { Cloud, Plus, Sliders } from "../icons.tsx";
+import { OpenRouterMark, Plus, Sliders } from "../icons.tsx";
 import {
   closeConfig,
   configOpen,
@@ -48,7 +48,7 @@ export function List({
             {d.editor.text.value.trim().slice(0, 80) || "New chat"}
           </span>
           <span class="m">
-            {d.settings.provider === "openrouter" && <Cloud />}
+            {d.settings.provider === "openrouter" && <OpenRouterMark />}
             {short(d.settings.model)}
           </span>
           <span class="w">{d.editor.pending.value ? "Sending" : "Unsent"}</span>
@@ -82,7 +82,7 @@ export function List({
         <span class="t">{c.title || "New chat"}</span>
         <span class="m">
           {runOf(c.id) !== null && <i class="dot" />}
-          {c.provider === "openrouter" && <Cloud />}
+          {c.provider === "openrouter" && <OpenRouterMark />}
           {short(c.model)}
         </span>
         <span class="w">{when(c.updatedAt, now)}</span>

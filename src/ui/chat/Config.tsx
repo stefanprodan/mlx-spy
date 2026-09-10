@@ -14,11 +14,11 @@ import type { RemoteModel } from "../../config.ts";
 import type { CatalogModel } from "../../engine/openrouter.ts";
 import { api } from "../api.ts";
 import { when } from "../format.ts";
-import { Cloud, Lines } from "../icons.tsx";
+import { Lines, OpenRouterMark } from "../icons.tsx";
 import { remoteModels } from "../store.ts";
 import { priceLabel } from "./ModelPicker.tsx";
 import { closeConfig } from "./nav.ts";
-import { k, n } from "./store.ts";
+import { k } from "./store.ts";
 
 type ConfigAnswer = {
   openrouter: { enabled: boolean; limit: number; models: RemoteModel[] };
@@ -26,7 +26,6 @@ type ConfigAnswer = {
 
 // null until the first answer; the page keeps its layout meanwhile
 export const enabled = signal<boolean | null>(null);
-export const limit = signal(0);
 // the last refresh: when it ran, or why it failed
 export const refreshed = signal<{ at: number; error: string | null } | null>(
   null,
@@ -46,7 +45,6 @@ export async function load() {
   try {
     const r = await api<ConfigAnswer>("/api/config");
     enabled.value = r.openrouter.enabled;
-    limit.value = r.openrouter.limit;
     remoteModels.value = r.openrouter.models;
   } catch (err) {
     // not "no key": the page could not be read at all
@@ -135,8 +133,11 @@ export async function remove(id: string) {
   }
 }
 
+// 262144 as "262K", 1310720 as "1.3M", 1000000 as "1M"
 const ctx = (v: number | null) =>
-  v === null ? "" : `${v >= 1_000_000 ? `${v / 1_000_000}M` : k(v)} ctx`;
+  v === null
+    ? ""
+    : `${v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1).replace(/\.0$/, "")}M` : k(v)} ctx`;
 const marks = (m: { tools: boolean; reasoning: boolean }) =>
   [m.tools ? "tools" : "", m.reasoning ? "reasoning" : ""]
     .filter(Boolean)
@@ -146,7 +147,7 @@ function Preview({ m }: { m: CatalogModel }) {
   return (
     <div class="preview">
       <span class="id" title={m.name}>
-        <Cloud />
+        <OpenRouterMark />
         {m.id}
       </span>
       <span class="facts">
@@ -187,7 +188,7 @@ function Rows() {
         {rows.map((m) => (
           <tr key={m.id} class={m.missing ? "missing" : undefined}>
             <td class="name" title={m.name}>
-              <Cloud />
+              <OpenRouterMark />
               {m.id}
             </td>
             <td class="price">
@@ -278,12 +279,6 @@ export function Config({ onList }: { onList: () => void }) {
           )}
           {on && (
             <>
-              <p class="hint">
-                Models added here appear in the picker under OpenRouter, up to{" "}
-                {n(limit.value)} chats at once. Prices are USD per million
-                tokens, refreshed each time this page opens. A chat on one of
-                them leaves this host.
-              </p>
               <form
                 class="addrow"
                 onSubmit={(ev) => {

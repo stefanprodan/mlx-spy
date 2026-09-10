@@ -14,7 +14,6 @@ import {
   checkError,
   checked,
   enabled,
-  limit,
   refreshed,
 } from "../../src/ui/chat/Config.tsx";
 import { ModelPicker, priceLabel } from "../../src/ui/chat/ModelPicker.tsx";
@@ -221,7 +220,6 @@ describe("the Settings page", () => {
     expect(html).not.toContain('<table class="remote">');
 
     enabled.value = true;
-    limit.value = 4;
     refreshed.value = { at: Date.now() - 5000, error: null };
     remoteModels.value = [free, paid];
     checked.value = null;
@@ -229,7 +227,6 @@ describe("the Settings page", () => {
     armed.value = paid.id;
     html = page();
     expect(html).toContain("prices as of");
-    expect(html).toContain("up to 4 chats at once");
     expect(html).toContain('<form class="addrow">');
     expect(html).toContain('<table class="remote">');
     expect(html).toContain('<td class="price">free</td>');
@@ -238,6 +235,11 @@ describe("the Settings page", () => {
     expect(html).toContain('class="btn danger">Confirm</button>');
     expect(html).toContain('class="btn">Remove</button>');
     expect(html).toContain("262K ctx");
+    remoteModels.value = [{ ...free, contextLength: 1310720 }];
+    expect(page()).toContain("1.3M ctx");
+    remoteModels.value = [{ ...free, contextLength: 1000000 }];
+    expect(page()).toContain("1M ctx");
+    remoteModels.value = [free, paid];
 
     refreshed.value = { at: Date.now(), error: "OpenRouter unreachable: x" };
     remoteModels.value = [];

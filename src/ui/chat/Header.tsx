@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useEffect, useRef, useState } from "preact/hooks";
-import { Caret, Cloud, Gear, Lines } from "../icons.tsx";
+import { Caret, Gear, Lines, OpenRouterMark } from "../icons.tsx";
 import { ModelPicker } from "./ModelPicker.tsx";
 import { current, modelInfo, patch, settings, short } from "./store.ts";
 
@@ -106,7 +106,11 @@ export function Header({
           title={modelTitle}
           onClick={() => setPop((p) => !p)}
         >
-          {remote ? <Cloud /> : <i class={info?.loaded ? "dot up" : "dot"} />}
+          {remote ? (
+            <OpenRouterMark />
+          ) : (
+            <i class={info?.loaded ? "dot up" : "dot"} />
+          )}
           <span class="name">{s.model ? short(s.model) : "pick a model"}</span>
           <Caret />
         </button>
