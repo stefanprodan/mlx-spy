@@ -6,7 +6,7 @@
 // commands (send, stop, regenerate, edit) and watches the reply arrive
 // over the shared WebSocket, reduced into `state` by events.ts.
 
-import { computed, signal } from "@preact/signals";
+import { computed, type Signal, signal } from "@preact/signals";
 import type { Chat, ChatSettings, ChatSummary, Message } from "../../chats.ts";
 import type { ModelInfo } from "../../engine/types.ts";
 import type { Sample } from "../../sample.ts";
@@ -44,7 +44,77 @@ export const draft = signal<ChatSettings>({
 });
 // the send in flight anywhere, from the snapshot and the events
 export const running = signal<Running>(null);
-export const note = signal<{ text: string; kind: string } | null>(null);
+type Note = { text: string; kind: string } | null;
+type Editor = {
+  text: Signal<string>;
+  note: Signal<Note>;
+  pending: Signal<number>;
+  revision: number;
+};
+const newEditor = (): Editor => ({
+  text: signal(""),
+  note: signal<Note>(null),
+  pending: signal(0),
+  revision: 0,
+});
+const editors = new Map<string, Editor>();
+const draftEditor = signal(newEditor());
+type LocalDraft = { id: number; editor: Editor; settings: ChatSettings };
+export const localDrafts = signal<LocalDraft[]>([]);
+let draftId = 0;
+export let navigation = 0;
+
+export function beginNavigation() {
+  return ++navigation;
+}
+
+function keepDraft() {
+  const target = draftEditor.value;
+  const existing = localDrafts.value.find((d) => d.editor === target);
+  if (
+    !existing &&
+    !target.text.value &&
+    !target.pending.value &&
+    !target.note.value
+  )
+    return;
+  localDrafts.value = [
+    { id: existing?.id ?? ++draftId, editor: target, settings: draft.value },
+    ...localDrafts.value.filter((d) => d.editor !== target),
+  ];
+}
+
+export function resetDraft(keep = true) {
+  if (keep) keepDraft();
+  draftEditor.value = newEditor();
+}
+
+export function restoreDraft(value: LocalDraft) {
+  if (value.editor === draftEditor.value) return;
+  keepDraft();
+  draftEditor.value = value.editor;
+  draft.value = value.settings;
+}
+
+function editorOf(id: string): Editor {
+  let value = editors.get(id);
+  if (!value) {
+    value = newEditor();
+    editors.set(id, value);
+  }
+  return value;
+}
+
+export const editor = computed(() =>
+  state.value ? editorOf(state.value.chat.id) : draftEditor.value,
+);
+export const note = computed(() => editor.value.note.value);
+
+export function editDraft(text: string) {
+  const target = editor.value;
+  target.revision++;
+  target.text.value = text;
+}
 // the registry, fetched once; the dialog lists it with a checkbox each
 export const tools = signal<{ name: string; description: string }[]>([]);
 // the engine host's timezone, for the date line the runner adds with a tool on
@@ -78,11 +148,15 @@ export const modelInfo = (id: string): ModelInfo | null =>
   models.value.find((m) => m.id === id) ?? null;
 export const loadedCount = () => models.value.filter((m) => m.loaded).length;
 
-export function setNote(text: string | null, kind = "") {
-  note.value = text === null ? null : { text, kind };
+export function setNote(text: string | null, kind = "", target = editor.value) {
+  target.note.value = text === null ? null : { text, kind };
 }
-export function fail(err: unknown) {
-  setNote(err instanceof Error ? err.message : String(err));
+export function fail(err: unknown, target = editor.value) {
+  setNote(err instanceof Error ? err.message : String(err), "", target);
+}
+
+export function chatError(chatId: string, text: string) {
+  setNote(text, "", editorOf(chatId));
 }
 
 export function setOpen(key: string, on: boolean) {
@@ -129,6 +203,7 @@ export function setCurrent(chat: Chat) {
 
 export async function patch(p: Partial<ChatSettings> & { title?: string }) {
   const cur = current.value;
+  const target = editor.value;
   if (!cur) {
     draft.value = { ...draft.value, ...p };
     return;
@@ -145,7 +220,7 @@ export async function patch(p: Partial<ChatSettings> & { title?: string }) {
     }
     upsert({ ...updated, streaming: isStreaming(updated.id) });
   } catch (err) {
-    fail(err);
+    fail(err, target);
   }
 }
 
@@ -184,6 +259,7 @@ export async function command(
 ) {
   const cur = current.value;
   if (!cur) return;
+  const target = editor.value;
   try {
     setNote(null);
     await api(
@@ -192,39 +268,65 @@ export async function command(
       body ?? {},
     );
   } catch (err) {
-    fail(err);
+    fail(err, target);
   }
 }
 
-// sends the composer's text; returns false when the text must stay in
-// the composer (nothing sent)
+// Keep the text in its own editor until accepted, so a late rejection
+// never has to restore text into the currently selected chat.
 export async function send(content: string): Promise<boolean> {
+  let target = editor.value;
+  if (target.pending.value) return false;
+  let revision: number | null = target.revision;
+  const token = navigation;
+  let chatId = current.value?.id ?? null;
+  const policy = { ...settings.value };
   if (content.length > MAX_MESSAGE) {
     setNote("The message is too long; 256 KB is the limit.");
     return false;
   }
-  if (!settings.value.model) {
+  if (!policy.model) {
     setNote("Pick a model first.");
     return false;
   }
+  target.pending.value++;
   try {
     setNote(null);
-    if (!current.value) {
-      const chat = await api<Chat>("/api/chats", "POST", { ...draft.value });
-      setCurrent(chat);
-      rememberChat(chat.id);
-      history.pushState(null, "", `/chat/${encodeURIComponent(chat.id)}`);
+    if (chatId === null) {
+      const chat = await api<Chat>("/api/chats", "POST", policy);
+      chatId = chat.id;
+      const origin = target;
+      const existing = editors.get(chat.id);
+      // The socket may expose the created chat before this response.
+      // Adopt its editor if the user has already opened it.
+      if (existing && existing !== origin) {
+        if (existing.revision === 0) {
+          existing.text.value = origin.text.value;
+          existing.revision = origin.revision;
+        } else revision = null;
+        origin.pending.value--;
+        target = existing;
+        target.pending.value++;
+      } else editors.set(chat.id, target);
+      if (token === navigation && editor.value === target) {
+        setCurrent(chat);
+        rememberChat(chat.id);
+        history.pushState(null, "", `/chat/${encodeURIComponent(chat.id)}`);
+      }
+      localDrafts.value = localDrafts.value.filter((d) => d.editor !== origin);
+      if (draftEditor.value === origin) resetDraft(false);
       upsert({ ...chat, streaming: false });
     }
-    await api(
-      `/api/chats/${encodeURIComponent(current.value!.id)}/messages`,
-      "POST",
-      { content },
-    );
+    await api(`/api/chats/${encodeURIComponent(chatId)}/messages`, "POST", {
+      content,
+    });
+    if (target.revision === revision) target.text.value = "";
     return true;
   } catch (err) {
-    fail(err);
+    fail(err, target);
     return false;
+  } finally {
+    target.pending.value--;
   }
 }
 

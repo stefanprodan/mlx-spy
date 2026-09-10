@@ -107,6 +107,16 @@ export type ChatWsEvent =
       htmlAt: number;
     }
   | { kind: "done"; chat: ChatSummary; message: Message }
+  // A terminal failure that could not be saved; no persisted row is claimed.
+  | {
+      kind: "error";
+      chatId: string;
+      messageId: number;
+      error: string;
+      content: string;
+      reasoning: string;
+      html: string;
+    }
   // the settings ride along so an open tab follows a change made elsewhere
   | { kind: "chat"; chat: ChatSummary & ChatSettings }
   | { kind: "deleted"; chatId: string };

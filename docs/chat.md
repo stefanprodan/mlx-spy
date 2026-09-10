@@ -87,6 +87,14 @@ own for Copy and Edit; editing resends from that point and drops what came
 after. Click the title to rename a chat; the first message names it
 otherwise. Delete is in the gear.
 
+Unsent text stays with its chat while you navigate within the page. It
+clears when the send is accepted, unless you have edited it meanwhile.
+A delayed rejection keeps the text and error in the originating chat,
+not the one you switched to. These drafts live in the tab, not the
+database, and do not survive a page reload. Choosing New chat keeps an
+unfinished new conversation under Drafts in the list, including its
+settings and any creation error, so you can return to it and retry.
+
 A reply that was cut shows why under it: `stopped`, `cut at max tokens`,
 `interrupted, mlx-spy restarted`, or the engine's error.
 

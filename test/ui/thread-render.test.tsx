@@ -7,6 +7,7 @@
 import { describe, expect, test } from "bun:test";
 import { render } from "preact-render-to-string";
 import { renderMarkdown } from "../../src/markdown.ts";
+import { applyEvent } from "../../src/ui/chat/events.ts";
 import { state } from "../../src/ui/chat/store.ts";
 import { Row, Thread } from "../../src/ui/chat/Thread.tsx";
 import { Tool } from "../../src/ui/chat/Tool.tsx";
@@ -87,6 +88,64 @@ describe("thread markup", () => {
       '<div class="lbl">result, untrusted</div><div class="out">',
     );
     expect(h).toContain('<div class="after"><span class="acts">');
+  });
+
+  test("a fatal tool-stage error is visible outside the retained work", () => {
+    const s = run.steps[betweenRounds].state;
+    const assistant = s.chat.messages.findLast((m) => m.role === "assistant")!;
+    const failed = {
+      ...s,
+      running: null,
+      chat: {
+        ...s.chat,
+        streaming: false,
+        messages: s.chat.messages.map((m) =>
+          m.id === assistant.id
+            ? {
+                ...m,
+                status: "error" as const,
+                error: "tool result write failed",
+              }
+            : m,
+        ),
+      },
+    };
+    const h = groupRows(failed, run.toolsOn)
+      .map((n) => render(<Row node={n} />))
+      .join("");
+    expect(h).toContain(
+      '<span class="st err">error: tool result write failed</span>',
+    );
+    expect(h).toContain('<span class="tn">websearch</span>');
+    expect(h).toContain('<div class="lbl">result, untrusted</div>');
+    expect(h).not.toContain('class="work live"');
+  });
+
+  test("an unsaved terminal failure stops the cursor and retains the rendered partial reply", () => {
+    const s = run.steps[midRound].state;
+    const assistant = s.chat.messages.findLast((m) => m.role === "assistant")!;
+    const content = "Partial **reply**";
+    const { state: failed } = applyEvent(
+      s,
+      {
+        kind: "error",
+        chatId: s.chat.id,
+        messageId: assistant.id,
+        error: "tool failed (reply could not be saved)",
+        content,
+        reasoning: "Partial thinking",
+        html: renderMarkdown(content),
+      },
+      1000,
+    );
+    const h = groupRows(failed, run.toolsOn)
+      .map((n) => render(<Row node={n} />))
+      .join("");
+    expect(failed.running).toBeNull();
+    expect(failed.live.has(assistant.id)).toBe(false);
+    expect(h).toContain("<strong>reply</strong>");
+    expect(h).toContain("tool failed (reply could not be saved)");
+    expect(h).not.toContain('class="work live"');
   });
 
   test("done: the group settles and the reply sits outside it", () => {
