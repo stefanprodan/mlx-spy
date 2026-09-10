@@ -85,7 +85,10 @@ page also remembers the chat last used: opening `/chat` from the header
 comes back to it, until New chat or a deletion.
 
 Enter sends, Shift+Enter breaks a line. The Send button becomes Stop while
-the reply streams. Hover a reply for Copy and Regenerate, a message of your
+the reply streams; after a stop the box reads Stopping until the engine
+stream and tool calls have let go. One reply runs at a time, so while
+another chat answers the box says so and takes text but does not send.
+Hover a reply for Copy and Regenerate, a message of your
 own for Copy and Edit; editing resends from that point and drops what came
 after. Click the title to rename a chat; the first message names it
 otherwise. Delete is in the gear.

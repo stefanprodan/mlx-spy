@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Message } from "../../chats.ts";
-import { copy, regenerate, running } from "./store.ts";
+import { canSend, copy, regenerate } from "./store.ts";
 import { type Live, tail } from "./stream.ts";
 import { Think } from "./Think.tsx";
 import { Tool } from "./Tool.tsx";
@@ -46,7 +46,7 @@ function After({ message: m, last }: { message: Message; last: boolean }) {
         {last && (
           <button
             type="button"
-            disabled={running.value !== null}
+            disabled={!canSend.value}
             onClick={() => void regenerate()}
           >
             Regenerate

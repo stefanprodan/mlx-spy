@@ -8,16 +8,18 @@ import { describe, expect, test } from "bun:test";
 import { render } from "preact-render-to-string";
 import { renderMarkdown } from "../../src/markdown.ts";
 import { applyEvent } from "../../src/ui/chat/events.ts";
-import { state } from "../../src/ui/chat/store.ts";
+import { runs, state } from "../../src/ui/chat/store.ts";
 import { Row, Thread } from "../../src/ui/chat/Thread.tsx";
 import { Tool } from "../../src/ui/chat/Tool.tsx";
 import { groupRows } from "../../src/ui/chat/thread.ts";
 import { driveRecording, loadRecording } from "./ws.ts";
 
+// the registry is known and idle, as after the socket's snapshot
+runs.value = { limit: 1, sends: [] };
 const lines = await loadRecording("tools.ndjson");
 const run = driveRecording("tools.ndjson", lines);
 const html = (i: number) =>
-  groupRows(run.steps[i].state, run.toolsOn)
+  groupRows(run.steps[i].state, run.toolsOn, run.steps[i].run)
     .map((n) => render(<Row node={n} />))
     .join("");
 const kind = (i: number) => {
@@ -96,7 +98,6 @@ describe("thread markup", () => {
     const assistant = s.chat.messages.findLast((m) => m.role === "assistant")!;
     const failed = {
       ...s,
-      running: null,
       chat: {
         ...s.chat,
         streaming: false,
@@ -111,7 +112,7 @@ describe("thread markup", () => {
         ),
       },
     };
-    const h = groupRows(failed, run.toolsOn)
+    const h = groupRows(failed, run.toolsOn, null)
       .map((n) => render(<Row node={n} />))
       .join("");
     expect(h).toContain(
@@ -131,6 +132,7 @@ describe("thread markup", () => {
       {
         kind: "error",
         chatId: s.chat.id,
+        firstMessageId: assistant.id,
         messageId: assistant.id,
         error: "tool failed (reply could not be saved)",
         content,
@@ -139,10 +141,11 @@ describe("thread markup", () => {
       },
       1000,
     );
-    const h = groupRows(failed, run.toolsOn)
+    // the slot is still held when the event lands: the receipt settles it
+    const h = groupRows(failed, run.toolsOn, run.steps[midRound].run)
       .map((n) => render(<Row node={n} />))
       .join("");
-    expect(failed.running).toBeNull();
+    expect(failed.ended.has(assistant.id)).toBe(true);
     expect(failed.live.has(assistant.id)).toBe(false);
     expect(h).toContain("<strong>reply</strong>");
     expect(h).toContain("tool failed (reply could not be saved)");
@@ -188,6 +191,7 @@ describe("thread markup", () => {
           },
         },
         run.toolsOn,
+        null,
       )
         .map((n) => render(<Row node={n} />))
         .join("");

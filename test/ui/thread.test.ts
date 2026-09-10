@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, test } from "bun:test";
+import type { RunningSend } from "../../src/chat.ts";
 import type { Message } from "../../src/chats.ts";
 import type { ToolCall } from "../../src/engine/types.ts";
 import { type ChatState, stateOf } from "../../src/ui/chat/events.ts";
@@ -59,7 +60,12 @@ function reasoningOf(row: Reply | Round): string {
   return row.live?.reasoning ?? row.message.reasoning;
 }
 
-function assertTree(state: ChatState, tree: Node[], toolsOn: boolean) {
+function assertTree(
+  state: ChatState,
+  tree: Node[],
+  toolsOn: boolean,
+  run: RunningSend | null,
+) {
   const expectedRows = state.chat.messages
     .filter((message: Message) => message.role !== "tool")
     .map((message: Message) => message.id)
@@ -102,7 +108,7 @@ function assertTree(state: ChatState, tree: Node[], toolsOn: boolean) {
     if (work.items.length === 0) {
       const index = tree.indexOf(work);
       const reply = tree[index + 1];
-      expect(state.running?.chatId).toBe(state.chat.id);
+      expect(run?.chatId).toBe(state.chat.id);
       expect(toolsOn).toBe(false);
       expect(reply?.kind).toBe("reply");
       if (reply?.kind === "reply") {
@@ -159,18 +165,18 @@ function assertTree(state: ChatState, tree: Node[], toolsOn: boolean) {
 
 function treeOf(run: DrivenRecording): Node[] {
   expect(run.state).not.toBeNull();
-  return groupRows(run.state!, run.toolsOn);
+  return groupRows(run.state!, run.toolsOn, run.run);
 }
 
 function assertFinalConsistency(run: DrivenRecording) {
   const state = run.state!;
-  expect(state.running).toBeNull();
-  const tree = groupRows(state, run.toolsOn);
+  expect(run.run).toBeNull();
+  const tree = groupRows(state, run.toolsOn, null);
   for (const row of [...replies(tree), ...rounds(tree), ...thinks(tree)]) {
     expect(row.live).toBeNull();
   }
-  const fresh = stateOf({ ...state.chat, messages: state.chat.messages }, null);
-  expect(tree).toEqual(groupRows(fresh, run.toolsOn));
+  const fresh = stateOf({ ...state.chat, messages: state.chat.messages });
+  expect(tree).toEqual(groupRows(fresh, run.toolsOn, null));
 }
 
 async function drive(
@@ -191,8 +197,8 @@ describe("chat thread recording invariants", () => {
       const run =
         name === "tools.ndjson" ? tools : await drive(name, seeded.get(name));
       for (const step of run.steps) {
-        const tree = groupRows(step.state, run.toolsOn);
-        assertTree(step.state, tree, run.toolsOn);
+        const tree = groupRows(step.state, run.toolsOn, step.run);
+        assertTree(step.state, tree, run.toolsOn, step.run);
         if (
           "type" in step.line &&
           step.line.type === "chat" &&
@@ -220,7 +226,9 @@ describe("chat thread recording invariants", () => {
         Boolean(candidate.line.data.content),
     );
     expect(step).toBeDefined();
-    expect(works(groupRows(step!.state, run.toolsOn))).toHaveLength(0);
+    expect(works(groupRows(step!.state, run.toolsOn, step!.run))).toHaveLength(
+      0,
+    );
   });
 
   test("tools settles its two calls and leaves its reply outside", async () => {
@@ -282,8 +290,8 @@ describe("chat thread recording invariants", () => {
         step.line.data.kind === "started",
     );
     expect(starts).toHaveLength(2);
-    const first = groupRows(starts[0].state, run.toolsOn);
-    const second = groupRows(starts[1].state, run.toolsOn);
+    const first = groupRows(starts[0].state, run.toolsOn, starts[0].run);
+    const second = groupRows(starts[1].state, run.toolsOn, starts[1].run);
     expect(
       first.some(
         (node: Node) => node.kind === "user" && node.message.id === 153,
@@ -331,11 +339,13 @@ describe("chat thread recording invariants", () => {
         step.line.type === "chat" &&
         step.line.data.kind === "delta",
     )!;
-    const live = summaries(groupRows(streaming.state, run.toolsOn));
+    const live = summaries(
+      groupRows(streaming.state, run.toolsOn, streaming.run),
+    );
     expect(live).toHaveLength(1);
     expect(live[0].live).not.toBeNull();
     expect(live[0].message.role).toBe("summary");
-    expect(streaming.state.running).not.toBeNull();
+    expect(streaming.run).not.toBeNull();
     const tree = treeOf(run);
     const done = summaries(tree);
     expect(done).toHaveLength(1);
@@ -357,6 +367,7 @@ describe("chat thread recording invariants", () => {
         chat: { ...state.chat, messages: [...state.chat.messages, again] },
       },
       run.toolsOn,
+      null,
     );
     expect(nodes.at(-1)?.kind).toBe("summary");
     expect(replies(nodes).at(-1)?.last).toBe(true);
@@ -411,7 +422,7 @@ describe("chat thread recording invariants", () => {
 
   test("a fetched interruption is settled and not running", async () => {
     const run = await drive("interrupted.ndjson");
-    expect(run.state?.running).toBeNull();
+    expect(run.run).toBeNull();
     expect(replies(treeOf(run)).at(-1)?.message.status).toBe("interrupted");
   });
 });

@@ -9,22 +9,27 @@ import type { ChatWsEvent } from "../../chat.ts";
 import type { Chat, Message } from "../../chats.ts";
 import { applyDelta, applyHtml, type Live, liveOf } from "./stream.ts";
 
-export type Running = { chatId: string; messageId: number } | null;
-
 export type ChatState = {
   chat: Chat;
   // the rows streaming, by message id
   live: Map<number, Live>;
-  // the send in flight anywhere, from the snapshot or `started`
-  running: Running;
+  // the rows a `done` or `error` ended the send on: the send is over
+  // for the transcript even while its slot is still held (store.ts
+  // `runs`), so a finished reply never shows as working again
+  ended: ReadonlySet<number>;
 };
 
-export function stateOf(chat: Chat, running: Running): ChatState {
+export function stateOf(chat: Chat): ChatState {
   const live = new Map<number, Live>();
   for (const m of chat.messages) {
     if (m.status === "streaming") live.set(m.id, liveOf(m));
   }
-  return { chat, live, running };
+  return { chat, live, ended: new Set() };
+}
+
+function withEnded(ended: ReadonlySet<number>, id: number) {
+  if (ended.has(id)) return ended;
+  return new Set([...ended, id]);
 }
 
 function upsert(messages: Message[], m: Message): Message[] {
@@ -57,8 +62,7 @@ export function applyEvent(
   const id = "chatId" in ev ? ev.chatId : ev.chat.id;
   switch (ev.kind) {
     case "started": {
-      const running = { chatId: ev.chat.id, messageId: ev.message.id };
-      if (id !== s.chat.id) return { state: { ...s, running }, gap: false };
+      if (id !== s.chat.id) return ok;
       let messages = s.chat.messages;
       let live = s.live;
       // regenerate and edit replaced rows: drop that row and every later one
@@ -77,7 +81,7 @@ export function applyEvent(
         live = withLive(live, ev.message.id, liveOf(ev.message));
       }
       return {
-        state: { chat: { ...s.chat, ...ev.chat, messages }, live, running },
+        state: { ...s, chat: { ...s.chat, ...ev.chat, messages }, live },
         gap: false,
       };
     }
@@ -117,22 +121,19 @@ export function applyEvent(
       };
     }
     case "done": {
-      // send-level: the reply may be a later round than the row started
-      const running = s.running?.chatId === id ? null : s.running;
-      if (id !== s.chat.id) return { state: { ...s, running }, gap: false };
+      if (id !== s.chat.id) return ok;
       const messages = upsert(s.chat.messages, ev.message);
       return {
         state: {
           chat: { ...s.chat, ...ev.chat, messages },
           live: without(s.live, ev.message.id),
-          running,
+          ended: withEnded(s.ended, ev.message.id),
         },
         gap: false,
       };
     }
     case "error": {
-      const running = s.running?.chatId === id ? null : s.running;
-      if (id !== s.chat.id) return { state: { ...s, running }, gap: false };
+      if (id !== s.chat.id) return ok;
       return {
         state: {
           chat: {
@@ -152,7 +153,7 @@ export function applyEvent(
             ),
           },
           live: without(s.live, ev.messageId),
-          running,
+          ended: withEnded(s.ended, ev.messageId),
         },
         gap: false,
       };

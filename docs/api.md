@@ -86,8 +86,14 @@ plus 1 GB, fails at start with the numbers in `error`.
 
 The chat is server-owned: mlx-spy sends the request to the engine, writes
 the reply into its database as it streams, and the browser only watches.
-One send runs at a time; a second send anywhere answers 409. A send with
-tools on can take several engine rounds. Bodies are JSON, at most 256 KB.
+A chat takes one send at a time, and the server admits at most `limit`
+sends across chats (one, until the engine's request scheduling is
+established): a send, edit, regenerate or compact in a chat that holds a
+slot, or while every slot is taken, answers 409 with the title of the
+chat in the way. A stopped send holds its slot until its engine stream
+and tool calls have drained, and answers "Still cancelling" meanwhile.
+A send with tools on can take several engine rounds. Bodies are JSON, at
+most 256 KB.
 
 | Route | Body | Answer |
 |---|---|---|
@@ -139,8 +145,8 @@ later requests carry it without them.
 An unexpected failure executing or saving a tool result marks its
 owning assistant `error`, preserving its tool calls, text, reasoning and
 usage. Unfinished tools become `interrupted`, while finished results
-are kept. The socket emits the terminal assistant in `done`; new sends
-remain blocked until the cancelled tools finish unwinding.
+are kept. The socket emits the terminal assistant in `done`; the slot
+stays held, as `stopping`, until the cancelled tools finish unwinding.
 If even the assistant's error state cannot be saved, an `error` socket
 event ends the live send instead of a persisted `done`. It carries the
 original failure with "reply could not be saved" and the current text,
@@ -182,11 +188,25 @@ is a 400.
 ## WebSocket
 
 `WS /ws` sends `{type: "snapshot"}` on connect (the same body as
-`/api/snapshot`, plus `chat: {chatId, messageId} | null` naming the row
-the send in flight is writing), then `{type: "sample"}` once a second, `{type: "event"}` when
+`/api/snapshot`), then `{type: "sample"}` once a second, `{type: "event"}` when
 an action finishes in any tab, `{type: "pull"}` with the pull as `data`
 on every change of a download's state and twice a second while one runs,
-and `{type: "chat"}` for the chat:
+`{type: "chatRuns"}` whenever the chat slots change, and `{type: "chat"}`
+for the chat.
+
+`chatRuns` (in the snapshot and as a message) is
+`{limit, sends: [{chatId, firstMessageId, messageId, phase}]}`: the cap
+and the sends holding a slot, in admission order. `firstMessageId` names
+the send across its rounds, `messageId` the row it is writing now, and
+`phase` is `running` (generation, tools or a summary round) or
+`stopping` (the send ended but its cancelled engine stream or tools have
+not settled; it still counts toward the cap). The whole collection is
+sent each time: when a send is admitted (before its `started`), when a
+round begins (before its `row`), when it starts stopping (before its
+`done`) and when its slot is freed (after `done`). It is the only source
+of who is running; the `chat` events below never say so on their own.
+
+The `chat` events:
 
 | `data.kind` | Fields | When |
 |---|---|---|
@@ -195,6 +215,6 @@ and `{type: "chat"}` for the chat:
 | `delta` | `chatId, messageId, content?, contentAt, reasoning?, reasoningAt` | text arrived; `*At` is the length of the buffer before it, so a client applies a delta only when it continues the text it has |
 | `html` | `chatId, messageId, html, htmlAt` | at most once a second: the reply rendered up to `htmlAt` characters |
 | `done` | `chat, message` | the send ended; `message` is its last assistant row with the terminal status, or the `summary` row when the send ended with a summary round |
-| `error` | `chatId, messageId, error, content, reasoning, html` | a terminal failure could not be saved; clear that chat's running state and display the unsaved error and partial reply |
+| `error` | `chatId, firstMessageId, messageId, error, content, reasoning, html` | a terminal failure could not be saved; the send is over for the transcript (its slot follows in `chatRuns` once drained), so display the unsaved error and partial reply |
 | `chat` | `chat` | a chat was created or its title or settings changed |
 | `deleted` | `chatId` | a chat was deleted |

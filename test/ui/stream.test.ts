@@ -136,7 +136,7 @@ function runStream(lines: RecordingLine[]): StreamRun {
       continue;
     }
     if ("type" in line && line.type === "snapshot") {
-      pending = line.chat ? [] : null;
+      pending = line.chatRuns.sends.length > 0 ? [] : null;
       continue;
     }
     if ("fetch" in line) {

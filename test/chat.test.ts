@@ -172,6 +172,15 @@ function setup(
   };
 }
 
+// the row a running send is writing, as the old single-send snapshot
+// field named it; a stopping send is not running
+function running(
+  runner: ChatRunner,
+): { chatId: string; messageId: number } | null {
+  const send = runner.runs().sends.find((run) => run.phase === "running");
+  return send ? { chatId: send.chatId, messageId: send.messageId } : null;
+}
+
 async function turn() {
   await Bun.sleep(0);
   await Bun.sleep(0);
@@ -245,7 +254,7 @@ describe("ChatRunner", () => {
       kind: "started",
       user: started.user,
     });
-    expect(s.runner.running()).toEqual({
+    expect(running(s.runner)).toEqual({
       chatId: s.chat.id,
       messageId: started.message.id,
     });
@@ -317,7 +326,7 @@ describe("ChatRunner", () => {
     expect(done.html).toContain("hi there");
     expect(s.events.some((event) => event.kind === "html")).toBe(true);
     expect(s.events.at(-1)).toMatchObject({ kind: "done", message: done });
-    expect(s.runner.running()).toBeNull();
+    expect(running(s.runner)).toBeNull();
     expect(s.logs[0]).toBe(`chat ${s.chat.id} sent ${MODEL}`);
     expect(s.logs.at(-1)).toMatch(/done 10\+3 tokens/);
     s.db.close();
@@ -342,7 +351,7 @@ describe("ChatRunner", () => {
       kind: "done",
       message: { status: "stopped" },
     });
-    expect(s.runner.running()).toBeNull();
+    expect(running(s.runner)).toBeNull();
     s.runner.stop(s.chat.id);
     s.engine.streams[0].end();
     await turn();
@@ -491,12 +500,20 @@ describe("ChatRunner", () => {
       }
       return finishReply(...args);
     };
-    s.runner.send(s.chat.id, "first");
+    const first = s.runner.send(s.chat.id, "first");
     await turn();
     await finish(s.engine.streams[0]);
-    expect(s.logs.at(-1)).toContain(
-      `chat ${s.chat.id} finish failed: disk full`,
-    );
+    // the failed write is retried as the send's failure: the row ends as
+    // an error with the store's reason, and the page gets its done
+    expect(s.logs).toContain(`chat ${s.chat.id} finish failed: disk full`);
+    expect(s.store.message(first.message.id)).toMatchObject({
+      status: "error",
+      error: "disk full",
+    });
+    expect(s.events.at(-1)).toMatchObject({
+      kind: "done",
+      message: { id: first.message.id, status: "error" },
+    });
     expect(() => s.runner.send(s.chat.id, "second")).not.toThrow();
     await turn();
     s.runner.stop(s.chat.id);
@@ -902,7 +919,7 @@ describe("ChatRunner", () => {
         s.engine.streams[0].push({ kind: "reasoning", text: "Use clocks." });
         s.engine.streams[0].push({ kind: "usage", stats });
         await calls(s.engine.streams[0], group);
-        expect(s.runner.running()).toBeNull();
+        expect(running(s.runner)).toBeNull();
         expect(signals.every((signal) => signal.aborted)).toBe(true);
         expect(s.engine.signals[0].aborted).toBe(true);
         expect(s.engine.requests).toHaveLength(1);
@@ -973,7 +990,7 @@ describe("ChatRunner", () => {
         expect(lateWrites).toBe(0);
         const next = s.runner.send(s.chat.id, "after drain");
         await turn();
-        expect(s.runner.running()?.messageId).toBe(next.message.id);
+        expect(running(s.runner)?.messageId).toBe(next.message.id);
         expect(s.engine.requests[1].messages.slice(2, 7)).toEqual([
           { role: "assistant", content: "Checking.", toolCalls: group },
           { role: "tool", toolCallId: "success", content: "result success" },
@@ -1026,7 +1043,7 @@ describe("ChatRunner", () => {
       const next = s.runner.send(nextChat.id, "replacement");
       await turn();
       await turn();
-      expect(s.runner.running()).toEqual({
+      expect(running(s.runner)).toEqual({
         chatId: nextChat.id,
         messageId: next.message.id,
       });
@@ -1104,7 +1121,7 @@ describe("ChatRunner", () => {
         ]);
         if (action === "stop") s.runner.stop(s.chat.id);
         else s.runner.shutdown();
-        expect(s.runner.running()).toBeNull();
+        expect(running(s.runner)).toBeNull();
         expect(s.engine.signals[0].aborted).toBe(true);
         expect(s.engine.requests).toHaveLength(1);
         const rows = s.store.get(s.chat.id)!.messages;
@@ -1160,7 +1177,7 @@ describe("ChatRunner", () => {
     await turn();
     await finish(s.engine.streams[0]);
     expect(replacements).toHaveLength(1);
-    expect(s.runner.running()?.messageId).toBe(replacements[0]);
+    expect(running(s.runner)?.messageId).toBe(replacements[0]);
     unsubscribe();
     await finish(s.engine.streams[1]);
     s.db.close();
@@ -1199,7 +1216,7 @@ describe("ChatRunner", () => {
     });
     expect(s.events.filter((event) => event.kind === "done")).toHaveLength(1);
     expect(s.engine.signals[0].aborted).toBe(true);
-    expect(s.runner.running()).toBeNull();
+    expect(running(s.runner)).toBeNull();
     s.db.close();
   });
 
@@ -1229,7 +1246,7 @@ describe("ChatRunner", () => {
         s.logs.some((line) => line.includes("secondary write failure")),
       ).toBe(true);
       expect(s.engine.signals[0].aborted).toBe(true);
-      expect(s.runner.running()).toBeNull();
+      expect(running(s.runner)).toBeNull();
       expect(s.store.lastMessage(s.chat.id)?.status).toBe("interrupted");
       expect(s.events.filter((event) => event.kind === "done")).toHaveLength(
         blocked === "assistant" ? 0 : 1,
@@ -1239,15 +1256,16 @@ describe("ChatRunner", () => {
       if (blocked === "assistant") {
         expect(errors[0]).toMatchObject({
           chatId: s.chat.id,
+          firstMessageId: sent.message.id,
           messageId: sent.message.id,
           error: "original executor failure (reply could not be saved)",
         });
       }
-      let page = stateOf(s.chat, null);
+      let page = stateOf(s.chat);
       for (const event of s.events) {
         page = applyEvent(page, event, 1000).state;
       }
-      expect(page.running).toBeNull();
+      expect([...page.ended]).toEqual([sent.message.id]);
       expect(
         page.chat.messages.find((m) => m.id === sent.message.id),
       ).toMatchObject({
@@ -1406,7 +1424,7 @@ describe("ChatRunner", () => {
     ]);
     expect(s.logs).toContain(`chat ${s.chat.id} tool limit`);
     expect(s.logs).toContain(`chat ${s.chat.id} answer round`);
-    expect(s.runner.running()).toEqual({
+    expect(running(s.runner)).toEqual({
       chatId: s.chat.id,
       messageId: s.store.get(s.chat.id)!.messages.at(-1)!.id,
     });
@@ -1427,7 +1445,7 @@ describe("ChatRunner", () => {
       kind: "done",
       message: { id: rows.at(-1)!.id, content: "the answer" },
     });
-    expect(s.runner.running()).toBeNull();
+    expect(running(s.runner)).toBeNull();
     s.db.close();
   });
 
@@ -1494,14 +1512,14 @@ describe("ChatRunner", () => {
               })),
             );
           }
-          const messageId = s.runner.running()!.messageId;
+          const messageId = running(s.runner)!.messageId;
           s.engine.streams[rounds - 1].push({
             kind: "content",
             text: "Checking.",
           });
           await calls(s.engine.streams[rounds - 1], group);
           const error = `stopped write ${failed[0].id} failed`;
-          expect(s.runner.running()).toBeNull();
+          expect(running(s.runner)).toBeNull();
           expect(s.engine.requests).toHaveLength(rounds);
           expect(executed).toHaveLength((rounds - 1) * group.length);
           expect(s.engine.signals.every((signal) => signal.aborted)).toBe(true);
@@ -1550,7 +1568,7 @@ describe("ChatRunner", () => {
           }
           const next = s.runner.send(s.chat.id, "after recovery");
           await turn();
-          expect(s.runner.running()?.messageId).toBe(next.message.id);
+          expect(running(s.runner)?.messageId).toBe(next.message.id);
           expect(s.engine.requests).toHaveLength(rounds + 1);
           expect(
             s.engine.requests[rounds].messages.slice(-group.length - 2, -1),
@@ -1571,7 +1589,7 @@ describe("ChatRunner", () => {
             status: "done",
             content: "Recovered.",
           });
-          expect(s.runner.running()).toBeNull();
+          expect(running(s.runner)).toBeNull();
         } finally {
           s.runner.shutdown();
           for (const stream of s.engine.streams) stream.end();
@@ -1593,7 +1611,7 @@ describe("ChatRunner", () => {
     );
     await calls(s.engine.streams[1], [clock("call_more")]);
     expect(s.engine.requests).toHaveLength(2);
-    expect(s.runner.running()).toBeNull();
+    expect(running(s.runner)).toBeNull();
     const last = s.store.get(s.chat.id)!.messages.at(-1)!;
     expect(last).toMatchObject({
       role: "assistant",
@@ -1668,7 +1686,7 @@ describe("ChatRunner", () => {
     const started = s.runner.compact(s.chat.id);
     expect(started.message.role).toBe("summary");
     expect(started.message.status).toBe("streaming");
-    expect(s.runner.running()).toEqual({
+    expect(running(s.runner)).toEqual({
       chatId: s.chat.id,
       messageId: started.message.id,
     });
@@ -1741,7 +1759,7 @@ describe("ChatRunner", () => {
       status: "error",
       error: "the summary came back empty",
     });
-    expect(s.runner.running()).toBeNull();
+    expect(running(s.runner)).toBeNull();
 
     s.runner.compact(s.chat.id);
     await turn();
@@ -1868,5 +1886,139 @@ describe("ChatRunner", () => {
     g.engine.streams[1].end();
     await turn();
     g.db.close();
+  });
+});
+
+// the registry's view of a send, published on every change of the slots
+describe("chat runs", () => {
+  function setupRuns() {
+    const s = setup(undefined, async () => ({ text: "10:00", error: null }));
+    const log: string[] = [];
+    s.runner.onEvent((event) => log.push(event.kind));
+    s.runner.onRuns((runs) =>
+      log.push(
+        `runs:${runs.sends
+          .map((run) => `${run.phase}:${run.firstMessageId}/${run.messageId}`)
+          .join(",")}`,
+      ),
+    );
+    return { ...s, log };
+  }
+
+  test("the slot is published before started, per round before its row, and freed with done", async () => {
+    const s = setupRuns();
+    s.runner.update(s.chat.id, { toolsOff: [] });
+    s.log.length = 0;
+    const first = s.runner.send(s.chat.id, "hello");
+    const id = first.message.id;
+    expect(s.log.slice(0, 3)).toEqual([
+      `runs:running:${id}/${id}`,
+      "chat",
+      "started",
+    ]);
+    expect(s.runner.runs()).toEqual({
+      limit: 1,
+      sends: [
+        {
+          chatId: s.chat.id,
+          firstMessageId: id,
+          messageId: id,
+          phase: "running",
+        },
+      ],
+    });
+    await turn();
+    await calls(s.engine.streams[0], [clock("call_1")]);
+    await turn();
+    // the second round's slot names the new row, and comes before the row
+    const round = s.log.indexOf(`runs:running:${id}/${id + 2}`);
+    expect(round).toBeGreaterThan(0);
+    expect(s.log[round + 1]).toBe("row");
+    expect(s.runner.runs().sends[0]).toMatchObject({
+      firstMessageId: id,
+      messageId: id + 2,
+      phase: "running",
+    });
+    s.engine.streams[1].push({ kind: "content", text: "ten" });
+    await finish(s.engine.streams[1]);
+    expect(s.log.slice(-2)).toEqual(["done", "runs:"]);
+    expect(s.runner.runs()).toEqual({ limit: 1, sends: [] });
+    s.db.close();
+  });
+
+  test("stop keeps the slot as stopping until the aborted stream drains", async () => {
+    const s = setupRuns();
+    const sent = s.runner.send(s.chat.id, "hello");
+    await turn();
+    s.log.length = 0;
+    s.runner.stop(s.chat.id);
+    const id = sent.message.id;
+    expect(s.log.slice(0, 2)).toEqual([`runs:stopping:${id}/${id}`, "html"]);
+    expect(s.log).toContain("done");
+    expect(s.log.at(-1)).not.toBe("runs:");
+    expect(s.runner.runs().sends).toEqual([
+      {
+        chatId: s.chat.id,
+        firstMessageId: id,
+        messageId: id,
+        phase: "stopping",
+      },
+    ]);
+    await rejects(
+      () => s.runner.update(s.chat.id, { model: MODEL }),
+      409,
+      /cannot change during a send/,
+    );
+    s.engine.streams[0].end();
+    await turn();
+    expect(s.log.at(-1)).toBe("runs:");
+    expect(s.runner.runs().sends).toEqual([]);
+    expect(() => s.runner.update(s.chat.id, { model: MODEL })).not.toThrow();
+    s.db.close();
+  });
+
+  test("a reply whose row cannot be written ends with the error event", async () => {
+    const s = setupRuns();
+    s.store.finishReply = () => {
+      throw new Error("disk I/O error");
+    };
+    const sent = s.runner.send(s.chat.id, "hello");
+    await turn();
+    s.engine.streams[0].push({ kind: "content", text: "partial" });
+    await finish(s.engine.streams[0]);
+    const id = sent.message.id;
+    expect(s.log.slice(-3)).toEqual([
+      `runs:stopping:${id}/${id}`,
+      "error",
+      "runs:",
+    ]);
+    expect(s.runner.runs().sends).toEqual([]);
+    expect(s.logs).toContain(`chat ${s.chat.id} error: disk I/O error`);
+    s.db.close();
+  });
+
+  test("a store failure on the first row frees the slot", async () => {
+    const s = setupRuns();
+    const addMessage = s.store.addMessage.bind(s.store);
+    let failed = false;
+    s.store.addMessage = (chatId, role, fields) => {
+      if (role === "assistant" && !failed) {
+        failed = true;
+        throw new Error("disk full");
+      }
+      return addMessage(chatId, role, fields);
+    };
+    expect(() => s.runner.send(s.chat.id, "hello")).toThrow("disk full");
+    expect(s.runner.runs().sends).toEqual([]);
+    expect(s.log).not.toContain("started");
+    const sent = s.runner.send(s.chat.id, "again");
+    expect(s.runner.runs().sends[0]).toMatchObject({
+      messageId: sent.message.id,
+      phase: "running",
+    });
+    await turn();
+    await finish(s.engine.streams[0]);
+    expect(s.runner.runs().sends).toEqual([]);
+    s.db.close();
   });
 });

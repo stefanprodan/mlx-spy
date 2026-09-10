@@ -9,6 +9,7 @@
 // tree from the state instead of moving nodes means a tab that reloads
 // mid-send shows the same thing as one that watched every event.
 
+import type { RunningSend } from "../../chat.ts";
 import type { Message } from "../../chats.ts";
 import type { ToolCall } from "../../engine/types.ts";
 import { secs } from "../format.ts";
@@ -64,6 +65,12 @@ type Send = { user: Message | null; summary?: Message; rows: Message[] };
 
 const count = (k: number) => `${k} tool call${k === 1 ? "" : "s"}`;
 
+// the fold's key in the opened set carries the chat, so a `done` in
+// another chat shuts only its own folds (nav.ts)
+export const workPrefix = (chatId: string) => `work-${chatId}-`;
+const workKey = (chatId: string, send: Send) =>
+  `${workPrefix(chatId)}${send.user?.id ?? send.rows[0].id}`;
+
 function workLabel(
   live: boolean,
   rounds: Message[],
@@ -99,8 +106,19 @@ function workLabel(
   return text;
 }
 
-export function groupRows(s: ChatState, toolsOn: boolean): Node[] {
-  const sendLive = s.running?.chatId === s.chat.id;
+// `run` is this chat's slot from the registry, or null; the send is live
+// while it runs and its terminal event has not arrived (the slot is
+// released after the `done`, so the receipt in `ended` settles first)
+export function groupRows(
+  s: ChatState,
+  toolsOn: boolean,
+  run: RunningSend | null,
+): Node[] {
+  const sendLive =
+    run !== null &&
+    run.chatId === s.chat.id &&
+    run.phase === "running" &&
+    !s.ended.has(run.messageId);
   const results = new Map<string, Message>();
   const sends: Send[] = [];
   for (const m of s.chat.messages) {
@@ -186,7 +204,7 @@ export function groupRows(s: ChatState, toolsOn: boolean): Node[] {
         const on = live && content === "";
         nodes.push({
           kind: "work",
-          key: `work-${send.user?.id ?? send.rows[0].id}`,
+          key: workKey(s.chat.id, send),
           live: on,
           label: workLabel(on, rounds, tools, replyRow),
           items,
@@ -200,7 +218,7 @@ export function groupRows(s: ChatState, toolsOn: boolean): Node[] {
     );
     nodes.push({
       kind: "work",
-      key: `work-${send.user?.id ?? send.rows[0].id}`,
+      key: workKey(s.chat.id, send),
       live: true,
       label: workLabel(true, roundRows, tools, null),
       items,

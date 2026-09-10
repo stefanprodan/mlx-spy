@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { Message } from "../../chats.ts";
-import { command, copy, currentStreaming, running } from "./store.ts";
+import { canSend, command, copy } from "./store.ts";
 
 // A user message with Copy and Edit; editing swaps the text for a
 // textarea and resends from that row (the server drops the rows after it).
@@ -23,9 +23,9 @@ export function UserRow({ message: m }: { message: Message }) {
           </button>
           <button
             type="button"
-            disabled={running.value !== null}
+            disabled={!canSend.value}
             onClick={() => {
-              if (!currentStreaming.value) setEditing(true);
+              if (canSend.value) setEditing(true);
             }}
           >
             Edit
@@ -36,7 +36,8 @@ export function UserRow({ message: m }: { message: Message }) {
   }
   const save = () => {
     const content = ta.current?.value.trim() ?? "";
-    if (!content) return;
+    // a send may have started elsewhere since the editor opened
+    if (!content || !canSend.value) return;
     void command("edit", { messageId: m.id, content });
   };
   const cancel = () => setEditing(false);
@@ -57,7 +58,12 @@ export function UserRow({ message: m }: { message: Message }) {
         <button type="button" class="btn" onClick={cancel}>
           Cancel
         </button>
-        <button type="button" class="btn primary" onClick={save}>
+        <button
+          type="button"
+          class="btn primary"
+          disabled={!canSend.value}
+          onClick={save}
+        >
           Send
         </button>
       </div>

@@ -12,9 +12,10 @@
 //     [--reconnect-after 8] [--url ws://127.0.0.1:11236/ws]
 //
 // `sample` messages are dropped. A `snapshot` is written with only its
-// `chat` field (the running send, or null); when that is set the recorder
-// does what the page does on connect, GET /api/chats/<id>, and writes the
-// answer as a `fetch` line. --reconnect-after closes the socket after that
+// `chatRuns` field (the sends in flight and the cap); for each of them the
+// recorder does what the page does on connect, GET /api/chats/<id>, and
+// writes the answer as a `fetch` line. `chatRuns` messages are written
+// as they come. --reconnect-after closes the socket after that
 // many seconds and opens it again, which is what a tab reload does; a close
 // by the server (a restart) is written as a `closed` line and followed by
 // a reconnect a second later.
@@ -69,9 +70,11 @@ function connect() {
       }
       return;
     }
-    write({ type: "snapshot", chat: m.data.chat });
-    if (m.data.chat) await fetchChat(m.data.chat.chatId);
-    else if (closed && lastChat) await fetchChat(lastChat);
+    const runs = m.data.chatRuns as { sends: { chatId: string }[] };
+    write({ type: "snapshot", chatRuns: runs });
+    if (runs.sends.length > 0) {
+      for (const run of runs.sends) await fetchChat(run.chatId);
+    } else if (closed && lastChat) await fetchChat(lastChat);
     closed = false;
   };
   // the server went away (a restart mid-stream): note it and come back

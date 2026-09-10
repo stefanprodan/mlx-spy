@@ -31,13 +31,14 @@ import {
   rememberChat,
   resetDraft,
   restoreDraft,
-  running,
+  runs,
   setCurrent,
   setNote,
   state,
   tools,
   upsert,
 } from "./store.ts";
+import { workPrefix } from "./thread.ts";
 
 export const chatIdFromPath = () => {
   const m = /^\/chat\/([^/]+)$/.exec(location.pathname);
@@ -128,7 +129,6 @@ export async function removeCurrent() {
 export function onChat(ev: ChatWsEvent) {
   const id = "chatId" in ev ? ev.chatId : ev.chat.id;
   if (ev.kind === "error") {
-    if (running.value?.chatId === ev.chatId) running.value = null;
     chats.value = chats.value.map((chat) =>
       chat.id === ev.chatId ? { ...chat, streaming: false } : chat,
     );
@@ -136,20 +136,20 @@ export function onChat(ev: ChatWsEvent) {
   }
   switch (ev.kind) {
     case "started":
-      running.value = { chatId: ev.chat.id, messageId: ev.message.id };
       upsert(ev.chat);
       break;
-    case "done":
-      // send-level: the reply may be a later round than the row started
-      if (running.value?.chatId === ev.chat.id) running.value = null;
+    case "done": {
       upsert(ev.chat);
-      // the work folds shut when the answer is in, on screen or not
-      if ([...opened.value].some((k) => k.startsWith("work-"))) {
+      // this chat's work folds shut when its answer is in, on screen or
+      // not; a fold opened in another chat stays as it was
+      const prefix = workPrefix(ev.chat.id);
+      if ([...opened.value].some((k) => k.startsWith(prefix))) {
         opened.value = new Set(
-          [...opened.value].filter((k) => !k.startsWith("work-")),
+          [...opened.value].filter((k) => !k.startsWith(prefix)),
         );
       }
       break;
+    }
     case "error":
       break;
     case "row":
@@ -212,7 +212,7 @@ function applyChatEvent(ev: ChatWsEvent) {
     }
     return;
   }
-  state.value = { ...r.state, running: running.value };
+  state.value = r.state;
 }
 
 // phone: the list is a drawer over the conversation; desktop: it folds
@@ -266,10 +266,16 @@ export function boot() {
     booted = true;
   });
   listen((msg) => {
+    // the slots come from the socket in order; a `refresh` (the REST
+    // snapshot after a monitor action) may be older than a `chatRuns`
+    // already applied, so it is not a source
+    if (msg.type === "chatRuns") {
+      runs.value = msg.data;
+      return;
+    }
     if (msg.type === "snapshot") {
-      running.value = msg.data.chat;
+      runs.value = msg.data.chatRuns;
       const s = state.value;
-      if (s) state.value = { ...s, running: msg.data.chat };
       // not while a chat is being fetched: the draft would cancel it
       if (booted && !s && loading === null && !draft.value.model) {
         showDraft(false);
@@ -281,7 +287,10 @@ export function boot() {
     else if (msg.type === "sample") lastSample.value = msg.data;
   });
   effect(() => {
-    if (connection.value === "reconnecting") lastSample.value = null;
+    if (connection.value === "reconnecting") {
+      lastSample.value = null;
+      runs.value = null;
+    }
   });
   window.addEventListener("popstate", () => {
     const id = chatIdFromPath();

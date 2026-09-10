@@ -57,6 +57,25 @@ const values = (items: { label: string; value: string }[]) =>
   items.map((i) => `${i.label} ${i.value}`.trim());
 
 describe("live stats", () => {
+  test("two requests on the engine are nobody's numbers", () => {
+    const rows = [row(1, "user"), row(2, "assistant", { status: "streaming" })];
+    const first = liveStats(freshSend(), rows, decoding, t0 + 1000);
+    expect(values(first.items)).toEqual(["decode 88 tok/s", "40 tok", "1.0 s"]);
+    // another client's request overlaps: the line keeps what it knew
+    const shared = liveStats(
+      first.memory,
+      rows,
+      { ...decoding, requestsRunning: 2, decodeTps: 150, inflightTokens: 900 },
+      t0 + 2000,
+    );
+    expect(values(shared.items)).toEqual([
+      "decode 88 tok/s",
+      "40 tok",
+      "2.0 s",
+    ]);
+    expect(shared.memory).toEqual(first.memory);
+  });
+
   test("only the timer before the engine reports anything", () => {
     const msgs = [row(1, "user"), row(2, "assistant", { status: "streaming" })];
     const r = liveStats(freshSend(), msgs, null, t0 + 1500);

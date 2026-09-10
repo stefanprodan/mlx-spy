@@ -154,7 +154,9 @@ src/pull.ts          PullRunner: the download queue (one at a time), Range
                      cancel, remove, resume at start; progress on /ws;
                      tested against a fake Hub in test/pull.test.ts
 src/chats.ts         ChatStore: chats and messages over the same sqlite file
-src/chat.ts          ChatRunner: the one send in flight, rounds of engine
+src/chat.ts          ChatRunner: the sends in flight by chat (a registry
+                     under a cap of one, held through cancellation until
+                     the stream and tools drain), rounds of engine
                      requests with tool calls between them, partial reply
                      written every 250 ms or 2 KB, deltas and rendered HTML
                      on /ws, stop from any tab, regenerate, edit; compaction
@@ -211,8 +213,9 @@ src/ui/chat/         the Chat page. Pure and tested on the recordings in
                      (groupRows: the user rows, work groups and replies
                      the transcript renders, computed from the state so a
                      reload shows what a live tab shows). store.ts (the
-                     signals: chats, state, draft, running, note, opened
-                     blocks; the commands: send, patch, regenerate),
+                     signals: chats, state, draft, runs (the slots, from
+                     the socket only), note, opened blocks; the commands:
+                     send, patch, regenerate),
                      nav.ts (open() with its token, showDraft, the socket
                      routing with the pending queue while a fetch is in
                      flight, boot). Components: Chat.tsx, List.tsx,
@@ -249,8 +252,10 @@ Data flow: adapter (`/metrics.json`, `/v1/models`) → `Reading` →
 `/api/history` and the `/ws` push → the page. Actions go the other way: a
 button → confirm dialog → `POST /api/actions/<name>` → `Actions.run` → an
 event on `/ws` that every tab shows. A chat message: composer →
-`POST /api/chats/<id>/messages` → `ChatRunner.send` → `{type: "chat"}`
-events on `/ws` in every tab → `done` with the final row and its stats.
+`POST /api/chats/<id>/messages` → `ChatRunner.send` → `{type: "chatRuns"}`
+with the slots, then `{type: "chat"}` events on `/ws` in every tab →
+`done` with the final row and its stats → `chatRuns` again once the slot
+is free. The page takes who is running from `chatRuns` alone.
 
 ## mlx-serve specifics worth knowing
 
@@ -284,6 +289,13 @@ events on `/ws` in every tab → `done` with the final row and its stats.
 
 ## Conventions
 
+- **This is alpha software until the user says otherwise. Backwards
+  compatibility is not required.** No deprecated fields, no legacy
+  projections, no "old client" paths, no compatibility shims in tests.
+  Change the socket and API contracts, the fixture format and the
+  database schema freely; wiping the database on an upgrade is
+  acceptable. The page, the recorder and the tests live in this repo
+  and move with the server in the same change.
 - **Style is enforced by Biome** (`biome.json`): 2-space indent, double
   quotes, semicolons, trailing commas, 80 columns. Biome also rejects a
   selector of lower specificity after a higher one that matches the same
@@ -305,6 +317,9 @@ events on `/ws` in every tab → `done` with the final row and its stats.
 - **Docs move with the code.** A change to a page updates `docs/monitor.md`
   or `docs/chat.md`; a route change updates `docs/api.md`; a change to the
   Studio setup updates `docs/internal/studio.md`, after it was run there.
+- **Commit messages are short.** Subject under 72 characters, `Area:
+  what changed`. Body optional, at most three short lines saying why,
+  never a list of everything in the diff; GitHub truncates the rest.
 - No em-dashes in prose or docs. `perl -i -pe` for global replaces, not
   sed. `uv` for ad hoc Python, never pip. No `Co-authored-by` or session
   trailers in commits or PRs. npm packages official only, exact pins,

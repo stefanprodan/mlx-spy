@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // The server-side chat runner owns every engine round and tool call after a
-// browser leaves. One send remains the unit of locking, stopping and events.
+// browser leaves. A send is the unit of locking, stopping and events; the
+// registry holds one per chat and admits as many as the cap allows.
 
 import {
   type Chat,
@@ -74,6 +75,23 @@ const SUMMARY_LEAD =
 
 type TerminalStatus = "done" | "stopped" | "interrupted" | "error";
 
+// the cap on sends in flight across chats; one until the engine's request
+// scheduling is established (plans/26.09.10-parallel-chats-plan.md, 7)
+const CHAT_CONCURRENCY = 1;
+
+// A send in flight, for the snapshot and the `chatRuns` socket message.
+// `firstMessageId` names the send across its rounds, `messageId` the row
+// being written now. `stopping` is a send that ended but whose cancelled
+// engine stream or tools have not settled: it still holds its slot.
+export type RunningSend = {
+  chatId: string;
+  firstMessageId: number;
+  messageId: number;
+  phase: "running" | "stopping";
+};
+
+export type ChatRuns = { limit: number; sends: RunningSend[] };
+
 export type ChatWsEvent =
   // deletedFrom: regenerate and edit removed that row and every later one
   // user is null for a summary round started on its own (compact)
@@ -111,6 +129,7 @@ export type ChatWsEvent =
   | {
       kind: "error";
       chatId: string;
+      firstMessageId: number;
       messageId: number;
       error: string;
       content: string;
@@ -164,6 +183,10 @@ type RoundState = {
 type ActiveSend = {
   chatId: string;
   userId: number | null;
+  // the first row of the send, 0 until round one has one
+  firstMessageId: number;
+  // why the last finishRound() could not write the row, for fail()
+  saveError: string | null;
   policy: FrozenPolicy;
   round: number;
   budget: SendBudget;
@@ -248,9 +271,11 @@ function callSignature(calls: ToolCall[]): string {
 }
 
 export class ChatRunner {
-  private active: ActiveSend | null = null;
-  private draining: ActiveSend | null = null;
+  // the sends in flight by chat, cancelled ones included until they drain
+  private readonly sends = new Map<string, ActiveSend>();
+  private readonly limit = CHAT_CONCURRENCY;
   private readonly listeners = new Set<(event: ChatWsEvent) => void>();
+  private readonly runListeners = new Set<(runs: ChatRuns) => void>();
   private readonly now: () => number;
   private readonly executeTool: ToolExecutor;
 
@@ -264,12 +289,24 @@ export class ChatRunner {
     return () => this.listeners.delete(fn);
   }
 
-  running(): { chatId: string; messageId: number } | null {
-    const send = this.active;
-    const round = send?.current;
-    return send && round && send.terminal === null
-      ? { chatId: send.chatId, messageId: round.messageId }
-      : null;
+  // the occupied slots, in admission order; published on every change
+  onRuns(fn: (runs: ChatRuns) => void): () => void {
+    this.runListeners.add(fn);
+    return () => this.runListeners.delete(fn);
+  }
+
+  runs(): ChatRuns {
+    const sends: RunningSend[] = [];
+    for (const send of this.sends.values()) {
+      if (!send.current) continue;
+      sends.push({
+        chatId: send.chatId,
+        firstMessageId: send.firstMessageId,
+        messageId: send.current.messageId,
+        phase: send.terminal === null ? "running" : "stopping",
+      });
+    }
+    return { limit: this.limit, sends };
   }
 
   list(): ChatSummary[] {
@@ -289,7 +326,7 @@ export class ChatRunner {
 
   update(id: string, patch: ChatPatch): (ChatSummary & ChatSettings) | null {
     if (
-      this.active?.chatId === id &&
+      this.sends.has(id) &&
       (patch.model !== undefined ||
         patch.toolsOff !== undefined ||
         patch.search !== undefined)
@@ -312,7 +349,7 @@ export class ChatRunner {
     text: string,
     deletedFrom?: number,
   ): { user: Message; message: Message } {
-    this.ensureIdle();
+    this.admit(chatId);
     this.validateText(text);
     let chat = this.requireChat(chatId);
     this.validateModel(chat.model);
@@ -333,7 +370,7 @@ export class ChatRunner {
   }
 
   regenerate(chatId: string): { user: Message; message: Message } {
-    this.ensureIdle();
+    this.admit(chatId);
     const chat = this.requireChat(chatId);
     const user = [...chat.messages]
       .reverse()
@@ -352,7 +389,7 @@ export class ChatRunner {
   // a summary round on its own, from /compact in the composer: the next
   // reply starts from the summary the same way an automatic one does
   compact(chatId: string): { message: Message } {
-    this.ensureIdle();
+    this.admit(chatId);
     const chat = this.requireChat(chatId);
     this.validateModel(chat.model);
     this.truncateMalformedHistory(chat);
@@ -368,7 +405,7 @@ export class ChatRunner {
     }
     const send = this.newSend(current, null);
     send.summarizing = true;
-    const message = this.beginRound(send, false);
+    const message = this.firstRound(send);
     this.publish({
       kind: "started",
       chat: chatSummary(this.requireChat(chatId)),
@@ -385,7 +422,7 @@ export class ChatRunner {
     messageId: number,
     content: string,
   ): { user: Message; message: Message } {
-    this.ensureIdle();
+    this.admit(chatId);
     this.validateText(content);
     const chat = this.requireChat(chatId);
     const row = chat.messages.find((message) => message.id === messageId);
@@ -405,22 +442,29 @@ export class ChatRunner {
   }
 
   stop(chatId: string): void {
-    const send = this.active;
-    if (!send || send.chatId !== chatId || send.terminal !== null) return;
+    const send = this.sends.get(chatId);
+    if (!send || send.terminal !== null) return;
     this.terminate(send, "stopped");
   }
 
   remove(chatId: string): boolean {
-    if (this.active?.chatId === chatId) this.stop(chatId);
+    this.stop(chatId);
     const removed = this.deps.store.remove(chatId);
     if (removed) this.publish({ kind: "deleted", chatId });
     return removed;
   }
 
+  // every send is interrupted and its rows written before the database
+  // closes; one failing send does not keep the others from being stopped
   shutdown(): void {
-    const send = this.active;
-    if (!send || send.terminal !== null) return;
-    this.terminate(send, "interrupted");
+    for (const send of [...this.sends.values()]) {
+      if (send.terminal !== null) continue;
+      try {
+        this.terminate(send, "interrupted");
+      } catch (err) {
+        this.deps.log(`chat ${send.chatId} interrupt failed: ${describe(err)}`);
+      }
+    }
   }
 
   private startSend(
@@ -430,9 +474,7 @@ export class ChatRunner {
     deletedFrom?: number,
   ): { user: Message; message: Message } {
     const send = this.newSend(chat, user.id);
-    // the started event carries round one's row; a row event before it
-    // would land in the page ahead of the user message
-    const message = this.beginRound(send, false);
+    const message = this.firstRound(send);
     const current = this.requireChat(chat.id);
     if (titleChanged) {
       this.publish({ kind: "chat", chat: chatSettings(current) });
@@ -470,6 +512,8 @@ export class ChatRunner {
     const send: ActiveSend = {
       chatId: chat.id,
       userId,
+      firstMessageId: 0,
+      saveError: null,
       policy,
       round: 1,
       budget: {
@@ -488,8 +532,20 @@ export class ChatRunner {
       answering: false,
       summarizing: false,
     };
-    this.active = send;
+    this.sends.set(chat.id, send);
     return send;
+  }
+
+  // round one's row, made before the started event that carries it (a
+  // row event before `started` would land in the page ahead of the user
+  // message); a store failure here frees the slot instead of leaking it
+  private firstRound(send: ActiveSend): Message {
+    try {
+      return this.beginRound(send, false);
+    } catch (err) {
+      this.release(send);
+      throw err;
+    }
   }
 
   private beginRound(send: ActiveSend, announce = true): Message {
@@ -521,6 +577,9 @@ export class ChatRunner {
       calls: [],
       toolRows: [],
     };
+    if (send.firstMessageId === 0) send.firstMessageId = message.id;
+    // the slot's row changes before the row itself is announced
+    this.publishRuns();
     if (announce) this.publishRow(send.chatId, message);
     return message;
   }
@@ -546,8 +605,7 @@ export class ChatRunner {
             this.fail(send, "the summary came back empty");
             return;
           }
-          const message = this.finishRound(send, round, "done", null);
-          if (message) this.complete(send, message);
+          this.settle(send, this.finishRound(send, round, "done", null));
           return;
         }
         this.deps.log(
@@ -562,15 +620,10 @@ export class ChatRunner {
         if (send.answering && calls.length > 0) {
           // the model called again after being told to answer: the send
           // ends here rather than looping
-          const message = this.finishRound(
+          this.settle(
             send,
-            round,
-            "done",
-            null,
-            calls,
-            "tool_limit",
+            this.finishRound(send, round, "done", null, calls, "tool_limit"),
           );
-          if (message) this.complete(send, message);
           return;
         }
         if (calls.length === 0) {
@@ -579,7 +632,10 @@ export class ChatRunner {
             return;
           }
           const message = this.finishRound(send, round, "done", null);
-          if (!message) return;
+          if (!message) {
+            this.settle(send, null);
+            return;
+          }
           if (this.overflowed(send, message)) {
             // the summary round shares its prefix with the reply just
             // made, so the prefill is mostly cached; the next send starts
@@ -598,13 +654,11 @@ export class ChatRunner {
           return;
         }
         if (reason === "length" || reason === "error") {
-          const message = this.finishRound(send, round, "done", null, calls);
-          if (message) this.complete(send, message);
+          this.settle(send, this.finishRound(send, round, "done", null, calls));
           return;
         }
         if (reason !== "stop" && reason !== "tool_calls") {
-          const message = this.finishRound(send, round, "done", null, calls);
-          if (message) this.complete(send, message);
+          this.settle(send, this.finishRound(send, round, "done", null, calls));
           return;
         }
 
@@ -631,7 +685,13 @@ export class ChatRunner {
         const toolRows = this.deps.store.finishToolGroup(
           round.messageId,
           // a null override would hide the engine's own tool_calls reason
-          this.finishFields(round, "done", null, terminalReason ?? undefined),
+          this.finishFields(
+            send,
+            round,
+            "done",
+            null,
+            terminalReason ?? undefined,
+          ),
           calls,
         );
         round.toolRows = toolRows;
@@ -688,9 +748,9 @@ export class ChatRunner {
     } catch (err) {
       if (send.terminal === null) this.fail(send, describe(err));
     } finally {
+      // the slot frees once every launched call has settled, abort or not
       await send.tools;
-      if (this.active === send) this.active = null;
-      if (this.draining === send) this.draining = null;
+      this.release(send);
     }
   }
 
@@ -981,6 +1041,7 @@ export class ChatRunner {
   }
 
   private finishFields(
+    send: ActiveSend,
     round: RoundState,
     status: TerminalStatus,
     error: string | null,
@@ -996,7 +1057,7 @@ export class ChatRunner {
       status,
       error,
       finishReason: reason,
-      model: this.active?.policy.model ?? null,
+      model: send.policy.model,
       finishedAt,
       ttftMs: round.ttftMs,
       thinkingMs,
@@ -1019,7 +1080,7 @@ export class ChatRunner {
       });
       const message = this.deps.store.finishReply(
         round.messageId,
-        this.finishFields(round, status, error, reason),
+        this.finishFields(send, round, status, error, reason),
         calls,
       );
       if (message) {
@@ -1034,28 +1095,40 @@ export class ChatRunner {
       }
       return message;
     } catch (err) {
+      // the caller ends the send through fail(), which tries once more and
+      // then publishes the non-durable error, so the page gets a receipt
       this.deps.log(`chat ${send.chatId} finish failed: ${describe(err)}`);
-      send.terminal = "error";
-      if (this.active === send) this.active = null;
+      send.saveError = describe(err);
       return null;
     }
+  }
+
+  // a finished round is the send's end, or, when its row could not be
+  // written, a failure with the reason the store gave
+  private settle(send: ActiveSend, message: Message | null) {
+    if (message) this.complete(send, message);
+    else this.fail(send, send.saveError ?? "the reply could not be saved");
   }
 
   private complete(send: ActiveSend, message: Message) {
     if (send.terminal !== null) return;
     send.terminal = "done";
-    if (this.active === send) this.active = null;
     const chat = this.requireChat(send.chatId);
+    // nothing is left to drain after a completed round: the slot is free
+    // from the done event on, so a listener of it can send the next
+    // message, and the release follows the event on the socket
+    const freed = this.free(send);
     this.publish({ kind: "done", chat: chatSummary(chat), message });
     this.logFinish(send, message);
+    if (freed) this.publishRuns();
   }
 
   private fail(send: ActiveSend, error: string) {
     const round = send.current;
     if (!round || send.terminal !== null) return;
     send.terminal = "error";
-    this.draining = send;
     send.controller.abort();
+    this.publishRuns();
     this.deps.log(`chat ${send.chatId} error: ${error}`);
     let message: Message | null = null;
     try {
@@ -1085,6 +1158,7 @@ export class ChatRunner {
       this.publish({
         kind: "error",
         chatId: send.chatId,
+        firstMessageId: send.firstMessageId,
         messageId: round.messageId,
         error: `${error} (reply could not be saved)`,
         content: round.content,
@@ -1096,8 +1170,8 @@ export class ChatRunner {
 
   private terminate(send: ActiveSend, status: "stopped" | "interrupted") {
     send.terminal = status;
-    this.draining = send;
     send.controller.abort();
+    this.publishRuns();
     const round = send.current;
     if (!round) return;
     let message = this.deps.store.message(round.messageId);
@@ -1219,19 +1293,50 @@ export class ChatRunner {
     }
   }
 
-  private ensureIdle() {
-    if (this.draining) {
+  // Admission, synchronous with the reservation that follows it: a chat
+  // takes one send at a time, and the cap counts cancelled sends until
+  // they drain. Nothing is written before it passes.
+  private admit(chatId: string) {
+    const blocking =
+      this.sends.get(chatId) ??
+      (this.sends.size >= this.limit
+        ? ([...this.sends.values()].find((send) => send.terminal !== null) ??
+          this.sends.values().next().value)
+        : undefined);
+    if (!blocking) return;
+    if (blocking.terminal !== null) {
       throw new ChatError(
         409,
         "Still cancelling the previous reply; try again in a moment",
       );
     }
-    if (!this.active) return;
-    const chat = this.deps.store.get(this.active.chatId);
+    const chat = this.deps.store.get(blocking.chatId);
     throw new ChatError(
       409,
       `mlx-spy is already answering in ${chat?.title || "another chat"}`,
     );
+  }
+
+  // an old continuation never frees a newer send's slot
+  private free(send: ActiveSend): boolean {
+    if (this.sends.get(send.chatId) !== send) return false;
+    this.sends.delete(send.chatId);
+    return true;
+  }
+
+  private release(send: ActiveSend) {
+    if (this.free(send)) this.publishRuns();
+  }
+
+  private publishRuns() {
+    const runs = this.runs();
+    for (const listener of this.runListeners) {
+      try {
+        listener(runs);
+      } catch (err) {
+        this.deps.log(`chat runs listener failed: ${describe(err)}`);
+      }
+    }
   }
 
   private requireChat(id: string): Chat {
