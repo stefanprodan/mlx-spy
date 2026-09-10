@@ -130,6 +130,33 @@ export function applyEvent(
         gap: false,
       };
     }
+    case "error": {
+      const running = s.running?.chatId === id ? null : s.running;
+      if (id !== s.chat.id) return { state: { ...s, running }, gap: false };
+      return {
+        state: {
+          chat: {
+            ...s.chat,
+            streaming: false,
+            messages: s.chat.messages.map((m) =>
+              m.id === ev.messageId
+                ? {
+                    ...m,
+                    status: "error",
+                    error: ev.error,
+                    content: ev.content,
+                    reasoning: ev.reasoning,
+                    html: ev.html,
+                  }
+                : m,
+            ),
+          },
+          live: without(s.live, ev.messageId),
+          running,
+        },
+        gap: false,
+      };
+    }
     case "chat": {
       if (id !== s.chat.id) return ok;
       return {

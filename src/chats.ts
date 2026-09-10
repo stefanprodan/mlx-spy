@@ -642,6 +642,23 @@ export class ChatStore {
     })();
   }
 
+  // The assistant was committed before its tools ran. Keep its calls,
+  // transcript and usage when a later execution or result write fails.
+  failToolGroup(assistantId: number, error: string): Message | null {
+    const changed = this.db.transaction(() => {
+      const result = this.db
+        .query(`UPDATE messages SET status = 'error', error = $error
+          WHERE id = $id AND role = 'assistant' AND status = 'done'
+            AND tool_calls IS NOT NULL`)
+        .run({ id: assistantId, error });
+      if (result.changes > 0) {
+        this.touchFromMessage(assistantId, this.now());
+      }
+      return result.changes > 0;
+    })();
+    return changed ? this.message(assistantId) : null;
+  }
+
   writeTool(id: number, fields: WriteTool): Message | null {
     const changed = this.db.transaction(() => {
       const result = this.db

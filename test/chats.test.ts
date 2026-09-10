@@ -257,6 +257,51 @@ describe("ChatStore", () => {
     db.close();
   });
 
+  test("fails a committed tool group without replacing its reply or results", () => {
+    const { db, store, setNow } = setup();
+    const chat = store.create(defaults);
+    const assistant = store.addMessage(chat.id, "assistant", {
+      status: "streaming",
+      content: "Checking.",
+      reasoning: "Use the clock.",
+    });
+    const calls = [{ id: "clock_1", name: "clock", arguments: "{}" }];
+    const [tool] = store.finishToolGroup(assistant.id, finish(), calls);
+    store.writeTool(tool.id, {
+      status: "done",
+      content: "12:00",
+      error: null,
+      finishedAt: 1600,
+    });
+    const before = store.message(assistant.id)!;
+    const result = store.message(tool.id);
+    setNow(1700);
+    expect(store.failToolGroup(assistant.id, "tool write failed")).toEqual({
+      ...before,
+      status: "error",
+      error: "tool write failed",
+    });
+    expect(store.message(tool.id)).toEqual(result);
+    expect(store.get(chat.id)?.updatedAt).toBe(1700);
+    expect(store.failToolGroup(assistant.id, "late failure")).toBeNull();
+    expect(store.message(assistant.id)?.error).toBe("tool write failed");
+    db.close();
+  });
+
+  test("tool group failure does not reopen other terminal or streaming rows", () => {
+    const { db, store } = setup();
+    const chat = store.create(defaults);
+    for (const role of ["user", "assistant", "summary"] as const) {
+      for (const status of ["done", "streaming", "stopped", "error"] as const) {
+        const message = store.addMessage(chat.id, role, { status });
+        expect(store.failToolGroup(message.id, "not a group")).toBeNull();
+        expect(store.message(message.id)).toEqual(message);
+      }
+    }
+    expect(store.failToolGroup(-1, "missing")).toBeNull();
+    db.close();
+  });
+
   test("moves tool rows through running and terminal writes", () => {
     const { db, store } = setup();
     const chat = store.create(defaults);

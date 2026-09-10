@@ -1,0 +1,6 @@
+{"t":0,"note":"Navigation race reproduction: disposable preview chats, browser-injected delayed HTTP 409, no generation request reaches the engine"}
+{"t":1,"type":"snapshot","chat":null}
+{"t":15128,"type":"chat","data":{"kind":"chat","chat":{"id":"03b608b2-fb21-450b-a0eb-dddb831d97d6","title":"Isolation repro A 1039","model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","systemPrompt":"","thinking":false,"reasoningEffort":null,"reasoningHistory":false,"temperature":null,"topP":null,"maxTokens":16,"toolsOff":["get_current_time","webfetch","websearch"],"search":"exa","createdAt":1789026053751,"updatedAt":1789026053751,"streaming":false}}}
+{"t":15131,"type":"chat","data":{"kind":"chat","chat":{"id":"69cdde49-737e-4a0c-9462-4c68f43e7a58","title":"Isolation repro B 1039","model":"stefanprodan/Ornith-1.5-35B-A3B-BigBang-oQ4e-mtp","systemPrompt":"","thinking":false,"reasoningEffort":null,"reasoningHistory":false,"temperature":null,"topP":null,"maxTokens":16,"toolsOff":["get_current_time","webfetch","websearch"],"search":"exa","createdAt":1789026053754,"updatedAt":1789026053754,"streaming":false}}}
+{"t":142706,"type":"chat","data":{"kind":"deleted","chatId":"03b608b2-fb21-450b-a0eb-dddb831d97d6"}}
+{"t":142709,"type":"chat","data":{"kind":"deleted","chatId":"69cdde49-737e-4a0c-9462-4c68f43e7a58"}}

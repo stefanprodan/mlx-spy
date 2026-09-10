@@ -12,6 +12,8 @@ import { api } from "../api.ts";
 import { connection, listen, models } from "../store.ts";
 import { applyEvent } from "./events.ts";
 import {
+  beginNavigation,
+  chatError,
   chats,
   clocks,
   current,
@@ -24,8 +26,11 @@ import {
   lastChat,
   lastSample,
   modelInfo,
+  navigation,
   opened,
   rememberChat,
+  resetDraft,
+  restoreDraft,
   running,
   setCurrent,
   setNote,
@@ -47,11 +52,8 @@ export const chatIdFromPath = () => {
 // events for the chat being fetched, applied once the rows are in
 let pending: ChatWsEvent[] = [];
 let loading: string | null = null;
-// a slower fetch from an earlier navigation must not win over a later one
-let opening = 0;
-
 export async function open(id: string, push: boolean) {
-  const token = ++opening;
+  const token = beginNavigation();
   // events buffered for this chat since boot or a gap stay queued
   if (loading !== id) {
     loading = id;
@@ -59,17 +61,16 @@ export async function open(id: string, push: boolean) {
   }
   try {
     const chat = await api<Chat>(`/api/chats/${encodeURIComponent(id)}`);
-    if (token !== opening) return;
+    if (token !== navigation) return;
     setCurrent(chat);
     rememberChat(id);
     if (push) history.pushState(null, "", `/chat/${encodeURIComponent(id)}`);
-    setNote(null);
     const queued = pending;
     loading = null;
     pending = [];
-    for (const ev of queued) onChat(ev);
+    for (const ev of queued) applyChatEvent(ev);
   } catch (err) {
-    if (token !== opening) return;
+    if (token !== navigation) return;
     loading = null;
     pending = [];
     fail(err);
@@ -81,10 +82,13 @@ export async function open(id: string, push: boolean) {
 }
 
 export function showDraft(push: boolean) {
-  opening++;
+  beginNavigation();
   // a chosen draft (New chat, a deleted or missing chat) is the new
   // starting point; a Back to /chat is not
-  if (push) rememberChat(null);
+  if (push) {
+    rememberChat(null);
+    resetDraft();
+  }
   loading = null;
   pending = [];
   state.value = null;
@@ -96,23 +100,39 @@ export function showDraft(push: boolean) {
   setNote(null);
 }
 
+export function openDraft(value: Parameters<typeof restoreDraft>[0]) {
+  beginNavigation();
+  loading = null;
+  pending = [];
+  restoreDraft(value);
+  state.value = null;
+  rememberChat(null);
+  history.pushState(null, "", "/chat");
+}
+
 export async function removeCurrent() {
   const cur = current.value;
   if (!cur) return;
+  const token = navigation;
   try {
     await api(`/api/chats/${encodeURIComponent(cur.id)}`, "DELETE");
     chats.value = chats.value.filter((c) => c.id !== cur.id);
-    showDraft(true);
+    if (token === navigation && current.value?.id === cur.id) {
+      showDraft(true);
+    }
   } catch (err) {
-    fail(err);
+    if (token === navigation && current.value?.id === cur.id) fail(err);
   }
 }
 
 export function onChat(ev: ChatWsEvent) {
   const id = "chatId" in ev ? ev.chatId : ev.chat.id;
-  if (loading !== null && id === loading) {
-    pending.push(ev);
-    return;
+  if (ev.kind === "error") {
+    if (running.value?.chatId === ev.chatId) running.value = null;
+    chats.value = chats.value.map((chat) =>
+      chat.id === ev.chatId ? { ...chat, streaming: false } : chat,
+    );
+    chatError(ev.chatId, ev.error);
   }
   switch (ev.kind) {
     case "started":
@@ -130,6 +150,8 @@ export function onChat(ev: ChatWsEvent) {
         );
       }
       break;
+    case "error":
+      break;
     case "row":
       upsert(ev.chat);
       break;
@@ -138,9 +160,30 @@ export function onChat(ev: ChatWsEvent) {
       break;
     case "deleted":
       chats.value = chats.value.filter((c) => c.id !== ev.chatId);
+      if (loading === ev.chatId) {
+        beginNavigation();
+        loading = null;
+        pending = [];
+        const selected = current.value?.id ?? null;
+        rememberChat(selected);
+        history.replaceState(
+          null,
+          "",
+          selected ? `/chat/${encodeURIComponent(selected)}` : "/chat",
+        );
+      }
       if (current.value?.id === ev.chatId) showDraft(true);
       return;
   }
+  if (loading !== null && id === loading) {
+    pending.push(ev);
+    return;
+  }
+  applyChatEvent(ev);
+}
+
+function applyChatEvent(ev: ChatWsEvent) {
+  const id = "chatId" in ev ? ev.chatId : ev.chat.id;
   const s = state.value;
   if (!s || s.chat.id !== id) return;
   // a row leaving the live map keeps its clocks for the thinking label
@@ -162,11 +205,14 @@ export function onChat(ev: ChatWsEvent) {
     // after it, once per gap
     if (loading === null) {
       loading = id;
-      setTimeout(() => void open(id, false), 400);
+      const token = navigation;
+      setTimeout(() => {
+        if (loading === id && token === navigation) void open(id, false);
+      }, 400);
     }
     return;
   }
-  state.value = r.state;
+  state.value = { ...r.state, running: running.value };
 }
 
 // phone: the list is a drawer over the conversation; desktop: it folds
@@ -191,6 +237,7 @@ export function boot() {
   // the chat in the URL, else the one last used; buffer its events from
   // the first socket message on
   const startId = chatIdFromPath() ?? lastChat();
+  const token = navigation;
   loading = startId;
   void api<{
     timezone: string;
@@ -202,6 +249,10 @@ export function boot() {
     })
     .catch(() => {});
   void fetchList().then(() => {
+    if (token !== navigation) {
+      booted = true;
+      return;
+    }
     if (startId) {
       // the remembered chat gets its URL, so a reload keeps it
       if (!chatIdFromPath()) {

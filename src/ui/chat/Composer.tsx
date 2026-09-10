@@ -11,6 +11,8 @@ import {
   compact,
   current,
   currentStreaming,
+  editDraft,
+  editor,
   modelInfo,
   note,
   running,
@@ -23,6 +25,8 @@ import {
 export function Composer() {
   const input = useRef<HTMLTextAreaElement>(null);
   const s = settings.value;
+  const draft = editor.value;
+  const text = draft.text.value;
   const mine = currentStreaming.value;
   const run = running.value;
   const elsewhere = run !== null && !mine;
@@ -47,24 +51,19 @@ export function Composer() {
   useEffect(() => {
     input.current?.focus();
   }, [chatId]);
+  useEffect(grow, [text]);
 
   const submit = async () => {
-    const el = input.current;
-    if (!el) return;
-    const content = el.value.trim();
-    if (!content) return;
-    el.value = "";
-    grow();
+    const content = draft.text.value.trim();
+    if (!content || draft.pending.value) return;
     if (content === "/compact") {
+      editDraft("");
       await compact();
       return;
     }
-    if (!(await send(content))) {
-      el.value = content;
-      grow();
-    }
+    await send(content);
   };
-  const disabled = !mine && !ready;
+  const disabled = !mine && (!ready || draft.pending.value > 0);
   return (
     <div class="composer">
       <div
@@ -82,7 +81,11 @@ export function Composer() {
           placeholder={placeholder}
           aria-label="Message"
           disabled={elsewhere}
-          onInput={grow}
+          value={text}
+          onInput={(ev) => {
+            editDraft(ev.currentTarget.value);
+            grow();
+          }}
           onKeyDown={(ev) => {
             if (ev.key === "Enter" && !ev.shiftKey && !ev.isComposing) {
               ev.preventDefault();

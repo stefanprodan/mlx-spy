@@ -76,8 +76,8 @@ export function liveStats(
   return { items, memory: { rate, tokens } };
 }
 
-// the last reply's numbers; a stopped or failed one has none and the
-// line hides rather than show an older reply's
+// Hide missing usage rather than show an older reply's. A failure in
+// tools retains the completed engine round's usage.
 export function doneStats(messages: Message[]): Item[] | null {
   const items: Item[] = [];
   const last = messages.filter((m) => m.role === "assistant").at(-1);
